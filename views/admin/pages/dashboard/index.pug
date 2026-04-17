@@ -1,0 +1,96 @@
+extends ../../layouts/default.pug
+include ../../mixins/pagination.pug
+
+block main
+  .container
+    h1 Trang tổng quan
+    .row.mt-4
+      .col-12
+        .card.mb-4
+          .card-header Thông tin tài khoản
+          .card-body
+            if(user.avatar)
+              img(
+                src=user.avatar
+                style="height: 100px;margin-bottom: 15px;"
+              )
+            if(user.fullName)
+              p Họ tên: <b>#{user.fullName}</b>
+            if(user.email)
+              p Email: <b>#{user.email}</b>
+            if(user.phone)
+              p Số điện thoại: <b>#{user.phone}</b>
+            if(role.title)
+              p Phân quyền: <b>#{role.title}</b>
+
+
+      .col-6
+        .card.mb-4
+          .card-header Danh mục sản phẩm
+          .card-body
+            p Số lượng: <b>#{statistic.categoryProduct.total}</b>
+            p Hoạt động: <b>#{statistic.categoryProduct.active}</b>
+            p Dừng hoạt động: <b>#{statistic.categoryProduct.inactive}</b>
+
+      .col-6
+        .card.mb-4
+          .card-header Sản phẩm
+          .card-body
+            p Số lượng: <b>#{statistic.product.total}</b>
+            p Hoạt động: <b>#{statistic.product.active}</b>
+            p Dừng hoạt động: <b>#{statistic.product.inactive}</b>
+
+      .col-6
+        .card.mb-4
+          .card-header Tài khoản admin
+          .card-body
+            p Số lượng: <b>#{statistic.account.total}</b>
+            p Hoạt động: <b>#{statistic.account.active}</b>
+            p Dừng hoạt động: <b>#{statistic.account.inactive}</b>
+
+      .col-6
+        .card.mb-4
+          .card-header Tài khoản client
+          .card-body
+            p Số lượng: <b>#{statistic.user.total}</b>
+            p Hoạt động: <b>#{statistic.user.active}</b>
+            p Dừng hoạt động: <b>#{statistic.user.inactive}</b>
+      .col-12 
+        .card.mb-4
+          .card-header Lịch sử bán hàng
+          .card-body 
+            .row.d-flex.justify-content-center
+              .col-2 
+                p Tên người mua 
+              .col-3
+                p ID mua hàng
+              .col-2
+                p Hình ảnh 
+              .col-1
+                p Số lượng
+              .col-2
+                p Ngày mua 
+              .col
+                p Trạng thái
+
+            .div.my-2(style="border: 1px solid #ddd")
+
+            each item in order
+              each product in item.products
+                .row.d-flex.justify-content-center
+                  .col-2 
+                    p #{item.userInfo.fullName}
+                  .col-3
+                    p #{item._id}
+                  .col-2
+                    img.my-2(src=product.thumbnail, style="width: 100px;")
+                  .col-1
+                    p #{product.quantity}    
+                  .col-2
+                    - var date = item.createdAt.toLocaleDateString("vi-VN");
+                    p #{date} 
+                  .col
+                    p.p-2(style="background-color: #00c292; color: #ffffff; border-radius: 8px; width: fit-content") Thanh toán
+
+                .div.my-2(style="border: 1px solid #ddd")
+        +pagination(pagination)

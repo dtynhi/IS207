@@ -1,0 +1,133 @@
+/* product-detail */
+  .product-detail .product-infor {
+    margin: auto;
+    width: 100%;
+    background-color: white;
+    box-sizing: border-box;
+  }
+  
+  .product-detail .image {
+    width: 25%;
+    float: left;
+    padding: 30px;
+  }
+  
+  .product-detail .infor {
+    width: 75%;
+    float: left;
+    padding: 30px;
+    box-sizing: border-box;
+  }
+  
+  .product-detail .inner-thumb img {
+    width: 100%;
+    height: auto;
+  }
+  
+  .product-detail .infor .inner-title {
+    font-size: 32px;
+    margin-bottom: 10px;
+    width: 70%;
+    float: left;
+  
+  }
+  
+  .product-detail .inner-category {
+    margin-bottom: 10px;
+    width: 100%;
+    float: left;
+  }
+  
+  .product-detail .inner-price-new {
+    color: black;
+    font-weight: 600;
+    font-size: 24px;
+    margin-bottom: 10px;
+    margin-top: 10px;
+  }
+  
+  .product-detail .inner-price-old {
+    color: red;
+    font-weight: 600;
+    font-size: 20px;
+    text-decoration: line-through;
+    margin-bottom: 5px;
+  }
+  
+  .product-detail .inner-percent {
+    margin-bottom: 0px;
+    font-size: 20px;
+  }
+  
+  .product-detail .inner-percent span {
+    color: #fff;
+    background: red;
+    font-weight: 600;
+    display: inline-block;
+    padding: 3px 6px;
+    border-radius: 8px;
+  }
+  
+  .product-detail .inner-stock {
+    margin-bottom: 10px;
+    padding-top: 10px;
+    width: 100%;
+    float: left;  
+    border-top: 1px solid lightgray;
+    padding-top: 20px;
+  }
+  
+  .product-detail .inner-stock span {
+    color: #fff;
+    background: #127FFF;
+    font-weight: 600;
+    display: inline-block;
+    padding: 3px 6px;
+    border-radius: 8px;
+  }
+  
+  .product-detail .form-add-to-cart{
+    padding: 5px;
+    float: left;
+    width: 30%;
+  }
+  
+  .product-detail .form-control{
+    background-color: rgb(246, 246, 232);
+  }
+  
+  .product-detail .btn{
+    color: blue;
+    border: 2px solid blue;
+    border-radius: 6px;
+    background-color: rgb(196, 255, 255)
+  }
+  
+  .product-detail .text{
+    position: relative;
+    text-align: center;
+    margin: auto;
+    .icon{
+      color: #0E79FF;
+      margin-left: 10px;
+      i {
+          font-size: 22px;
+      }
+    }
+  }
+  
+  .product-detail .col-12{
+    box-sizing: border-box;
+    background-color: white;
+  }
+  
+  .product-detail .inner-desc{
+    color: black;
+  }
+  .product-detail .box-head .inner-title {
+    margin-bottom: 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: #0D6EFD;
+    border-bottom: 2px solid #0D6EFD;
+  }

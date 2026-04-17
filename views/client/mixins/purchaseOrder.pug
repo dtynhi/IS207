@@ -1,0 +1,12 @@
+mixin purchaseOrder(allProducts,allId)
+  .mainPurchaseOrder
+    each order in allProducts 
+      .row
+        .col-sm-8 
+        .col-sm-4
+          h5 Hoàn thành
+      .row 
+        .col-sm-3 
+          img(src=order.thumbnail)
+        .col-sm-9
+          p=allId

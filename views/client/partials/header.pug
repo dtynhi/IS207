@@ -1,0 +1,70 @@
+include ../mixins/sub-menu.pug
+
+header
+.header 
+  .container
+    .row.justify-content-between
+      .col-4
+        .inner-logo.d-flex.flex-row.align-items-center
+          a(href="/")
+            img(src=settingGeneral.logo, alt=settingGeneral.websiteName, style="border-radius: 15px; box-shadow: 5px 0px rgba(13, 110, 253, 0.2)")
+          h3(class="mx-4 my-auto align-items-center fs-1")
+            a(href="/" class="text-decoration-none") Uni Market
+      .col-8
+        form(
+          action="/search"
+          method="GET"
+        ) 
+          div(class="form-group d-flex flex-row justify-content-end mb-0")
+            input(
+              type="text"
+              placeholder="Nhập từ khóa..."
+              class="form-control col-6"
+              style="border-radius: 8px; border-top-right-radius: 0px; border-bottom-right-radius: 0px"
+              name="keyword"
+              value=keyword
+            )
+            button(
+              type="submit"
+              class="btn btn-primary col-2"
+              style="border-radius: 8px; border-top-left-radius: 0px; border-bottom-left-radius: 0px"
+            ) Tìm kiếm  
+    
+.header
+  .container
+    div(class="row justify-content-between" id="navbar")
+      ul(style="list-style: none; margin-left: -20px;" class="col-7 d-flex flex-row justify-content-start align-items-center align-self-center text-decoration-none mb-0")
+        li(class="sub-menu px-2")
+          -const pathProduct = "/products";
+          a(href=pathProduct class="d-flex flex-row text-decoration-none" style="color: black;")
+            svg(xmlns="http://www.w3.org/2000/svg" width="23" height="23" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16") 
+              path(fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z")
+            p(class="mx-2 my-auto") Danh mục
+            +sub-menu(layoutProductsCategory, pathProduct)
+        li(class="px-2")
+          a(href="/products" class="text-decoration-none" style="color: black;") Tất cả sản phẩm
+        if(currentURL == "/")
+          li(class="px-2")
+            a(href="#productsFeatured" class="text-decoration-none" style="color: black;") Sản phẩm bán chạy 
+          li(class="px-2")
+            a(href="#productsNew" class="text-decoration-none" style="color: black;") Sản phẩm được đề xuất
+
+      .col.d-flex.justify-content-end.align-items-center
+        if(user)
+          a(href="/user/info" class="px-2 text-decoration-none d-flex flex-column align-items-center p-0 justifi-content-center mx-2") 
+            svg(xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16")
+              path(d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z")
+              path(fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z")
+            p(class="m-0") Hồ sơ
+          a(href="/cart" class="px-2 text-decoration-none d-flex flex-column align-items-center p-0 justifi-content-center mx-2")
+            svg(xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-cart" viewBox="0 0 16 16")
+              path(d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z")
+            div (#{miniCart ? miniCart.totalQuantity : 0})
+          a(href="/user/logout" class="px-2 text-decoration-none d-flex flex-column align-items-center p-0 justifi-content-center mx-2")
+            svg(xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16")
+              path(fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z")
+              path(fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z")
+            p(class="m-0") Đăng xuất
+        else 
+          a(href="/user/register" class="px-2 py-2 text-decoration-none d-flex flex-column align-items-center p-0 justifi-content-center mx-2") Đăng ký
+          a(href="/user/login" class="px-2 py-2 text-decoration-none d-flex flex-column align-items-center p-0 justifi-content-center mx-2") Đăng nhập

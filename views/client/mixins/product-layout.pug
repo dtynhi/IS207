@@ -1,0 +1,34 @@
+include product-item.pug
+
+mixin product-grid(products)
+  .row
+    each item in products
+      +product-item(item)
+
+mixin product-grid-main-page(products)
+  each item in products
+    +product-item-main-page(item)
+
+mixin product-grid-carousel(products)
+  .carousel-inner
+    - for (var i = 0; i < layoutProductsCategory.length; i++)
+      if layoutProductsCategory[i].status == "active" && i == 0
+        .carousel-item.active
+          .container.d-flex.flex-row.justify-content-center.w-100.my-3.p-0(style="background-color: #ffffff")
+            .col-sm-3.border.border-1.d-flex.flex-column.align-items-center.justify-content-center
+              h4 #{layoutProductsCategory[i].title}
+            - var count = 0
+            each item in products
+              if item.product_category_id == layoutProductsCategory[i]._id.toString() && count < 4
+                - count++
+                +product-item-main-page(item)
+      else if layoutProductsCategory[i].status == "active"
+        .carousel-item
+          .container.d-flex.flex-row.justify-content-center.w-100.my-3.p-0(style="background-color: #ffffff")
+            .col-sm-3.border.border-1.d-flex.flex-column.align-items-center.justify-content-center
+              h4 #{layoutProductsCategory[i].title}
+            - var count = 0
+            each item in products
+              if item.product_category_id == layoutProductsCategory[i]._id.toString() && count < 4
+                - count++
+                +product-item-main-page(item)

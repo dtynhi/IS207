@@ -1,0 +1,43 @@
+extends ../../layouts/default.pug
+include ../../mixins/box-head.pug
+include ../../mixins/menu
+include ../../mixins/info-config
+include ../../mixins/pagination.pug
+
+block main
+  .container.my-3
+    .row
+      .col-12
+        +box-head("")
+
+    .row.content
+      .col-3
+        +menu(user)
+
+      .col-9.mt-3
+        .card
+          .card-header Đơn hàng của tôi
+          .card-body
+            each item in purchase
+              .card.mb-3
+                .card-body.pb-0
+                  each product in item.products
+                    .row.d-flex.justify-content-start.px-2
+                      .col-2
+                        img.my-2(src=product.thumbnail, style="width: 100px;")
+                      .col-4
+                        p #{product.title}
+                        p Số lượng: #{product.quantity}
+                      .col-6.d-flex.flex-column.align-items-end 
+                        p(style="color: #757575; text-decoration: line-through; ") &#8363;#{product.price}
+                        p(style="color: #ee4d2d") &#8363;#{product.priceNew}
+                        a(href=`/products/detail/${product.slug}` style="background-color: #027BFF; color: #ffffff; padding: 10px 25px; border: 0px; border-radius: 3px; text-decoration: none;") Mua lại
+                    .div.my-2(style="border: 1px solid #ddd")
+                  .d-flex.flex-row.justify-content-between.align-items-center.pb-2
+                    .col-auto.d-flex.justify-content-end.p-0
+                      h5.m-0(style="") Thành tiền: &#8363;#{item.totalPrice}
+                    .col.d-flex.justify-content-end.p-0
+                      
+        div.mt-2              
+          +pagination(pagination)
+

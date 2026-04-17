@@ -1,0 +1,39 @@
+extends ../../layouts/default.pug
+
+block main
+  .container
+    if (account.fullName)
+      h1(class="mb-4") #{account.fullName}
+
+    if (account.email)
+      div(class="mb-4") Email: <b>#{account.email}</b>
+
+    
+      div(class="mb-4") Phone: <b>#{account.phone}</b>
+
+    if (account.avatar)
+      div(class="mb-4")
+        img(
+          src=account.avatar
+          style="width: 100px"
+        )
+
+    if (account.status)
+      div(class="mb-4")
+        span Trạng thái:
+        if (account.status === "active")
+          span(class="badge badge-success") Hoạt động
+        else
+          span(class="badge badge-danger") Dừng hoạt động
+
+    
+      
+
+  
+
+    a(
+      href=`${prefixAdmin}/accounts/edit/${account.id}`
+      class="btn btn-warning"
+    ) Chỉnh sửa
+
+    script(src="/admin/js/account.js")

@@ -1,0 +1,79 @@
+mixin info-config(user)
+     .row
+         .col-sm-12
+              .info-config
+                  h5 Hồ sơ của tôi
+                  p Quản lý thông tin hồ sơ để bảo mật tài khoản
+     form(action=`/user/${user._id}/update/?_method=PATCH`, method="POST",enctype="multipart/form-data",class="form-info")
+       .row
+                .col-sm-8
+                      .row.mb-3
+                          label.col-sm-4.col-form-label(for='username') Tên đăng nhập
+                          .col-sm-8
+                              input#username.form-control(type='text', name="fullName", value=user.fullName)
+                      .row.mb-3
+                          label.col-sm-4.col-form-label(for='email') Email
+                          .col-sm-8
+                              input#email.form-control(type='text', value=user.email,name="email")
+                      .row.mb-3
+                          label.col-sm-4.col-form-label(for='phone-number') Số điện thoại
+                          .col-sm-8
+                              input#phone-number.form-control(type='text', name="phone", value=user.phone)
+                      fieldset.row.mb-3
+                          label.col-sm-4.pt-0 Giới tính
+                          .col-sm-2
+                              .form-check
+                                  input#gridRadios1.form-check-input(type='radio' name='sex' value='Nam' checked='')
+                                  label.form-check-label(for='gridRadios1')
+                                      | Nam
+                          .col-sm-2
+                              .form-check
+                                   input#gridRadios2.form-check-input(type='radio' name='sex' value='Nữ')
+                                   label.form-check-label(for='gridRadios2')
+                                       | Nữ
+                          .col-sm-2
+                              .form-check
+                                  input#gridRadios3.form-check-input(type='radio' name='sex' value='Khác')
+                                  label.form-check-label(for='gridRadios3')
+                                      | Khác
+                      .row.mb-3
+                          .col-sm-4
+                              label() Ngày sinh
+                          .col-sm-2
+                                select#day.form-control(name='day')
+                                    option(disabled selected)
+                                    each val in Array.from({ length: 31 }, (_, i) => i + 1)
+                                        option(value=val, selected=val === user.birthday.getDate())= val
+                          .col-sm-3
+                                select#month.form-control(name='month')
+                                    option(disabled selected)
+                                    each val, index in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
+                                        option(value=index + 1, selected=index === user.birthday.getMonth())= val
+
+                          .col-sm-3
+                                select#year.form-control(name='year')
+                                    option(disabled selected)
+                                    each val in Array.from({ length: new Date().getFullYear() - 1960 }, (_, i) => 1960 + i)
+                                        option(value=val, selected=val === user.birthday.getFullYear())= val
+                .col-sm-4.upload-avatar
+                       .mb-4.d-flex.justify-content-center
+                           img#selectedImage(src=user.avatar alt='example placeholder' style='width: 300px;')
+                       .d-flex.justify-content-center
+                           .btn.btn-light.btn-rounded.border.border-dark
+                               label.form-label.text-black.m-1(for='customFile1') Choose file
+                               input#customFile1.form-control.d-none(type='file', onchange="displaySelectedImage(event, 'selectedImage')",name="avatar",accept="image/*")
+       .row.button-info
+           button.btn.btn-primary(type='submit') Lưu
+
+     script.
+         function displaySelectedImage(event, elementId) {
+             const selectedImage = document.getElementById(elementId);
+             const fileInput = event.target;
+             if (fileInput.files && fileInput.files[0]) {
+                 const reader = new FileReader();
+                 reader.onload = function (e) {
+                     selectedImage.src = e.target.result;
+                 };
+                 reader.readAsDataURL(fileInput.files[0]);
+             }
+         }

@@ -1,0 +1,25 @@
+mixin changepass(user)
+  .change-pass
+            .row
+                .col-sm-12
+                    .header-changepass
+                        h5 Đổi mật khẩu
+            .row
+                .col-sm-12
+                    form(action=`/user/${user._id}/changepass/?_method=PATCH`, method="POST",class="form-changepass")
+                        .row.mb-3
+                            label.col-sm-4.col-form-label(for='password') Mật khẩu hiện tại
+                            .col-sm-8
+                                input#password.form-control(type='text', name="password")
+                        .row.mb-3
+                            label.col-sm-4.col-form-label(for='newpassword') Mật khẩu mới
+                            .col-sm-8
+                                input#newpassword.form-control(type='text', name="newpassword")
+                        .row.mb-3
+                            label.col-sm-4.col-form-label(for='confirmpassword') Nhập lại mật khẩu
+                            .col-sm-8
+                                input#confirmpassword.form-control(type='text', name="confirmpassword")
+                        .row.mb-3
+                            .col-sm-4
+                            .col-sm-8
+                                button.btn.btn-primary(type='submit') Xác nhận

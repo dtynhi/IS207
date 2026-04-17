@@ -1,0 +1,23 @@
+extends ../../layouts/default.pug
+include ../../mixins/box-head.pug
+include ../../mixins/product-layout.pug
+include ../../mixins/filter.pug
+include ../../mixins/pagination.pug
+
+block main
+
+  .container.d-flex.flex-row.justify-content-between.my-4
+    .col-2-5.d-flex.flex-column(style="width: 25%")
+      
+        +filter(layoutProductsCategory)
+    .col-9-5
+      div(style="width: 100%")
+        +box-head(pageTitle)
+        if(products.length > 0)
+          +product-grid(products)
+        else
+          h3(class="text-center") Không tìm thấy sản phẩm nào
+  .container.d-flex.flex-row-reverse.bd-highlight      
+    +pagination(pagination)
+
+

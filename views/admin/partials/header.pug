@@ -1,0 +1,39 @@
+include ../mixins/sub-menu.pug
+
+
+header.header
+  .container
+    .row.align-items-center.d-flex.justify-content-between
+      .col-6
+        .inner-logo.d-flex.flex-row.align-items-center
+          a(href="/admin/dashboard")
+              img(src=settingGeneral ? settingGeneral.logo : "https://s3-alpha-sig.figma.com/img/31fd/3ece/a15190595f0e6f18c546333dac500775?Expires=1702252800&Signature=Z4F~5oNHcJWpq6X-It88-uWSMSiNNt2pYRdAbO6CP8UVCenMUCM4sbL4xtp5VXjHUK03uOHzS-eVmsD45x0YY0Eq5g9cvyRW-usoSWiaBbzD0-gpK9RtJnaAxinCBwWtwoeTULbxZ8oh9KCa9EtESZaWIWSKBmHDiurmJ2XQfav1Uu1NSulBFEu0go2eiYOYLQ5Gqw~clrj6CVj4wToi4QfIsqAMgv~-QELKsCysyg-Hib1sN6G4WlweYDc0CWsbm-dVgC4BGQX~DlXQThYlpwo5lYu0K9G~XiwiMWVjprSt3XZ2wucI3T6TtRG19J~ydnbmw2WoomLEdQA6G3Dvdg__&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4",
+               alt="", style="border-radius: 15px; box-shadow: 5px 0px rgba(13, 110, 253, 0.2); width:50px")
+          h3(class="mx-4 my-auto align-items-center fs-1")
+            a(href="/admin/dashboard" class="text-decoration-none") UniMarket Admin
+
+      
+
+      .div
+        div(class="d-flex justify-content-end")
+          div(class="d-flex flex-column justify-content-center align-items-center")
+            a(
+              href=`${prefixAdmin}/my-account`
+              class="text-decoration-none mx-2"
+            ) #{user.fullName}
+            a(
+              href=``
+              class="text-decoration-none mx-2 font-weight-light text-dark"
+            ) #{role.title}
+
+          if(user.avatar)
+            img(src=user.avatar, alt="User Avatar", style="width: 40px; height: 40px; border-radius: 50%; margin-right: 8px;")
+          
+          a(
+            href=`${prefixAdmin}/auth/logout`
+            class="text-decoration-none"
+            ) 
+            <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 512 512">
+              <!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. -->
+              <path d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z"/>
+            </svg>

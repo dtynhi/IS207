@@ -1,0 +1,11 @@
+mixin createAddress(user)
+    .row
+      .col-sm-12
+        .header-createAddress
+            h3 Tạo một địa chỉ mới
+    form(action=`/user/${user._id}/address/create/?_method=PATCH`, method="POST",class="form-createAddress")
+        .row.mb-3
+            .col-sm-8
+                input#createAddress-form.form-control(type='text', name="mainAddress", placeholder="Nhập địa chỉ mới của bạn")
+            .col-sm-4
+                button.btn.btn-primary(type='submit') Lưu

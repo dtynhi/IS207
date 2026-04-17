@@ -1,0 +1,15 @@
+extends ../../layouts/default.pug
+include ../../mixins/box-head.pug
+include ../../mixins/menu
+include ../../mixins/address-config
+block main
+  .container.my-3
+    .row
+      .col-12
+        +box-head("")
+
+    .row.content
+      .col-3
+        +menu(user)
+      .col-9
+        +address-config(user)

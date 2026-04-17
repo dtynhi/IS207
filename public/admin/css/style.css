@@ -1,0 +1,129 @@
+/* Header */
+.header {
+  background: #ffffff;
+  padding: 10px 0;
+  position: sticky;
+  top: 0;
+	z-index: 999;
+  /* width: 90%; */
+  /* left: 5%; */
+}
+
+.header .inner-logo a {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0D6EFD;
+}
+/* End Header */
+
+/* Body */
+.body .sider {
+  width: 150px;
+  background: #ffffff;
+  color: #fff;
+  height: calc(100vh - 56px);
+  position: fixed;
+  top: 56px;
+  /* left: 0; */
+}
+
+.body .main {
+  margin: 15px;
+  position: relative;
+  /* left: 150px; */
+  
+  /* width: calc(100% - 180px); */
+  /* width: 90%; */
+  /* left: 5%; */
+}
+/* End Body */
+
+/* option navbar*/
+
+.navbar-light .navbar-nav .nav-link {
+  color: rgb(0, 0, 0);
+}
+
+.navbar-light .navbar-nav .nav-link:focus, .navbar-light .navbar-nav .nav-link:hover {
+  color: #0D6EFD;
+  border-bottom: 1px solid #0D6EFD;
+}
+
+
+/* end option navbar */
+
+
+
+/* Sider */
+.sider .inner-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sider .inner-menu ul li a {
+  color: black;
+  display: block;
+  padding: 6px 10px;
+  
+}
+.sider .inner-menu ul li a:hover{
+  color: #0D6EFD;
+  display: block;
+  padding: 6px 10px;
+  text-decoration: none;
+  border-bottom: 1px solid #0D6EFD;
+}
+/* End Sider */
+
+/* Show Alert */
+[show-alert] {
+  position: fixed;
+  top: 70px;
+  right: 15px;
+  z-index: 9999;
+}
+
+[show-alert].alert-hidden {
+  animation-name: alert-hidden;
+  animation-duration: 0.5s;
+  animation-fill-mode: both;
+}
+
+@keyframes alert-hidden {
+  from {
+    right: 15px;
+  }
+  to {
+    right: -100%;
+    display: none;
+  }
+}
+
+[show-alert] [close-alert] {
+  background: #ffffffc4;
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  font-weight: 600;
+  border-radius: 50%;
+  cursor: pointer;
+}
+/* End Show Alert */
+
+/* Image Preview */
+.image-preview {
+  width: 150px;
+  height: auto;
+  margin-top: 15px;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+.image-preview[src=""] {
+  display: none;
+}
+/* End Image Preview */

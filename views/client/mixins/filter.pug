@@ -1,0 +1,49 @@
+mixin filter(category)
+  .d-flex.flex-row.align-items-start
+    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-funnel" viewBox="0 0 16 16">
+      <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z"/>
+    </svg>
+    h5.ml-2 BỘ LỌC TÌM KIẾM
+  div(style="border: 1px solid #ddd; width: 80%")
+  div.mt-2
+    p Theo Danh Mục
+    each item in category
+      .d-flex.flex-row.align-items-start
+        input.mt-1(name="checkboxFilter" id=`${item.id}` type="checkbox" value = `facet-${item.id}`)
+        p.ml-2 #{item.title}
+
+  div(style="border: 1px solid #ddd; width: 80%")
+  div.p-0.my-2
+    p Theo Trường
+    div
+      div.d-flex.flex-row.align-items-start
+        input.mt-1(name="checkboxFilter" id="HCMUT" type="checkbox" value = "school-HCMUT")
+        p.ml-2 HCMUT
+      div.d-flex.flex-row.align-items-start
+        input.mt-1(name="checkboxFilter" id="HCMUS" type="checkbox" value = "school-HCMUS")
+        p.ml-2 HCMUS
+      div.d-flex.flex-row.align-items-start
+        input.mt-1(name="checkboxFilter" id="HCMUSSH" type="checkbox" value = "school-HCMUSSH")
+        p.ml-2 HCMUSSH
+      div.d-flex.flex-row.align-items-start
+        input.mt-1(name="checkboxFilter" id="UEL" type="checkbox" value = "school-UEL")
+        p.ml-2 UEL
+    <div id="collapsible" class="collapse">
+      div.d-flex.flex-row.align-items-start
+        input.mt-1(name="checkboxFilter" id="HCMIU" type="checkbox" value = "school-HCMIU")
+        p.ml-2 HCMIU
+    </div>
+    a.d-flex.flex-row.align-items-start(id="collapseButton" type="button" data-toggle="collapse" data-target="#collapsible" onclick="changeName()") Thêm
+  div(style="border: 1px solid #ddd; width: 80%")
+  div.mt-2
+    p Theo Giá
+    div.d-flex.flex-row.justify-content-between(style="width: 80%")
+      <input type="text" class="form-control" placeholder="&#8363; Từ" aria-label="minPrice" aria-describedby="minPriceInput" style="width: 40%" name="minPrice" />
+      p.mt-1 &#8213;
+      <input type="text" class="form-control" placeholder="&#8363; Đến" aria-label="maxPrice" aria-describedby="maxPriceInput" style="width: 40%" name="maxPrice" />
+    div.d-flex.flex-column(style="width: 80%")
+      button.my-2.py-2(type="submit" style="border: 0px; border-radius: 10px; background-color: #007bff; color: #ffffff" name="buttonPrice") Áp dụng
+  div(style="border: 1px solid #ddd; width: 80%")
+  div.mt-2
+    div.d-flex.flex-column(style="width: 80%")  
+      button.my-2.py-2(style="border: 0px; border-radius: 10px; background-color: #ffffff; color: #007bff" name="clearFilter") Thiết lập lại 

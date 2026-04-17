@@ -1,0 +1,44 @@
+mixin address-config(user)
+    .address-config
+        .row
+            .col-sm-12
+                .header-address
+                    h5 Địa chỉ của tôi
+                    button.btn.btn-outline-primary
+                        a(href="/user/address/create") Thêm địa chỉ
+        each addr in user.address
+            form(action=`/user/${user._id}/${addr.idAddress}/address/update/?_method=PATCH`, method="POST" class="form-address")
+                .row.main-form-address
+                    .col-sm-12.wrapper-address.d-flex.flex-column
+                        .row.mb-3
+                            p.user-address #{user.fullName}
+                            p.user-address(style={color:"#979797"}) #{user.phone}
+                        .row.mb-3.show-address
+                            .col-sm-8
+                                input#address-form.form-control(type='text' name="mainAddress", value=addr.mainAddress)
+                            .col-sm-4
+                                button.btn.btn-primary(type='submit') Lưu
+                        .row.mb-3.button-address
+                            .col-sm-12.d-flex.align-items-center
+                                button.btn.btn-outline-primary(style={display: addr.isDefault ? "block" : "none"}) Mặc định
+                                button.btn.btn-outline-secondary(style={display: addr.isDefault ? "none" : "block"}) Thiết lập mặc định
+                                a.ml-4(href=`/user/${user._id}/${addr.idAddress}/delete/address`,data-toggle="modal" data-target="#exampleModalLong") Xoá
+                                #exampleModalLong.modal.fade(tabindex='-1' role='dialog' aria-labelledby='exampleModalLongTitle' aria-hidden='true')
+                                    .modal-dialog(role='document')
+                                        .modal-content
+                                            .modal-header
+                                                h5#exampleModalLongTitle.modal-title Xoá địa chỉ
+                                                button.close(type='button' data-dismiss='modal' aria-label='Close')
+                                                    span(aria-hidden='true') &times;
+                                            .modal-body
+                                                |Bạn chắc chắn xoá không?
+                                            .modal-footer
+                                                button.btn.btn-secondary(type='button' data-dismiss='modal') Huỷ
+                                                button.btn.btn-danger(type="submit", onclick=(event) => submitDeleteForm(event)) Xoá
+    form(action=`/user/${user._id}/address/delete/?_method=PATCH`,name="delete-form" method="POST",class=`form-delete`)
+    script.
+        function submitDeleteForm(event) {
+            console.log(event)
+            const formdelete = document.querySelectorAll(".form-delete");
+            console.log(formdelete);
+        }

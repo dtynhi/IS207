@@ -1,0 +1,749 @@
+/*  Supports weights 100-900 */
+@import "@fontsource-variable/inter";
+
+body {
+  background-color: #f7fafc;
+  font-family: "Inter Variable", sans-serif;
+}
+
+/* Header */
+.header {
+  background-color: #ffffff;
+  border-bottom: 1px solid #ddd;
+  padding: 10px 0;
+  /* background-color: aqua; */
+}
+
+.header .inner-logo img {
+  max-height: 50px;
+  max-width: 100%;
+}
+
+.header .inner-logo {
+  text-decoration: none;
+}
+
+.header .inner-menu > ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.header .inner-menu > ul > li {
+  margin-left: 20px;
+}
+/* End Header */
+
+/* Footer */
+.footer {
+  background-color: #ffffff;
+}
+.footer .inner-logo img {
+  max-height: 50px;
+  max-width: 100%;
+}
+
+.footer .inner-logo {
+  text-decoration: none;
+}
+/* End Footer */
+
+/* box-head */
+.box-head {
+  margin-bottom: 30px;
+}
+
+.box-head .inner-title {
+  margin-bottom: 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #0d6efd;
+  border-bottom: 2px solid #0d6efd;
+}
+/* End box-head */
+
+/* product-item */
+.product-item {
+  border: 1px solid #ddd;
+  /* border-radius: 8px; */
+  overflow: hidden;
+}
+
+.product-item .inner-image {
+  width: 100%;
+  aspect-ratio: 3/4;
+  border-bottom: 1px solid #ddd;
+  position: relative;
+}
+
+.product-item .inner-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-item .inner-featured {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #127fff;
+  color: white;
+  padding: 3px 6px;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+.product-item .inner-content {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.product-item .inner-content .inner-title {
+  width: 100%;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.product-item .inner-content .inner-price-new {
+  font-size: 18px;
+  font-weight: 600;
+  color: black;
+}
+
+.product-item .inner-content .inner-price-old {
+  font-size: 18px;
+  font-weight: 600;
+  color: red;
+  text-decoration: line-through;
+}
+
+.product-item .inner-content .inner-discount {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  background: red;
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+/* End product-item */
+
+/* sub-menu */
+.sub-menu {
+  position: relative;
+  z-index: 999;
+}
+
+.sub-menu ul {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background: #ffffff;
+  min-width: 180px;
+  display: none;
+  border: 1px solid #ddd;
+}
+
+.sub-menu ul li {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.sub-menu:hover > ul {
+  display: block;
+}
+
+.sub-menu ul li {
+  position: relative;
+}
+
+.sub-menu ul li ul {
+  right: 100%;
+  top: 0;
+}
+
+.sub-menu ul li:hover > ul {
+  display: block;
+}
+
+.sub-menu ul li a:hover {
+  text-decoration: none;
+}
+
+/* End sub-menu */
+
+/* product-detail */
+
+body {
+  background-color: rgb(243, 243, 243);
+}
+
+.product-detail .product-infor {
+  background-color: white;
+  box-sizing: border-box;
+}
+
+.product-detail .image {
+  width: 25%;
+  float: left;
+  padding: 30px;
+}
+
+.product-detail .infor {
+  width: 75%;
+  float: left;
+  padding: 30px;
+  box-sizing: border-box;
+}
+
+.product-detail .inner-thumb img {
+  width: 100%;
+  height: auto;
+}
+
+.product-detail .infor .inner-title {
+  font-size: 32px;
+  margin-bottom: 15px;
+  width: 70%;
+  float: left;
+}
+
+.product-detail .inner-category {
+  margin-bottom: 10px;
+  width: 100%;
+  float: left;
+}
+
+.product-detail .inner-price-new {
+  color: black;
+  font-weight: 600;
+  font-size: 24px;
+  margin-bottom: 10px;
+  grid-column: 1 / span 2;
+  grid-row: 2;
+}
+
+.product-detail .inner-price-old {
+  color: red;
+  font-weight: 600;
+  font-size: 20px;
+  text-decoration: line-through;
+  margin-bottom: 10px;
+  grid-column: 1 / span 2;
+  grid-row: 3;
+}
+
+.product-detail .inner-percent {
+  margin-bottom: 10px;
+}
+
+.product-detail .inner-percent span {
+  color: #fff;
+  background: red;
+  font-weight: 600;
+  display: inline-block;
+  padding: 3px 6px;
+  border-radius: 8px;
+}
+
+.product-detail .inner-stock {
+  margin-bottom: 10px;
+  padding-top: 10px;
+  width: 100%;
+  float: left;
+  border-top: 1px solid lightgray;
+}
+
+.product-detail .inner-stock span {
+  color: #fff;
+  background: #127fff;
+  font-weight: 600;
+  display: inline-block;
+  padding: 3px 6px;
+  border-radius: 8px;
+}
+
+.product-detail .form-add-to-cart {
+  padding: 5px;
+  float: left;
+  width: 30%;
+}
+
+.product-detail .form-control {
+  background-color: rgb(246, 246, 232);
+}
+
+.product-detail .btn {
+  color: blue;
+  border: 2px solid blue;
+  border-radius: 6px;
+  background-color: rgb(196, 255, 255);
+}
+
+.product-detail .button .text {
+  position: relative;
+  text-align: center;
+  margin: auto;
+  .icon {
+    color: #0e79ff;
+    margin-left: 10px;
+    i {
+      font-size: 22px;
+    }
+  }
+}
+
+.product-detail .col-12 {
+  box-sizing: border-box;
+  background-color: white;
+}
+
+.product-detail .inner-desc {
+  color: black;
+}
+.product-detail .box-head .inner-title {
+  margin-bottom: 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #0d6efd;
+  border-bottom: 2px solid #0d6efd;
+}
+/* End product-detail */
+
+/* Show Alert */
+[show-alert] {
+  position: fixed;
+  top: 70px;
+  right: 15px;
+  z-index: 9999;
+}
+
+[show-alert].alert-hidden {
+  animation-name: alert-hidden;
+  animation-duration: 0.5s;
+  animation-fill-mode: both;
+}
+
+@keyframes alert-hidden {
+  from {
+    right: 15px;
+  }
+  to {
+    right: -100%;
+    display: none;
+  }
+}
+
+[show-alert] [close-alert] {
+  background: #ffffffc4;
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  font-weight: 600;
+  border-radius: 50%;
+  cursor: pointer;
+}
+/* End Show Alert */
+/*User Info*/
+/* Menu */
+.content {
+  background: rgba(247, 250, 252, 1);
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-1 {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  border-top: 1px solid #dee2e7;
+  border-bottom: 1px solid #dee2e7;
+  padding: 15px;
+  margin-top: 22px;
+}
+a {
+  text-decoration: none;
+}
+
+.user-avatar {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.user-info-1 {
+  display: flex;
+  align-items: center;
+}
+
+.menu-2 {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.bi-person {
+  width: 20px;
+  height: 20px;
+  background: #1c1c1c;
+}
+
+.menu-2-config {
+  display: flex;
+  justify-items: center;
+  justify-items: flex-start;
+  width: 100%;
+  height: 48px;
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+.menu-2-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-left: 20px;
+}
+
+.option {
+  padding: 8px;
+  color: #1c1c1c;
+  &.active {
+    color: blue;
+  }
+}
+
+.menu-3 {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+
+/*Main info config*/
+.info-config {
+  border-bottom: 1px solid #dee2e7;
+  padding: 7px;
+  margin-top: 22px;
+  margin-bottom: 4px;
+}
+
+.button-info {
+  margin-bottom: 20px;
+}
+
+.form-info {
+  margin-top: 10px;
+}
+
+/*Upload avatar*/
+
+.upload-avatar {
+  width: 100%;
+  height: 274px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-left: 1px solid #dee2e7;
+  padding: 78px 30px;
+  margin-top: 33px;
+}
+
+#selectedImage {
+  width: 100%;
+  height: 124px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+/*Address config*/
+.header-address {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #dee2e7;
+  padding: 7px;
+  margin-top: 22px;
+  margin-bottom: 4px;
+  height: 90px;
+}
+
+.address-config {
+  width: 100%;
+  background: white;
+}
+
+.user-address {
+  margin-right: 10px;
+}
+
+.wrapper-address {
+  display: flex;
+  margin: 29px;
+}
+
+.show-address {
+  padding: 10px;
+}
+
+.form-address {
+  border-bottom: 1px solid #dee2e7;
+}
+
+/*Change Password*/
+.header-changepass {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #dee2e7;
+  padding: 7px;
+  margin-top: 22px;
+  margin-bottom: 4px;
+  height: 90px;
+}
+.change-pass {
+  background: white;
+  padding-left: 30px;
+  padding-right: 30px;
+  padding-bottom: 30px;
+}
+
+/*Create address*/
+.header-createAddress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #dee2e7;
+  padding: 7px;
+  margin-top: 22px;
+  margin-bottom: 4px;
+  height: 90px;
+}
+
+.form-createAddress {
+  margin-top: 30px;
+}
+
+/*Login*/
+.page {
+  background-color: #f7fafc;
+}
+
+.login-page {
+  display: flex;
+  align-items: stretch;
+  padding: 20px;
+}
+
+.background-login {
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  margin: 0;
+}
+
+.login-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 10%;
+  position: relative;
+}
+
+.title-image {
+  position: absolute;
+  top: 15%; /* Đưa tiêu đề lên giữa theo chiều dọc */
+  left: 50%; /* Đưa tiêu đề vào giữa theo chiều ngang */
+  transform: translate(
+    -50%,
+    -50%
+  ); /* Dịch chuyển tiêu đề đi 50% chiều ngang và 50% chiều dọc để nằm chính giữa */
+  text-align: center;
+  z-index: 999;
+  font-weight: 800;
+  line-height: 120px;
+  color: #ffffff;
+  text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+}
+.title-question {
+  position: absolute;
+  top: 60%; /* Đưa tiêu đề lên giữa theo chiều dọc */
+  left: 50%; /* Đưa tiêu đề vào giữa theo chiều ngang */
+  transform: translate(
+    -50%,
+    -50%
+  ); /* Dịch chuyển tiêu đề đi 50% chiều ngang và 50% chiều dọc để nằm chính giữa */
+  text-align: center;
+  z-index: 999;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 10px;
+  color: #ffffff;
+  text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+}
+
+.loginCustom-button {
+  position: absolute;
+  width: 200px;
+  height: 50px;
+  top: 75%; /* Đưa tiêu đề lên giữa theo chiều dọc */
+  left: 50%; /* Đưa tiêu đề vào giữa theo chiều ngang */
+  transform: translate(
+    -50%,
+    -50%
+  ); /* Dịch chuyển tiêu đề đi 50% chiều ngang và 50% chiều dọc để nằm chính giữa */
+  text-align: center;
+  z-index: 999;
+  font-weight: 600;
+  color: #ffffff;
+  text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  background: rgba(217, 217, 217, 0.71);
+  border: 4px solid #fffafa;
+  border-radius: 30px;
+}
+
+.main-login {
+  display: flex;
+  align-items: center;
+}
+
+/*Register*/
+
+.page-register {
+  background: #f7fafc;
+}
+
+.register-page {
+  display: flex;
+  align-items: stretch;
+  padding: 20px;
+}
+
+.main-register {
+  display: flex;
+  align-items: center;
+}
+/*Forgot password*/
+.page-forgot {
+  background: #f7fafc;
+}
+
+.main-forgot {
+  display: flex;
+  align-items: center;
+}
+/*Reset password*/
+.reset-page {
+  display: flex;
+  background: #f7fafc;
+  padding: 20px;
+}
+
+.main-reset {
+  display: flex;
+  align-items: center;
+}
+/*OTP*/
+.otp-page {
+  display: flex;
+  background: #f7fafc;
+  padding: 20px;
+  align-items: center;
+}
+
+/* Add Bootstrap Col */
+
+.extra-col {
+  position: relative;
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+}
+
+.col-0-5 {
+  @extend .extra-col;
+  flex: 0 0 4.16666667%;
+  max-width: 4.16666667%;
+}
+
+.col-1-5 {
+  @extend .extra-col;
+  flex: 0 0 12.5%;
+  max-width: 12.5%;
+}
+
+.col-2-5 {
+  @extend .extra-col;
+  flex: 0 0 20.833333325%;
+  max-width: 20.833333325%;
+}
+
+.col-3-5 {
+  @extend .extra-col;
+  flex: 0 0 29.166666655%;
+  max-width: 29.166666655%;
+}
+
+.col-4-5 {
+  @extend .extra-col;
+  flex: 0 0 37.499999985%;
+  max-width: 37.499999985%;
+}
+
+.col-5-5 {
+  @extend .extra-col;
+  flex: 0 0 45.833333315%;
+  max-width: 45.833333315%;
+}
+
+.col-6-5 {
+  @extend .extra-col;
+  flex: 0 0 54.166666645%;
+  max-width: 54.166666645%;
+}
+
+.col-7-5 {
+  @extend .extra-col;
+  flex: 0 0 62.499999975%;
+  max-width: 62.499999975%;
+}
+
+.col-8-5 {
+  @extend .extra-col;
+  flex: 0 0 70.833333305%;
+  max-width: 70.833333305%;
+}
+
+.col-9-5 {
+  @extend .extra-col;
+  flex: 0 0 79.166666635%;
+  max-width: 79.166666635%;
+}
+
+.col-10-5 {
+  @extend .extra-col;
+  flex: 0 0 87.499999965%;
+  max-width: 87.499999965%;
+}
+
+.col-11-5 {
+  @extend .extra-col;
+  flex: 0 0 95.8333333%;
+  max-width: 95.8333333%;
+}
+
+/* End Add Bootstrap Col */
