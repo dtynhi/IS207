@@ -1,7 +1,11 @@
 mixin menu(user)
         .menu
             .menu-1
-                img(src=user.avatar?user.avatar:settingGeneral.logo, alt='User Avatar', class="user-avatar")
+                img(
+                  src=(user.avatar ? user.avatar : (settingGeneral && settingGeneral.logo ? settingGeneral.logo : "https://dummyimage.com/56x56/e9ecef/6c757d&text=UM"))
+                  alt='User Avatar'
+                  class="user-avatar"
+                )
                 .menu-config
                     h5=user.fullName
                     a(href='#',class="option") Sửa hồ sơ

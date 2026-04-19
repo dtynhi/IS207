@@ -7,7 +7,11 @@ header
       .col-4
         .inner-logo.d-flex.flex-row.align-items-center
           a(href="/")
-            img(src=settingGeneral.logo, alt=settingGeneral.websiteName, style="border-radius: 15px; box-shadow: 5px 0px rgba(13, 110, 253, 0.2)")
+            img(
+              src=(settingGeneral && settingGeneral.logo ? settingGeneral.logo : "https://dummyimage.com/56x56/e9ecef/6c757d&text=UM")
+              alt=(settingGeneral && settingGeneral.websiteName ? settingGeneral.websiteName : "Uni Market")
+              style="border-radius: 15px; box-shadow: 5px 0px rgba(13, 110, 253, 0.2)"
+            )
           h3(class="mx-4 my-auto align-items-center fs-1")
             a(href="/" class="text-decoration-none") Uni Market
       .col-8
