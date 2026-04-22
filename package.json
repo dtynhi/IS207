@@ -2,39 +2,30 @@
   "name": "product-management",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "private": true,
   "scripts": {
-    "start": "nodemon --inspect index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "npm run dev:backend",
+    "dev:backend": "npm run dev --workspace backend",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "build:backend": "npm run build --workspace backend",
+    "build:frontend": "npm run build --workspace frontend",
+    "test:backend": "npm run test --workspace backend",
+    "test:frontend": "npm run test --workspace frontend",
+    "test:e2e": "npm run test --workspace test",
+    "lint:backend": "npm run lint --workspace backend",
+    "lint:frontend": "npm run lint --workspace frontend",
+    "typecheck:shared": "npm run typecheck --workspace packages/shared",
+    "migrate:dev": "npm run prisma:migrate:dev --workspace backend",
+    "prisma:generate": "npm run prisma:generate --workspace backend",
+    "db:push": "npm run prisma:db:push --workspace backend",
+    "seed": "npm run seed --workspace backend"
   },
+  "workspaces": [
+    "backend",
+    "frontend",
+    "test",
+    "packages/*"
+  ],
   "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@fontsource-variable/baloo-bhai-2": "^5.0.17",
-    "@fontsource-variable/inter": "^5.0.15",
-    "@fontsource/baloo-bhai-2": "^5.0.17",
-    "body-parser": "^1.20.2",
-    "bootstrap-icons": "^1.11.2",
-    "cloudinary": "^2.9.0",
-    "cookie-parser": "^1.4.6",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "express-flash": "^0.0.2",
-    "express-session": "^1.17.3",
-    "md5": "^2.3.0",
-    "method-override": "^3.0.0",
-    "moment": "^2.29.4",
-    "mongodb": "^6.3.0",
-    "mongoose": "^7.5.0",
-    "mongoose-slug-updater": "^3.3.0",
-    "multer": "^1.4.5-lts.1",
-    "nodemailer": "^6.9.7",
-    "pug": "^3.0.2",
-    "serve-favicon": "^2.5.0",
-    "streamifier": "^0.1.1",
-    "tinymce": "^6.7.3"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
-  }
+  "license": "ISC"
 }
