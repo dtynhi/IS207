@@ -3,7 +3,6 @@
 Uni Market is a monorepo with:
 - Backend API: TypeScript + Express + Prisma + PostgreSQL (`backend/`)
 - Frontend app: React + Vite + Tailwind + Ant Design (`frontend/`)
-- E2E tests: Playwright (`test/`)
 
 ## Requirements
 
