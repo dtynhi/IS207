@@ -41,7 +41,7 @@ Default values:
 NODE_ENV=development
 PORT=4000
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/unimarket_backend
-JWT_SECRET=change_me
+JWT_SECRET=change_me_here
 CORS_ORIGIN=http://localhost:5173
 ```
 
