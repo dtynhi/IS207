@@ -90,7 +90,6 @@ const parseNum = (value: string | null, fallback: number) => {
 export const ProductsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const countdown = useCountdown();
-
   const activeFacets = searchParams.getAll("facet");
   const isFiltered =
     activeFacets.length > 0 ||

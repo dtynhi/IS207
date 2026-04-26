@@ -14,7 +14,6 @@ Uni Market is a monorepo with:
 
 - `backend/`: API server, Prisma schema, seed scripts
 - `frontend/`: web client
-- `test/`: Playwright E2E tests
 - `docs/`: technical docs
 
 ## 1) Install Dependencies

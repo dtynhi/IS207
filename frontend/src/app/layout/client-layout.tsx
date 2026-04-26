@@ -15,6 +15,7 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { logoutUserApi } from "../../features/auth/api/auth.api";
 import { clearAllSession, getUserEmail, getUserId } from "../../shared/session/storage";
 import { useCartIndicator } from "../../features/cart/hooks/use-cart-indicator";
+import { useGeneralSettings } from "../../shared/settings/use-general-settings";
 
 const { Text } = Typography;
 
@@ -36,8 +37,14 @@ export const ClientLayout = () => {
   const userEmail = getUserEmail();
   const isAuthPage = location.pathname.startsWith("/auth");
   const { cartCount } = useCartIndicator(userId);
+  const { data: settings } = useGeneralSettings();
   const initialSearch = new URLSearchParams(location.search).get("search") || "";
   const [searchValue, setSearchValue] = useState(initialSearch);
+  const websiteName = settings?.websiteName?.trim() || "Uni Market";
+  const settingPhone = settings?.phone?.trim();
+  const settingEmail = settings?.email?.trim();
+  const settingAddress = settings?.address?.trim();
+  const settingCopyright = settings?.copyright?.trim();
 
   useEffect(() => {
     const querySearch = new URLSearchParams(location.search).get("search") || "";
@@ -99,8 +106,8 @@ export const ClientLayout = () => {
         <div className="um-header-main">
           <Link to="/" className="um-logo">
             <Space>
-              <ShopOutlined />
-              Uni Market
+              {settings?.logo ? <img src={settings.logo} alt={websiteName} className="h-7 w-7 rounded object-cover" /> : <ShopOutlined />}
+              {websiteName}
             </Space>
           </Link>
 
@@ -199,7 +206,12 @@ export const ClientLayout = () => {
             <Link to="/admin/login" className="text-[13px] text-white/50">Kênh quản trị</Link>
           </div>
         </div>
-        <div className="um-footer-bottom">© 2026 Uni Market — Đồ án IS207 · UIT</div>
+        <div className="um-footer-bottom">
+          {settingCopyright || `© 2026 ${websiteName} — Đồ án IS207 · UIT`}
+          {settingPhone ? ` · ${settingPhone}` : ""}
+          {settingEmail ? ` · ${settingEmail}` : ""}
+          {settingAddress ? ` · ${settingAddress}` : ""}
+        </div>
       </footer>
     </div>
   );
