@@ -13,6 +13,7 @@ export type AdminProductRow = {
   stock: number;
   status: "active" | "inactive";
   productCategoryId?: string;
+  thumbnail?: string;
 };
 
 export type AdminProductFormValues = {
@@ -21,6 +22,7 @@ export type AdminProductFormValues = {
   price: number;
   stock: number;
   productCategoryId?: string;
+  thumbnail?: string;
 };
 
 export type AdminCategoryRow = {

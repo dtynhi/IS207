@@ -11,8 +11,11 @@ import {
   Switch,
   Table,
   Typography,
+  Upload,
+  Image,
 } from "antd";
 import { useMemo, useState } from "react";
+import { PlusOutlined } from "@ant-design/icons";
 import { useAdminProducts } from "../hooks/use-admin-products";
 import type { AdminProductFormValues, AdminProductRow } from "../types/admin.types";
 
@@ -23,11 +26,25 @@ export const AdminProductsPage = () => {
     useAdminProducts();
   const [editForm] = Form.useForm<AdminProductFormValues>();
   const [editingProduct, setEditingProduct] = useState<AdminProductRow | null>(null);
+  const [previewImage, setPreviewImage] = useState<string>("");
 
   const categoryOptions = useMemo(
     () => (categoriesQuery.data || []).map((item) => ({ value: item.id, label: item.title })),
     [categoriesQuery.data]
   );
+
+  const handleImageChange = (info: any) => {
+    const file = info.file.originFileObj as File;
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64String = e.target?.result as string;
+        editForm.setFieldsValue({ thumbnail: base64String });
+        setPreviewImage(base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const openEditModal = (record: AdminProductRow) => {
     setEditingProduct(record);
@@ -37,7 +54,9 @@ export const AdminProductsPage = () => {
       price: record.price,
       stock: record.stock,
       productCategoryId: record.productCategoryId,
+      thumbnail: record.thumbnail,
     });
+    setPreviewImage(record.thumbnail || "");
   };
 
   const submitEdit = async () => {
@@ -75,6 +94,16 @@ export const AdminProductsPage = () => {
           { title: "Price", dataIndex: "price" },
           { title: "Stock", dataIndex: "stock" },
           {
+            title: "Thumbnail",
+            render: (_, record) => (
+              record.thumbnail ? (
+                <Image src={record.thumbnail} width={50} alt="thumb" preview={false} />
+              ) : (
+                <span className="text-gray-400">No image</span>
+              )
+            ),
+          },
+          {
             title: "Status",
             render: (_, record) => (
               <Switch
@@ -103,7 +132,10 @@ export const AdminProductsPage = () => {
       <Modal
         title="Edit Product"
         open={Boolean(editingProduct)}
-        onCancel={() => setEditingProduct(null)}
+        onCancel={() => {
+          setEditingProduct(null);
+          setPreviewImage("");
+        }}
         onOk={submitEdit}
         okText="Save"
         confirmLoading={updateMutation.isPending}
@@ -114,6 +146,22 @@ export const AdminProductsPage = () => {
           <Form.Item name="price" label="Price" rules={[{ required: true }]}><InputNumber min={0} className="w-full" /></Form.Item>
           <Form.Item name="stock" label="Stock" rules={[{ required: true }]}><InputNumber min={0} className="w-full" /></Form.Item>
           <Form.Item name="productCategoryId" label="Category"><Select allowClear options={categoryOptions} /></Form.Item>
+          
+          <Form.Item name="thumbnail" label="Thumbnail Image">
+            <Upload
+              accept="image/*"
+              maxCount={1}
+              beforeUpload={() => false}
+              onChange={handleImageChange}
+            >
+              <Button icon={<PlusOutlined />}>Upload Image</Button>
+            </Upload>
+            {previewImage && (
+              <div className="mt-4">
+                <Image src={previewImage} width={100} alt="preview" />
+              </div>
+            )}
+          </Form.Item>
         </Form>
       </Modal>
     </Card>
