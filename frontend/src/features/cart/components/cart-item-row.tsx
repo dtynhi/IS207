@@ -1,5 +1,5 @@
 import { DeleteOutlined, InboxOutlined } from "@ant-design/icons";
-import { Button, Card, InputNumber, Popconfirm, Typography } from "antd";
+import { Button, Card, Image, InputNumber, Popconfirm, Typography } from "antd";
 import { Price } from "../../../shared/components/price";
 import type { CartItem } from "../types/cart.types";
 
@@ -16,7 +16,13 @@ export const CartItemRow = ({ item, onUpdateQty, onRemove }: CartItemRowProps) =
     <Card className="mb-2" styles={{ body: { padding: "14px 20px" } }}>
       <div className="grid grid-cols-[1fr_120px_120px_120px_60px] items-center gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[10px] bg-[var(--primary-soft)] text-[28px]"><InboxOutlined /></div>
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[10px] bg-[var(--primary-soft)] text-[28px] overflow-hidden">
+            {item.product?.thumbnail ? (
+              <Image src={item.product.thumbnail} alt={item.product.title} preview={false} className="h-full w-full object-cover" />
+            ) : (
+              <InboxOutlined />
+            )}
+          </div>
           <Text className="text-sm">{item.product?.title || item.productId}</Text>
         </div>
 
