@@ -95,6 +95,7 @@ model Product {
   images            Json?
   slug              String   @unique
   school            String?
+  brand             String?
   position          Int      @default(0)
   featured          Boolean  @default(false)
   status            RecordStatus @default(active)

@@ -8,6 +8,7 @@ export type Product = {
   thumbnail: string | null;
   slug: string;
   school: string | null;
+  brand: string | null;
   status: "active" | "inactive";
   productCategoryId: string | null;
   createdAt: string;

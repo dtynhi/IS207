@@ -14,6 +14,8 @@ export type AdminProductRow = {
   status: "active" | "inactive";
   productCategoryId?: string;
   thumbnail?: string;
+  brand?: string;
+  description?: string;
 };
 
 export type AdminProductFormValues = {
@@ -23,6 +25,8 @@ export type AdminProductFormValues = {
   stock: number;
   productCategoryId?: string;
   thumbnail?: string;
+  brand?: string;
+  description?: string;
 };
 
 export type AdminCategoryRow = {

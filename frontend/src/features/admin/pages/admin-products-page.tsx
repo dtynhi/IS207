@@ -24,9 +24,12 @@ const { Title } = Typography;
 export const AdminProductsPage = () => {
   const { query, categoriesQuery, createMutation, updateMutation, deleteMutation, statusMutation, contextHolder } =
     useAdminProducts();
+  const [createForm] = Form.useForm<AdminProductFormValues>();
   const [editForm] = Form.useForm<AdminProductFormValues>();
+  const [isCreating, setIsCreating] = useState(false);
   const [editingProduct, setEditingProduct] = useState<AdminProductRow | null>(null);
   const [previewImage, setPreviewImage] = useState<string>("");
+  const [createPreviewImage, setCreatePreviewImage] = useState<string>("");
 
   const categoryOptions = useMemo(
     () => (categoriesQuery.data || []).map((item) => ({ value: item.id, label: item.title })),
@@ -46,6 +49,31 @@ export const AdminProductsPage = () => {
     }
   };
 
+  const handleCreateImageChange = (info: any) => {
+    const file = info.file.originFileObj as File;
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64String = e.target?.result as string;
+        createForm.setFieldsValue({ thumbnail: base64String });
+        setCreatePreviewImage(base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const openCreateModal = () => {
+    setIsCreating(true);
+    createForm.resetFields();
+    setCreatePreviewImage("");
+  };
+
+  const submitCreate = async () => {
+    const values = await createForm.validateFields();
+    createMutation.mutate({ ...values, status: "active" });
+    setIsCreating(false);
+  };
+
   const openEditModal = (record: AdminProductRow) => {
     setEditingProduct(record);
     editForm.setFieldsValue({
@@ -55,6 +83,8 @@ export const AdminProductsPage = () => {
       stock: record.stock,
       productCategoryId: record.productCategoryId,
       thumbnail: record.thumbnail,
+      brand: record.brand,
+      description: record.description,
     });
     setPreviewImage(record.thumbnail || "");
   };
@@ -69,20 +99,10 @@ export const AdminProductsPage = () => {
   return (
     <Card>
       {contextHolder}
-      <Title level={3}>Products Management</Title>
-
-      <Form
-        layout="inline"
-        className="mb-4"
-        onFinish={(values: AdminProductFormValues) => createMutation.mutate({ ...values, status: "active" })}
-      >
-        <Form.Item name="title" rules={[{ required: true }]}><Input placeholder="Title" /></Form.Item>
-        <Form.Item name="slug" rules={[{ required: true }]}><Input placeholder="Slug" /></Form.Item>
-        <Form.Item name="price" initialValue={10000}><InputNumber min={0} placeholder="Price" /></Form.Item>
-        <Form.Item name="stock" initialValue={1}><InputNumber min={0} placeholder="Stock" /></Form.Item>
-        <Form.Item name="productCategoryId"><Select className="w-[180px]" allowClear placeholder="Category" options={categoryOptions} /></Form.Item>
-        <Button type="primary" htmlType="submit" loading={createMutation.isPending}>Create</Button>
-      </Form>
+      <div className="mb-4 flex items-center justify-between">
+        <Title level={3} className="!m-0">Products Management</Title>
+        <Button type="primary" onClick={openCreateModal} icon={<PlusOutlined />}>Create Product</Button>
+      </div>
 
       <Table<AdminProductRow>
         loading={query.isPending}
@@ -130,6 +150,44 @@ export const AdminProductsPage = () => {
       />
 
       <Modal
+        title="Create Product"
+        open={isCreating}
+        onCancel={() => {
+          setIsCreating(false);
+          setCreatePreviewImage("");
+        }}
+        onOk={submitCreate}
+        okText="Create"
+        confirmLoading={createMutation.isPending}
+      >
+        <Form form={createForm} layout="vertical">
+          <Form.Item name="title" label="Title" rules={[{ required: true }]}><Input /></Form.Item>
+          <Form.Item name="slug" label="Slug" rules={[{ required: true }]}><Input /></Form.Item>
+          <Form.Item name="price" label="Price" rules={[{ required: true }]}><InputNumber min={0} className="w-full" /></Form.Item>
+          <Form.Item name="stock" label="Stock" rules={[{ required: true }]}><InputNumber min={0} className="w-full" /></Form.Item>
+          <Form.Item name="brand" label="Brand"><Input placeholder="e.g., Loreal, Olay, etc." /></Form.Item>
+          <Form.Item name="description" label="Product Description"><Input.TextArea rows={4} placeholder="Mô tả chi tiết sản phẩm..." /></Form.Item>
+          <Form.Item name="productCategoryId" label="Category"><Select allowClear options={categoryOptions} /></Form.Item>
+          
+          <Form.Item name="thumbnail" label="Thumbnail Image">
+            <Upload
+              accept="image/*"
+              maxCount={1}
+              beforeUpload={() => false}
+              onChange={handleCreateImageChange}
+            >
+              <Button icon={<PlusOutlined />}>Upload Image</Button>
+            </Upload>
+            {createPreviewImage && (
+              <div className="mt-4">
+                <Image src={createPreviewImage} width={100} alt="preview" />
+              </div>
+            )}
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
         title="Edit Product"
         open={Boolean(editingProduct)}
         onCancel={() => {
@@ -145,6 +203,8 @@ export const AdminProductsPage = () => {
           <Form.Item name="slug" label="Slug" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="price" label="Price" rules={[{ required: true }]}><InputNumber min={0} className="w-full" /></Form.Item>
           <Form.Item name="stock" label="Stock" rules={[{ required: true }]}><InputNumber min={0} className="w-full" /></Form.Item>
+          <Form.Item name="brand" label="Brand"><Input placeholder="e.g., Loreal, Olay, etc." /></Form.Item>
+          <Form.Item name="description" label="Product Description"><Input.TextArea rows={4} placeholder="Mô tả chi tiết sản phẩm..." /></Form.Item>
           <Form.Item name="productCategoryId" label="Category"><Select allowClear options={categoryOptions} /></Form.Item>
           
           <Form.Item name="thumbnail" label="Thumbnail Image">

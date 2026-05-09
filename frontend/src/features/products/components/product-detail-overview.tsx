@@ -52,7 +52,7 @@ export const ProductDetailOverview = ({
             children: <Tag color={data.status === "active" ? "green" : "default"}>{data.status === "active" ? "Đang bán" : "Ngưng bán"}</Tag>,
           },
           { key: "stock", label: "Kho hàng", children: data.stock > 0 ? `${data.stock} sản phẩm` : "Hết hàng" },
-          ...(data.school ? [{ key: "school", label: "Trường", children: data.school }] : []),
+          ...(data.brand ? [{ key: "brand", label: "Brand", children: data.brand }] : []),
         ]} />
 
         <div className="mb-7 flex items-center gap-4">
