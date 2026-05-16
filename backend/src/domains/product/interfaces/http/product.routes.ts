@@ -87,6 +87,9 @@ router.post("/admin/products", async (req, res, next) => {
         position: z.number().int().optional(),
         status: z.enum(["active", "inactive"]).optional(),
         createdById: z.string().optional(),
+        thumbnail: z.string().optional(),
+        brand: z.string().optional(),
+        featured: z.boolean().optional(),
       })
       .parse(req.body);
 
