@@ -103,9 +103,28 @@ export const createProduct = async (payload: {
 };
 
 export const updateProduct = async (id: string, payload: Record<string, unknown>) => {
-  return prisma.product.update({ where: { id }, data: payload });
-};
+  
+  //TUYỆT CHIÊU CHẶN ĐẦU: Tạo một bản sao dữ liệu để xử lý an toàn
+  const safePayload = { ...payload };
 
+  // Kiểm tra xem trong các trường gửi lên có 'discountPercentage' không
+  if ('discountPercentage' in safePayload) {
+    const value = safePayload.discountPercentage;
+    
+    // Nếu giá trị gửi xuống là null, undefined, chuỗi rỗng hoặc số 0
+    if (value === null || value === undefined || value === "" || value === 0) {
+      safePayload.discountPercentage = 0; // Ép chết về số 0 để tắt Flash Sale an toàn
+    } else {
+      safePayload.discountPercentage = Number(value); // Đảm bảo luôn luôn là kiểu dữ liệu Số
+    }
+  }
+
+  // Lưu vào database bằng dữ liệu an toàn đã qua xử lý
+  return prisma.product.update({ 
+    where: { id }, 
+    data: safePayload 
+  });
+};
 export const updateProductStatus = async (id: string, status: "active" | "inactive") => {
   return prisma.product.update({ where: { id }, data: { status } });
 };

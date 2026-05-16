@@ -93,7 +93,7 @@ export const ProductsHomeView = ({
               </div>
             </div>
           }
-          extra={<Link to="/flash-sale" className="bg-white text-orange-500 font-bold px-3 py-1 rounded-full text-sm hover:bg-orange-50 border border-orange-500">Xem tất cả &gt;</Link>}
+          extra={<Link to="/flash-sale" className="px-4 py-1.5 rounded-full border border-pink-500 text-pink-500 hover:bg-pink-500 hover:text-white transition-colors text-sm font-medium">Xem tất cả &gt;</Link>}
           styles={{ body: { padding: "12px 16px 20px" }}
           }
           className="mb-4"

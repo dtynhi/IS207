@@ -1,37 +1,113 @@
-import { Typography } from "antd";
+import { useState, useMemo } from "react";
+import { Typography, Breadcrumb, Menu, Layout } from "antd";
 import { FlashSaleCard } from "../components/flash-sale-card";
 import { useProductsQuery } from "../../products/hooks/use-products-query";
 
+// 👉 1. Import thêm 2 món này để gọi kho Danh mục ra "ghép đôi"
+import { useQuery } from "@tanstack/react-query";
+import { getCategories } from "../../products/api/product.api";
+
 const { Title } = Typography;
+const { Sider, Content } = Layout;
 
 export const FlashSalePage = () => {
-  // 1. Mượn "người đi chợ" của team để lấy danh sách sản phẩm (Lấy 100 món cho nhiều)
-  const { data, isPending } = useProductsQuery({ page: 1, limit: 100 });
-  const allProducts = data?.items || [];
-  
-  // 2. Lọc ra những món có % giảm giá > 0
-  const flashSaleProducts = allProducts.filter(item => item.discountPercentage > 0);
+  // Lấy danh sách Sản phẩm
+  const { data: productsData, isPending: isProductsPending } = useProductsQuery({ page: 1, limit: 100 });
+  const allProducts = productsData?.items || [];
+
+  // 👉 2. Lấy danh sách Danh mục từ API của team bạn
+  const { data: categoriesData } = useQuery({ 
+    queryKey: ["client-categories"], 
+    queryFn: getCategories 
+  });
+  // Xử lý an toàn cấu trúc dữ liệu trả về (có thể nằm trong items hoặc trực tiếp)
+  const allCategories = categoriesData || [];
+  // Lọc ra TẤT CẢ sản phẩm đang sale
+  const flashSaleProducts = allProducts.filter((item: any) => item.discountPercentage > 0);
+
+  // Lấy ra các MÃ DANH MỤC (productCategoryId) đang có sale
+  const activeCategoryIds = Array.from(new Set(flashSaleProducts.map((p: any) => p.productCategoryId))).filter(Boolean);
+
+  // Đổi state để lưu trữ theo ID thay vì tên
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
+
+  // Lọc sản phẩm ra lưới theo ID Danh mục
+  const displayedProducts = useMemo(() => {
+    if (selectedCategoryId === 'all') return flashSaleProducts;
+    // Lọc ra những sản phẩm có mã Danh mục trùng với selectedCategoryId
+    return flashSaleProducts.filter((p: any) => String(p.productCategoryId) === selectedCategoryId);
+  }, [flashSaleProducts, selectedCategoryId]);
+
+  //  3. Cấu hình Menu Sidebar: Ghép ID với Tên thực tế
+  const menuItems = [
+    { key: 'all', label: 'Tất Cả Sản Phẩm' },
+    ...activeCategoryIds.map((id) => {
+      // Đi tìm cái Danh mục có mã ID tương ứng
+      const categoryObj = allCategories.find((cat: any) => String(cat.id) === String(id));
+      
+     // Nếu tìm được thì lấy tên, không thì hiển thị "Danh mục chưa rõ tên"
+        const categoryName = categoryObj ? categoryObj.title : `Danh mục chưa rõ tên`;      return {
+        key: String(id),
+        label: categoryName,
+      };
+    })
+  ];
+
+  // Tìm tên danh mục để in ra cái Tiêu đề to đùng bên phải
+  const selectedCatObj = allCategories.find((cat: any) => String(cat.id) === selectedCategoryId);
+  const headerTitle = selectedCategoryId === 'all' 
+    ? 'TẤT CẢ SẢN PHẨM SALE' 
+    : `SALE - ${(selectedCatObj?.title || selectedCatObj?.title || 'DANH MỤC').toUpperCase()}`;
+
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 animate-in">
-      {/* Khung Tiêu đề */}
-      <div className="bg-white p-4 rounded-lg shadow-sm mb-6 border-l-4 border-red-600">
-        <Title level={3} className="!mb-1 text-red-600 uppercase tracking-wide">
-          SALE TO TRONG THÁNG
-        </Title>
-        <p className="text-gray-500 text-sm">({flashSaleProducts.length} sản phẩm)</p>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 py-8 bg-[#f8fafc] animate-in">
+      <Breadcrumb className="mb-4" items={[
+        { title: 'TRANG CHỦ' },
+        { title: 'KHUYẾN MÃI' },
+        { title: 'SALE TO TRONG THÁNG' },
+      ]} />
 
-      {/* Hiển thị sản phẩm */}
-      {isPending ? (
-        <div className="text-center py-10 text-gray-500">Đang tải dữ liệu...</div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {flashSaleProducts.map((product) => (
-            <FlashSaleCard key={product.id} product={product} />
-          ))}
-        </div>
-      )}
+      <Layout className="bg-transparent gap-6 flex-row">
+        
+        {/* SIDEBAR DANH MỤC */}
+        <Sider width={250} className="bg-white rounded-lg shadow-sm h-fit hidden md:block border border-gray-100">
+          <div className="p-4 border-b border-gray-100 bg-[#fff5f5] rounded-t-lg">
+            <h3 className="font-bold text-lg mb-0 text-red-600 uppercase">Danh mục Sale</h3>
+          </div>
+          <Menu
+            mode="inline"
+            selectedKeys={[selectedCategoryId]} 
+            onClick={(e) => setSelectedCategoryId(e.key)} 
+            className="border-none rounded-b-lg font-medium"
+            items={menuItems} 
+          />
+        </Sider>
+
+        {/* LƯỚI SẢN PHẨM */}
+        <Content>
+          <div className="bg-white p-4 rounded-lg shadow-sm mb-4 flex justify-between items-center border border-gray-100">
+             <Title level={4} className="!mb-0 text-gray-800 uppercase tracking-wide">
+                {headerTitle}
+             </Title>
+             <span className="text-gray-500 font-medium">{displayedProducts.length} sản phẩm</span>
+          </div>
+
+          {isProductsPending ? (
+            <div className="text-center py-10 text-gray-500">Đang tải dữ liệu...</div>
+          ) : displayedProducts.length === 0 ? (
+            <div className="text-center py-10 text-gray-500 bg-white rounded-lg border border-gray-100">
+                Chưa có sản phẩm nào đang khuyến mãi.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+              {displayedProducts.map((product: any) => (
+                <FlashSaleCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
+        </Content>
+      </Layout>
     </div>
   );
 };

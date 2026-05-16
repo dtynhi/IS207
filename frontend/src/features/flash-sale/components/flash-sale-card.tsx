@@ -48,9 +48,9 @@ export const FlashSaleCard = ({ product }: { product: Product }) => {
            )}
         </div>
 
-        {/* Nút THÊM VÀO GIỎ màu hồng */}
+        {/* Nút THÊM VÀO GIỎ*/}
         <button 
-            className="w-full bg-[#be185d] hover:bg-[#9d174d] text-white font-bold py-1.5 rounded-full text-sm transition-colors shadow-md"          
+            className="w-full bg-[#EE6AA7] hover:bg-[#FF69B4] text-white font-bold py-1.5 rounded-full text-sm transition-colors shadow-md"          
             onClick={(e) => {
              e.preventDefault();
              alert('Đã thêm vào giỏ!');
