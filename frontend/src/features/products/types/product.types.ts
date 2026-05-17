@@ -11,6 +11,7 @@ export type Product = {
   brand: string | null;
   status: "active" | "inactive";
   productCategoryId: string | null;
+  featured: boolean;
   createdAt: string;
   updatedAt: string;
 };
