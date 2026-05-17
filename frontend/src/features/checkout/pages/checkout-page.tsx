@@ -1,5 +1,6 @@
+import { useQuery } from "@tanstack/react-query";
 import { EnvironmentOutlined } from "@ant-design/icons";
-import { Button, Card, Empty, Form, Input, Row, Col, Space, Typography } from "antd";
+import { Button, Card, Empty, Form, Input, Row, Col, Space, Typography, Select, Radio } from "antd";
 import { useNavigate } from "react-router-dom";
 import { Breadcrumb } from "../../../shared/components/breadcrumb";
 import { Price } from "../../../shared/components/price";
@@ -8,13 +9,60 @@ import { useCheckoutPage } from "../hooks/use-checkout-page";
 import type { CheckoutFormValues } from "../types/checkout.types";
 
 const { Text } = Typography;
+const VN_ADDRESS_API = "https://provinces.open-api.vn/api";
+
+type Province = { code: number; name: string };
+type ProvinceDetail = {
+  districts: Array<{
+    wards: Array<{ code: number; name: string }>;
+  }>;
+};
 
 export const CheckoutPage = () => {
   const navigate = useNavigate();
+  const [form] = Form.useForm<CheckoutFormValues>();
   const { cartQuery, orderMutation, submitOrder, contextHolder } = useCheckoutPage();
 
   const items = cartQuery.data?.items || [];
   const total = Number(cartQuery.data?.totalPrice || 0);
+  const selectedProvinceName = Form.useWatch("province", form);
+
+  const provincesQuery = useQuery({
+    queryKey: ["vn-address-provinces"],
+    queryFn: async (): Promise<Province[]> => {
+      const response = await fetch(`${VN_ADDRESS_API}/?depth=1`);
+      if (!response.ok) {
+        throw new Error("Không tải được danh sách tỉnh/thành");
+      }
+      return response.json();
+    },
+  });
+
+  const selectedProvince = provincesQuery.data?.find((province) => province.name === selectedProvinceName);
+
+  const wardsQuery = useQuery({
+    queryKey: ["vn-address-wards", selectedProvince?.code],
+    queryFn: async (): Promise<ProvinceDetail> => {
+      const response = await fetch(`${VN_ADDRESS_API}/p/${selectedProvince?.code}?depth=3`);
+      if (!response.ok) {
+        throw new Error("Không tải được danh sách phường/xã");
+      }
+      return response.json();
+    },
+    enabled: Boolean(selectedProvince?.code),
+  });
+
+  const provinceOptions = (provincesQuery.data || []).map((province) => ({
+    value: province.name,
+    label: province.name,
+  }));
+
+  const wardOptions = (wardsQuery.data?.districts || [])
+    .flatMap((district) => district.wards || [])
+    .map((ward) => ({
+      value: ward.name,
+      label: ward.name,
+    }));
 
   return (
     <div className="animate-in pt-6 pb-6">
@@ -38,7 +86,13 @@ export const CheckoutPage = () => {
       ) : (
         <>
           <Card title={<Space><EnvironmentOutlined className="text-[var(--primary)]" /><Text className="text-[var(--primary)]">Địa chỉ nhận hàng</Text></Space>} className="mb-4 border-t-[3px] border-t-[var(--primary)]">
-            <Form id="checkout-form" layout="vertical" onFinish={(values: CheckoutFormValues) => submitOrder(values)}>
+            <Form
+              form={form}
+              id="checkout-form"
+              layout="vertical"
+              initialValues={{ paymentMethod: "cod" }}
+              onFinish={(values: CheckoutFormValues) => submitOrder(values)}
+            >
               <Row gutter={16}>
                 <Col xs={24} md={12}>
                   <Form.Item name="fullName" label="Họ tên" rules={[{ required: true, message: "Nhập họ tên" }]}>
@@ -51,9 +105,49 @@ export const CheckoutPage = () => {
                   </Form.Item>
                 </Col>
               </Row>
-              <Form.Item name="address" label="Địa chỉ" rules={[{ required: true, message: "Nhập địa chỉ" }]}>
-                <Input placeholder="Địa chỉ nhận hàng" />
-              </Form.Item>
+
+              <Row gutter={16}>
+                <Col xs={24} md={12}>
+                  <Form.Item name="province" label="Tỉnh / Thành" rules={[{ required: true, message: "Chọn tỉnh/thành" }]}>
+                    <Select
+                      placeholder="Chọn tỉnh/thành"
+                      options={provinceOptions}
+                      loading={provincesQuery.isLoading}
+                      onChange={() => form.setFieldValue("ward", undefined)}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} md={12}>
+                  <Form.Item name="ward" label="Phường / Xã" rules={[{ required: true, message: "Chọn phường/xã" }]}>
+                    <Select
+                      placeholder={selectedProvince ? "Chọn phường/xã" : "Chọn tỉnh/thành trước"}
+                      options={wardOptions}
+                      loading={wardsQuery.isLoading}
+                      disabled={!selectedProvince}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Row gutter={16}>
+                <Col xs={24}>
+                  <Form.Item name="paymentMethod" label="Phương thức thanh toán" rules={[{ required: true, message: "Chọn phương thức thanh toán" }]}> 
+                    <Radio.Group>
+                      <Radio value="cod">Thanh toán khi nhận hàng</Radio>
+                      <Radio value="bank">Thanh toán VNPay (Sandbox)</Radio>
+                    </Radio.Group>
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Row gutter={16}>
+                <Col xs={24}>
+                  <Form.Item name="addressLine" label="Tên đường, Tòa nhà, Số nhà" rules={[{ required: true, message: "Nhập địa chỉ chi tiết" }]}>
+                    <Input placeholder="Ví dụ: Số 10, Tòa A, Nguyễn Trãi" />
+                  </Form.Item>
+                </Col>
+              </Row>
+
             </Form>
           </Card>
 

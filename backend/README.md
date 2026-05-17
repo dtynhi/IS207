@@ -38,6 +38,22 @@ npm run seed --workspace backend
 
 - `GET /api/v1/health`
 
+## VNPay sandbox
+
+Thiết lập trong `backend/.env`:
+
+- `BASE_URL=http://localhost:4000`
+- `FRONTEND_URL=http://localhost:5173`
+- `VNPAY_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html`
+- `VNPAY_TMN_CODE=<sandbox terminal code>`
+- `VNPAY_HASH_SECRET=<sandbox secret>`
+
+Luồng dùng endpoint:
+
+- Tạo đơn + URL thanh toán: `POST /api/v1/checkout/order` với `paymentMethod: "bank"`
+- Return URL (trình duyệt quay về): `GET /api/v1/checkout/vnpay-return`
+- IPN URL (cấu hình trên cổng VNPay sandbox): `GET /api/v1/checkout/vnpay-ipn`
+
 ## Current status
 
 - Domain-based API modules: auth, product, category, cart, order, user, account, role, setting, dashboard
