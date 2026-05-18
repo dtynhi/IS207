@@ -17,6 +17,7 @@ import { ResetPasswordPage } from "../features/auth/pages/reset-password-page";
 import { CartPage } from "../features/cart/pages/cart-page";
 import { CheckoutPage } from "../features/checkout/pages/checkout-page";
 import { CheckoutSuccessPage } from "../features/checkout/pages/checkout-success-page";
+import { CheckoutBankSandboxPage } from "../features/checkout/pages/checkout-bank-sandbox-page";
 import { HealthPage } from "../features/health/pages/health-page";
 import { ProductDetailPage } from "../features/products/pages/product-detail-page";
 import { ProductsPage } from "../features/products/pages/products-page";
@@ -36,6 +37,7 @@ export const router = createBrowserRouter([
       { path: "flash-sale", element: <FlashSalePage /> },
       { path: "cart", element: <CartPage /> },
       { path: "checkout", element: <CheckoutPage /> },
+      { path: "checkout/pay/sandbox/:orderId", element: <CheckoutBankSandboxPage /> },
       { path: "checkout/success/:orderId", element: <CheckoutSuccessPage /> },
       { path: "auth/register", element: <RegisterPage /> },
       { path: "auth/login", element: <LoginPage /> },

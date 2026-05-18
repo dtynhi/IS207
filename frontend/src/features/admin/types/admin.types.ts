@@ -16,6 +16,7 @@ export type AdminProductRow = {
   thumbnail?: string;
   brand?: string;
   description?: string;
+  featured?: boolean;
 };
 
 export type AdminProductFormValues = {
@@ -27,6 +28,7 @@ export type AdminProductFormValues = {
   thumbnail?: string;
   brand?: string;
   description?: string;
+  featured?: boolean;
 };
 
 export type AdminCategoryRow = {

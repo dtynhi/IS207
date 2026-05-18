@@ -37,8 +37,13 @@ export const AdminProductsPage = () => {
   );
 
   const handleImageChange = (info: any) => {
-    const file = info.file.originFileObj as File;
-    if (file) {
+    if (info.file.status === "removed") {
+      editForm.setFieldsValue({ thumbnail: "" });
+      setPreviewImage("");
+      return;
+    }
+    const file = info.file.originFileObj || info.file;
+    if (file && file instanceof File) {
       const reader = new FileReader();
       reader.onload = (e) => {
         const base64String = e.target?.result as string;
@@ -50,8 +55,13 @@ export const AdminProductsPage = () => {
   };
 
   const handleCreateImageChange = (info: any) => {
-    const file = info.file.originFileObj as File;
-    if (file) {
+    if (info.file.status === "removed") {
+      createForm.setFieldsValue({ thumbnail: "" });
+      setCreatePreviewImage("");
+      return;
+    }
+    const file = info.file.originFileObj || info.file;
+    if (file && file instanceof File) {
       const reader = new FileReader();
       reader.onload = (e) => {
         const base64String = e.target?.result as string;
@@ -85,6 +95,7 @@ export const AdminProductsPage = () => {
       thumbnail: record.thumbnail,
       brand: record.brand,
       description: record.description,
+      featured: record.featured,
     });
     setPreviewImage(record.thumbnail || "");
   };
@@ -113,6 +124,15 @@ export const AdminProductsPage = () => {
           { title: "Slug", dataIndex: "slug" },
           { title: "Price", dataIndex: "price" },
           { title: "Stock", dataIndex: "stock" },
+          {
+            title: "Featured",
+            dataIndex: "featured",
+            render: (featured: boolean) => (
+              <span className={featured ? "text-green-600 font-bold" : "text-gray-400"}>
+                {featured ? "Yes" : "No"}
+              </span>
+            ),
+          },
           {
             title: "Thumbnail",
             render: (_, record) => (
@@ -168,13 +188,18 @@ export const AdminProductsPage = () => {
           <Form.Item name="brand" label="Brand"><Input placeholder="e.g., Loreal, Olay, etc." /></Form.Item>
           <Form.Item name="description" label="Product Description"><Input.TextArea rows={4} placeholder="Mô tả chi tiết sản phẩm..." /></Form.Item>
           <Form.Item name="productCategoryId" label="Category"><Select allowClear options={categoryOptions} /></Form.Item>
+          <Form.Item name="featured" label="Featured Product" valuePropName="checked"><Switch /></Form.Item>
           
-          <Form.Item name="thumbnail" label="Thumbnail Image">
+          <Form.Item label="Thumbnail Image">
             <Upload
               accept="image/*"
               maxCount={1}
               beforeUpload={() => false}
               onChange={handleCreateImageChange}
+              onRemove={() => {
+                createForm.setFieldsValue({ thumbnail: "" });
+                setCreatePreviewImage("");
+              }}
             >
               <Button icon={<PlusOutlined />}>Upload Image</Button>
             </Upload>
@@ -183,6 +208,9 @@ export const AdminProductsPage = () => {
                 <Image src={createPreviewImage} width={100} alt="preview" />
               </div>
             )}
+          </Form.Item>
+          <Form.Item name="thumbnail" hidden>
+            <Input />
           </Form.Item>
         </Form>
       </Modal>
@@ -206,13 +234,18 @@ export const AdminProductsPage = () => {
           <Form.Item name="brand" label="Brand"><Input placeholder="e.g., Loreal, Olay, etc." /></Form.Item>
           <Form.Item name="description" label="Product Description"><Input.TextArea rows={4} placeholder="Mô tả chi tiết sản phẩm..." /></Form.Item>
           <Form.Item name="productCategoryId" label="Category"><Select allowClear options={categoryOptions} /></Form.Item>
+          <Form.Item name="featured" label="Featured Product" valuePropName="checked"><Switch /></Form.Item>
           
-          <Form.Item name="thumbnail" label="Thumbnail Image">
+          <Form.Item label="Thumbnail Image">
             <Upload
               accept="image/*"
               maxCount={1}
               beforeUpload={() => false}
               onChange={handleImageChange}
+              onRemove={() => {
+                editForm.setFieldsValue({ thumbnail: "" });
+                setPreviewImage("");
+              }}
             >
               <Button icon={<PlusOutlined />}>Upload Image</Button>
             </Upload>
@@ -221,6 +254,9 @@ export const AdminProductsPage = () => {
                 <Image src={previewImage} width={100} alt="preview" />
               </div>
             )}
+          </Form.Item>
+          <Form.Item name="thumbnail" hidden>
+            <Input />
           </Form.Item>
         </Form>
       </Modal>

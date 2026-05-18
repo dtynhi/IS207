@@ -13,7 +13,8 @@ type DisplayCategory = {
   id: string;
   title: string;
   slug: string;
-  icon: ReactNode;
+  icon?: ReactNode; // Đã thêm dấu ? để không bắt buộc phải có icon
+  image?: string;   // Thêm trường image để truyền link ảnh đại diện
   source: "admin" | "suggestion";
 };
 
@@ -46,56 +47,66 @@ export const ProductsHomeView = ({
 }: ProductsHomeViewProps) => {
   return (
     <div className="animate-in pt-5 pb-6">
-      <div className="um-hero">
-        <Title level={1} className="!mb-2 !text-white">Chào mừng đến Uni Market</Title>
-        <Paragraph className="!mb-[22px] !max-w-[460px] !text-white/90">Nền tảng mua sắm dành cho sinh viên - Đa dạng sản phẩm, giá ưu đãi đặc biệt, giao hàng nhanh chóng!</Paragraph>
-        <Button
-          type="primary"
-          size="large"
-          onClick={() => {
-            const el = document.getElementById("um-suggestions");
-            el?.scrollIntoView({ behavior: "smooth" });
-          }}
-        >
-          Khám phá ngay
-        </Button>
-      </div>
-
-      <Card title={<Space><AppstoreOutlined /><Text strong>Danh mục</Text></Space>} styles={{ body: { padding: "12px 16px 20px" } }} className="mb-4">
-        <div className="um-cat-grid">
+      
+      {/* KHỐI DANH MỤC */}
+      <Card 
+        title={
+          <Space>
+            <AppstoreOutlined className="!text-xl" />
+            <Text strong className="!text-xl">Danh mục</Text>
+          </Space>
+        } 
+        styles={{ 
+          header: { backgroundColor: '#76EEC6' }, // Đổi màu nền tiêu đề
+          body: { padding: "20px 16px 24px" } 
+        }} 
+        className="mb-4 overflow-hidden"
+      >
+        <div className="um-cat-grid flex flex-wrap gap-4 justify-center">
           {displayCats.map((cat) => (
-            <div key={cat.id} className="um-cat-item" onClick={() => onPickCategory(cat)}>
-              <div className="um-cat-icon">{cat.icon}</div>
-              <div className="um-cat-name">{cat.title}</div>
-              <Text type="secondary" className="!text-[10px]">
-                {cat.source === "admin" ? "Danh mục từ admin" : "Gợi ý nhanh"}
-              </Text>
+            <div key={cat.id} className="um-cat-item cursor-pointer text-center flex flex-col items-center gap-2" onClick={() => onPickCategory(cat)}>
+              <div className="um-cat-icon flex items-center justify-center">
+                {/* Logic hiển thị ảnh: Nếu có link ảnh thì hiện ảnh, nếu không thì dùng icon mặc định */}
+                {cat.image ? (
+                  <img 
+                    src={cat.image} 
+                    alt={cat.title} 
+                    className="w-[60px] h-[60px] object-cover rounded-full shadow-sm border border-gray-100" 
+                  />
+                ) : (
+                  <div className="text-3xl">{cat.icon}</div>
+                )}
+              </div>
+              <div className="um-cat-name font-bold text-[15px]">{cat.title}</div>
+              {/* Đã xóa phần Text hiển thị "Danh mục từ admin/Gợi ý nhanh" ở đây */}
             </div>
           ))}
         </div>
       </Card>
 
+      {/* KHỐI FLASH SALE */}
       {flashSaleProducts.length > 0 && (
         <Card
           title={
-            <div className="um-flash-head">
+            <div className="um-flash-head flex items-center gap-4">
               <Space>
-                <FireOutlined className="text-[var(--sale)]" />
-                <Text strong className="um-flash-title">FLASH SALE</Text>
+                <FireOutlined className="text-[var(--sale)] !text-xl" />
+                <Text strong className="um-flash-title !text-xl">FLASH SALE</Text>
               </Space>
-              <div className="um-countdown">
+              <div className="um-countdown flex items-center">
                 <Text className="um-countdown-box">{countdown.h}</Text>
                 <Text className="um-countdown-divider">:</Text>
                 <Text className="um-countdown-box">{countdown.m}</Text>
                 <Text className="um-countdown-divider">:</Text>
                 <Text className="um-countdown-box">{countdown.s}</Text>
-                <ClockCircleOutlined />
+                <ClockCircleOutlined className="ml-2" />
               </div>
             </div>
           }
           extra={<Link to="/flash-sale" className="px-4 py-1.5 rounded-full border border-pink-500 text-pink-500 hover:bg-pink-500 hover:text-white transition-colors text-sm font-medium">Xem tất cả &gt;</Link>}
           styles={{ body: { padding: "12px 16px 20px" }}
           }
+      
           className="mb-4"
         >
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -103,16 +114,42 @@ export const ProductsHomeView = ({
           </div>
         </Card>
       )}
-
+      {/* KHỐI SẢN PHẨM NỔI BẬT */}
       {bestSellers.length > 0 && (
-        <Card title={<Space><StarOutlined /><Text strong>Sản phẩm nổi bật</Text></Space>} styles={{ body: { padding: "12px 16px 20px" } }} className="mb-4">
+        <Card 
+          title={
+            <Space>
+              <StarOutlined className="!text-xl" />
+              <Text strong className="!text-xl">Sản phẩm nổi bật</Text>
+            </Space>
+          } 
+          styles={{ 
+            header: { backgroundColor: '#76EEC6' }, 
+            body: { padding: "12px 16px 20px" } 
+          }} 
+          className="mb-4 overflow-hidden"
+        >
           <div className="um-product-grid">
             {bestSellers.map((product) => (<ProductCard key={product.id} product={product} />))}
           </div>
         </Card>
       )}
 
-      <Card id="um-suggestions" title={<Space><BulbOutlined /><Text strong>Gợi ý cho bạn</Text></Space>} styles={{ body: { padding: productsPending || products.length === 0 ? 24 : 16 } }}>
+      {/* KHỐI GỢI Ý CHO BẠN */}
+      <Card 
+        id="um-suggestions" 
+        title={
+          <Space>
+            <BulbOutlined className="!text-xl" />
+            <Text strong className="!text-xl">Gợi ý cho bạn</Text>
+          </Space>
+        } 
+        styles={{ 
+          header: { backgroundColor: '#76EEC6' }, 
+          body: { padding: productsPending || products.length === 0 ? 24 : 16 } 
+        }}
+        className="overflow-hidden"
+      >
         {productsPending && <ProductLoadingGrid count={10} />}
 
         {!productsPending && products.length === 0 && (<div className="p-10 text-center"><Empty description="Chưa có sản phẩm" /></div>)}

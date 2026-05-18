@@ -140,7 +140,7 @@ export const ProductsPage = () => {
 
   const flashSaleProducts = useMemo(() => allProducts.filter((item) => item.discountPercentage > 0).slice(0, 10), [allProducts]);
   const bestSellers = useMemo(
-    () => allProducts.filter((item) => item.stock > 0 && item.discountPercentage === 0).slice(0, 5),
+    () => allProducts.filter((item) => item.featured).slice(0, 5),
     [allProducts],
   );
 
