@@ -9,15 +9,20 @@ import accountRoutes from "./account/interfaces/http/account.routes";
 import roleRoutes from "./role/interfaces/http/role.routes";
 import settingRoutes from "./setting/interfaces/http/setting.routes";
 import dashboardRoutes from "./dashboard/interfaces/http/dashboard.routes";
+import { requireAdmin } from "../shared/middleware/admin-auth.middleware";
 
 const domainRouter = Router();
 
+// Public routes (no authentication required)
 domainRouter.use(authRoutes);
 domainRouter.use(productRoutes);
 domainRouter.use(categoryRoutes);
 domainRouter.use(cartRoutes);
 domainRouter.use(orderRoutes);
 domainRouter.use(userRoutes);
+
+// Admin routes (authentication required)
+domainRouter.use(requireAdmin);
 domainRouter.use(accountRoutes);
 domainRouter.use(roleRoutes);
 domainRouter.use(settingRoutes);

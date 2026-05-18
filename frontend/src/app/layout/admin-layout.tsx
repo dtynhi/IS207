@@ -1,16 +1,7 @@
-import {
-  DashboardOutlined,
-  FolderOpenOutlined,
-  HomeOutlined,
-  LockOutlined,
-  LogoutOutlined,
-  SettingOutlined,
-  ShopOutlined,
-  TeamOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
-import { Alert, Button, Layout, Menu, Space, Typography } from "antd";
+import { DashboardOutlined, FolderOpenOutlined, HomeOutlined, LockOutlined, LogoutOutlined, SettingOutlined, ShopOutlined, TeamOutlined, UserOutlined } from "@ant-design/icons";
+import { Button, Layout, Menu, Space, Typography } from "antd";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { clearAdminId, getAdminId } from "../../shared/session/storage";
 
 const { Header, Content, Sider } = Layout;
@@ -19,6 +10,13 @@ export const AdminLayout = () => {
   const location = useLocation();
   const nav = useNavigate();
   const adminId = getAdminId();
+
+  // Guard: Redirect to login if not authenticated
+  useEffect(() => {
+    if (!adminId) {
+      nav("/admin/login");
+    }
+  }, [adminId, nav]);
 
   const menuItems = [
     { key: "/admin/dashboard", label: <Link to="/admin/dashboard">Dashboard</Link>, icon: <DashboardOutlined /> },
@@ -58,7 +56,6 @@ export const AdminLayout = () => {
           <Menu mode="inline" selectedKeys={[selected]} items={menuItems} className="h-full border-r-0 pt-2" />
         </Sider>
         <Content className="bg-[var(--bg)] p-6">
-          {!adminId && <Alert type="warning" showIcon message="Chưa đăng nhập" className="mb-4" />}
           <div className="animate-in"><Outlet /></div>
           <div className="pt-10 text-center">
             <Typography.Text type="secondary" className="text-xs">Uni Market Admin · IS207 · UIT</Typography.Text>
