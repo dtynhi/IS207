@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { baseQueryParamsSchema } from "../../../../shared/query/base-query.params";
 import { sendError, sendSuccess } from "../../../../shared/response/response";
+import { requireAdmin } from "../../../../shared/middleware/admin-auth.middleware";
 import {
   createAccount,
   deleteAccount,
@@ -15,7 +16,7 @@ import {
 
 const router = Router();
 
-router.get("/admin/accounts", async (req, res, next) => {
+router.get("/admin/accounts", requireAdmin, async (req, res, next) => {
   try {
     const params = baseQueryParamsSchema.parse(req.query);
     const result = await listAccounts(params);
@@ -25,7 +26,7 @@ router.get("/admin/accounts", async (req, res, next) => {
   }
 });
 
-router.get("/admin/accounts/:id", async (req, res, next) => {
+router.get("/admin/accounts/:id", requireAdmin, async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const item = await getAccountDetail(id);
@@ -39,7 +40,7 @@ router.get("/admin/accounts/:id", async (req, res, next) => {
   }
 });
 
-router.post("/admin/accounts", async (req, res, next) => {
+router.post("/admin/accounts", requireAdmin, async (req, res, next) => {
   try {
     const payload = z
       .object({
@@ -63,7 +64,7 @@ router.post("/admin/accounts", async (req, res, next) => {
   }
 });
 
-router.patch("/admin/accounts/:id", async (req, res, next) => {
+router.patch("/admin/accounts/:id", requireAdmin, async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const payload = z
@@ -92,7 +93,7 @@ router.patch("/admin/accounts/:id", async (req, res, next) => {
   }
 });
 
-router.patch("/admin/accounts/change-status/:status/:id", async (req, res, next) => {
+router.patch("/admin/accounts/change-status/:status/:id", requireAdmin, async (req, res, next) => {
   try {
     const status = z.enum(["active", "inactive"]).parse(req.params.status);
     const id = z.string().parse(req.params.id);
@@ -103,7 +104,7 @@ router.patch("/admin/accounts/change-status/:status/:id", async (req, res, next)
   }
 });
 
-router.delete("/admin/accounts/:id", async (req, res, next) => {
+router.delete("/admin/accounts/:id", requireAdmin, async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     await deleteAccount(id);
@@ -113,7 +114,7 @@ router.delete("/admin/accounts/:id", async (req, res, next) => {
   }
 });
 
-router.get("/admin/my-account/:id", async (req, res, next) => {
+router.get("/admin/my-account/:id", requireAdmin, async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const account = await getMyAccount(id);
@@ -127,7 +128,7 @@ router.get("/admin/my-account/:id", async (req, res, next) => {
   }
 });
 
-router.patch("/admin/my-account/:id", async (req, res, next) => {
+router.patch("/admin/my-account/:id", requireAdmin, async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const payload = z

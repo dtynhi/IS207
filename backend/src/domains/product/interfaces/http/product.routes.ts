@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { sendError, sendSuccess } from "../../../../shared/response/response";
+import { requireAdmin } from "../../../../shared/middleware/admin-auth.middleware";
 import {
   changeMultiProducts,
   createProduct,
@@ -48,7 +49,7 @@ router.get("/products/detail/:slug", async (req, res, next) => {
   }
 });
 
-router.get("/admin/products", async (req, res, next) => {
+router.get("/admin/products", requireAdmin, async (req, res, next) => {
   try {
     const params = productQuerySchema.parse(req.query);
     const result = await listProducts(params, "admin");
@@ -58,7 +59,7 @@ router.get("/admin/products", async (req, res, next) => {
   }
 });
 
-router.get("/admin/products/:id", async (req, res, next) => {
+router.get("/admin/products/:id", requireAdmin, async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const item = await getAdminProductDetail(id);
@@ -72,7 +73,7 @@ router.get("/admin/products/:id", async (req, res, next) => {
   }
 });
 
-router.post("/admin/products", async (req, res, next) => {
+router.post("/admin/products", requireAdmin, async (req, res, next) => {
   try {
     const payload = z
       .object({
@@ -100,7 +101,7 @@ router.post("/admin/products", async (req, res, next) => {
   }
 });
 
-router.patch("/admin/products/change-status/:status/:id", async (req, res, next) => {
+router.patch("/admin/products/change-status/:status/:id", requireAdmin, async (req, res, next) => {
   try {
     const status = z.enum(["active", "inactive"]).parse(req.params.status);
     const id = z.string().parse(req.params.id);
@@ -111,7 +112,7 @@ router.patch("/admin/products/change-status/:status/:id", async (req, res, next)
   }
 });
 
-router.patch("/admin/products/change-multi", async (req, res, next) => {
+router.patch("/admin/products/change-multi", requireAdmin, async (req, res, next) => {
   try {
     const payload = z
       .object({
@@ -138,7 +139,7 @@ router.patch("/admin/products/change-multi", async (req, res, next) => {
   }
 });
 
-router.patch("/admin/products/:id", async (req, res, next) => {
+router.patch("/admin/products/:id", requireAdmin, async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const item = await updateProduct(id, req.body as Record<string, unknown>);
@@ -148,7 +149,7 @@ router.patch("/admin/products/:id", async (req, res, next) => {
   }
 });
 
-router.delete("/admin/products/:id", async (req, res, next) => {
+router.delete("/admin/products/:id", requireAdmin, async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const deletedById = z.string().optional().parse(req.headers["x-account-id"] || req.query.deletedById);
