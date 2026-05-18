@@ -5,7 +5,8 @@ import type { SetURLSearchParams } from "react-router-dom";
 import { ProductCard } from "./product-card";
 import { ProductLoadingGrid } from "./product-loading-grid";
 import type { Product } from "../types/product.types";
-
+import { FlashSaleCard } from "../../flash-sale/components/flash-sale-card";
+import { Link } from "react-router-dom";
 const { Title, Paragraph, Text } = Typography;
 
 type DisplayCategory = {
@@ -102,14 +103,14 @@ export const ProductsHomeView = ({
               </div>
             </div>
           }
-          styles={{ 
-            header: { backgroundColor: '#76EEC6' }, 
-            body: { padding: "12px 16px 20px" } 
-          }}
+          extra={<Link to="/flash-sale" className="px-4 py-1.5 rounded-full border border-pink-500 text-pink-500 hover:bg-pink-500 hover:text-white transition-colors text-sm font-medium">Xem tất cả &gt;</Link>}
+          styles={{ body: { padding: "12px 16px 20px" }}
+          }
+      
           className="mb-4"
         >
-          <div className="um-scroll-row">
-            {flashSaleProducts.map((product) => (<ProductCard key={product.id} product={product} />))}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {flashSaleProducts.map((product) => (<FlashSaleCard key={product.id} product={product} />))}
           </div>
         </Card>
       )}
