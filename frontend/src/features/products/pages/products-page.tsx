@@ -21,7 +21,6 @@ import type { Product, ProductCategory } from "../types/product.types";
 import { useCategoriesQuery } from "../hooks/use-categories-query";
 import { useProductsQuery } from "../hooks/use-products-query";
 import type { ProductFilterValues } from "../components/product-filter-form";
-
 type CategoryView = {
   id: string;
   title: string;

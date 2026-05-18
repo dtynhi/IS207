@@ -25,7 +25,8 @@ import { ChangePasswordPage } from "../features/user/pages/change-password-page"
 import { UserAddressPage } from "../features/user/pages/user-address-page";
 import { UserProfilePage } from "../features/user/pages/user-profile-page";
 import { UserPurchasePage } from "../features/user/pages/user-purchase-page";
-
+import { FlashSalePage } from "../features/flash-sale/pages/flash-sale-page";
+import { AdminFlashSalePage } from "../features/admin/pages/admin-flash-sale-page";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -33,6 +34,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <ProductsPage /> },
       { path: "products/:slug", element: <ProductDetailPage /> },
+      { path: "flash-sale", element: <FlashSalePage /> },
       { path: "cart", element: <CartPage /> },
       { path: "checkout", element: <CheckoutPage /> },
       { path: "checkout/pay/sandbox/:orderId", element: <CheckoutBankSandboxPage /> },
@@ -64,6 +66,7 @@ export const router = createBrowserRouter([
       { path: "accounts", element: <AdminAccountsPage /> },
       { path: "my-account", element: <AdminMyAccountPage /> },
       { path: "settings", element: <AdminSettingsPage /> },
+      { path: "flash-sale", element: <AdminFlashSalePage /> },//Thêm route admin flash sale
     ],
   },
 ]);
