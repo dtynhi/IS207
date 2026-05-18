@@ -124,3 +124,28 @@ export const listOrders = async (params: { page: number; limit: number }) => {
     },
   };
 };
+
+export const updateOrderStatus = async (orderId: string, status: "pending" | "processing" | "completed" | "cancelled") => {
+  return prisma.order.update({
+    where: { id: orderId },
+    data: {
+      status,
+    },
+  });
+};
+
+export const getOrderTotalAmount = async (orderId: string) => {
+  const items = await prisma.orderItem.findMany({
+    where: { orderId },
+    select: {
+      price: true,
+      quantity: true,
+      discountPercentage: true,
+    },
+  });
+
+  return items.reduce((sum, item) => {
+    const discountedPrice = item.price * (1 - item.discountPercentage / 100);
+    return sum + Math.round(discountedPrice * item.quantity);
+  }, 0);
+};

@@ -45,9 +45,12 @@ export type ChangePasswordFormValues = {
 };
 
 export const purchaseStatusMap: Record<string, { color: string; label: string }> = {
-  pending: { color: "processing", label: "Chờ xác nhận" },
+  pending: { color: "processing", label: "Chờ thanh toán" },
+  processing: { color: "blue", label: "Đang xử lý" },
+  completed: { color: "green", label: "Đã thanh toán" },
+  cancelled: { color: "red", label: "Đã huỷ" },
+  // Legacy statuses for old data
   confirmed: { color: "blue", label: "Đã xác nhận" },
   shipping: { color: "cyan", label: "Đang giao" },
   delivered: { color: "green", label: "Đã giao" },
-  cancelled: { color: "red", label: "Đã huỷ" },
 };

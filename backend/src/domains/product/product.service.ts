@@ -1,6 +1,17 @@
 import { prisma } from "../../infrastructure/db/prisma.client";
 import { getSearchValue, toPaginationMeta, toSkipTake, toSort } from "../../shared/query/query-utils";
 import type { ProductQueryParams } from "./product.query";
+// import { generateSeedFromDb } from "../../infrastructure/db/generate-seed";
+
+// Helper để trigger seed generation không block request
+// const triggerSeedUpdate = async () => {
+//   try {
+//     await generateSeedFromDb();
+//   } catch (error) {
+//     // Silent fail - log only
+//     console.error("[product-service] Lỗi update seed:", error);
+//   }
+// };
 
 export const listProducts = async (
   params: ProductQueryParams,
@@ -81,10 +92,13 @@ export const createProduct = async (payload: {
   productCategoryId?: string;
   school?: string;
   position?: number;
+  featured?: boolean;
   status?: "active" | "inactive";
   createdById?: string;
+  thumbnail?: string;
+  brand?: string;
 }) => {
-  return prisma.product.create({
+  const product = await prisma.product.create({
     data: {
       title: payload.title,
       price: payload.price,
@@ -92,22 +106,40 @@ export const createProduct = async (payload: {
       description: payload.description,
       discountPercentage: payload.discountPercentage ?? 0,
       stock: payload.stock ?? 0,
+      featured: payload.featured ?? false,
       status: payload.status ?? "active",
       deleted: false,
       productCategoryId: payload.productCategoryId,
       school: payload.school,
       position: payload.position ?? 0,
       createdById: payload.createdById,
+      thumbnail: payload.thumbnail,
+      brand: payload.brand,
     },
   });
+
+  // Tự động update seed (async, không block)
+  // triggerSeedUpdate();
+
+  return product;
 };
 
 export const updateProduct = async (id: string, payload: Record<string, unknown>) => {
-  return prisma.product.update({ where: { id }, data: payload });
+  const product = await prisma.product.update({ where: { id }, data: payload });
+
+  // Tự động update seed (async, không block)
+  // triggerSeedUpdate();
+
+  return product;
 };
 
 export const updateProductStatus = async (id: string, status: "active" | "inactive") => {
-  return prisma.product.update({ where: { id }, data: { status } });
+  const product = await prisma.product.update({ where: { id }, data: { status } });
+
+  // Tự động update seed (async, không block)
+  // triggerSeedUpdate();
+
+  return product;
 };
 
 export const changeMultiProducts = async (payload: {
@@ -126,6 +158,9 @@ export const changeMultiProducts = async (payload: {
       },
     });
 
+    // Tự động update seed
+    // triggerSeedUpdate();
+
     return { affected: result.count };
   }
 
@@ -140,6 +175,9 @@ export const changeMultiProducts = async (payload: {
         deleted: true,
       },
     });
+
+    // Tự động update seed
+    // triggerSeedUpdate();
 
     return { affected: result.count };
   }
@@ -164,9 +202,17 @@ export const changeMultiProducts = async (payload: {
     affected += 1;
   }
 
+  // Tự động update seed
+  // triggerSeedUpdate();
+
   return { affected };
 };
 
 export const deleteProduct = async (id: string, deletedById?: string) => {
-  return prisma.product.update({ where: { id }, data: { deleted: true, deletedById } });
+  const product = await prisma.product.update({ where: { id }, data: { deleted: true, deletedById } });
+
+  // Tự động update seed
+  // triggerSeedUpdate();
+
+  return product;
 };
