@@ -32,9 +32,6 @@ type CategoryView = {
 };
 
 const DEFAULT_CATS: { title: string; keyword: string; icon: ReactNode }[] = [
-  { title: "Điện thoại", keyword: "điện thoại", icon: <MobileOutlined /> },
-  { title: "Laptop", keyword: "laptop", icon: <DesktopOutlined /> },
-  { title: "Thời trang", keyword: "thời trang", icon: <SkinOutlined /> },
   { title: "Sách vở", keyword: "sách", icon: <ReadOutlined /> },
   { title: "Phụ kiện", keyword: "phụ kiện", icon: <SoundOutlined /> },
   { title: "Đồ ăn", keyword: "đồ ăn", icon: <CoffeeOutlined /> },
@@ -45,9 +42,6 @@ const DEFAULT_CATS: { title: string; keyword: string; icon: ReactNode }[] = [
 ];
 
 const catIconMap: Record<string, ReactNode> = {
-  "điện thoại": <MobileOutlined />,
-  laptop: <DesktopOutlined />,
-  "thời trang": <SkinOutlined />,
   sách: <ReadOutlined />,
   "phụ kiện": <SoundOutlined />,
   "đồ ăn": <CoffeeOutlined />,
@@ -125,18 +119,7 @@ export const ProductsPage = () => {
       facetId: cat.id,
     }));
 
-    const existingTitles = new Set(adminCats.map((cat) => cat.title.toLowerCase().trim()));
-    const suggestionCats: CategoryView[] = DEFAULT_CATS.filter((cat) => !existingTitles.has(cat.title.toLowerCase().trim()))
-      .map((cat) => ({
-        id: `suggest-${cat.keyword}`,
-        title: cat.title,
-        slug: cat.keyword.replace(/\s+/g, "-"),
-        icon: cat.icon,
-        source: "suggestion",
-        searchKeyword: cat.keyword,
-      }));
-
-    return [...adminCats, ...suggestionCats].slice(0, 10);
+    return adminCats;
   }, [apiCats]);
 
   const flashSaleProducts: Product[] = flashSaleQuery.data?.items || [];
