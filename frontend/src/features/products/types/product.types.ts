@@ -31,4 +31,5 @@ export type ProductListParams = {
   facet?: string[];
   minPrice?: number;
   maxPrice?: number;
+  flashSale?: boolean;
 };

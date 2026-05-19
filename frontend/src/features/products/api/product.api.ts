@@ -12,6 +12,7 @@ export const getProducts = async (params: ProductListParams) => {
       facet: params.facet,
       minPrice: params.minPrice,
       maxPrice: params.maxPrice,
+      flashSale: params.flashSale,
     },
   });
 

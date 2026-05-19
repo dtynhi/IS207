@@ -110,6 +110,7 @@ export const ProductsPage = () => {
 
   const productsQuery = useProductsQuery(params);
   const categoriesQuery = useCategoriesQuery();
+  const flashSaleQuery = useProductsQuery({ page: 1, limit: 10, flashSale: true });
 
   const apiCats: ProductCategory[] = categoriesQuery.data || [];
   const allProducts: Product[] = productsQuery.data?.items || [];
@@ -138,7 +139,7 @@ export const ProductsPage = () => {
     return [...adminCats, ...suggestionCats].slice(0, 10);
   }, [apiCats]);
 
-  const flashSaleProducts = useMemo(() => allProducts.filter((item) => item.discountPercentage > 0).slice(0, 10), [allProducts]);
+  const flashSaleProducts: Product[] = flashSaleQuery.data?.items || [];
   const bestSellers = useMemo(
     () => allProducts.filter((item) => item.featured).slice(0, 5),
     [allProducts],

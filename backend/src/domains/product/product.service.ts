@@ -52,6 +52,10 @@ export const listProducts = async (
     };
   }
 
+  if (params.flashSale === true) {
+    where.discountPercentage = { gt: 0 };
+  }
+
   const [items, totalItems] = await Promise.all([
     prisma.product.findMany({
       where,
