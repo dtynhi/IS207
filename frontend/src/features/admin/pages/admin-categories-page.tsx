@@ -19,9 +19,6 @@ import type { AdminCategoryFormValues, AdminCategoryRow } from "../types/admin.t
 const { Title } = Typography;
 
 const STARTER_CATEGORIES = [
-  "Điện thoại",
-  "Laptop",
-  "Thời trang",
   "Sách vở",
   "Phụ kiện",
   "Đồ ăn",
