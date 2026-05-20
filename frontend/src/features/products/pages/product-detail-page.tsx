@@ -37,7 +37,7 @@ export const ProductDetailPage = () => {
   return (
     <div className="animate-in pt-6 pb-6">
       {contextHolder}
-      <Breadcrumb items={[{ label: "Uni Market", to: "/" }, { label: data.title }]} />
+      <Breadcrumb items={[{ label: "5N Store", to: "/" }, { label: data.title }]} />
 
       <ProductDetailOverview
         data={data}
