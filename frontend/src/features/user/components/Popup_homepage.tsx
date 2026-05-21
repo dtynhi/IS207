@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button } from 'antd';
+import { useLocation } from 'react-router-dom';
 
 export const PromoPopup = () => {
+  const { pathname, search } = useLocation();
+  if (pathname !== '/' || search !== '') {
+    return null;
+  }
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Tự động hiện popup sau 2 giây khi vào trang

@@ -10,6 +10,7 @@ import {
   UserOutlined,
   DownOutlined,
 } from "@ant-design/icons";
+
 import { Badge, Button, Input, List, Space, Typography, Dropdown} from "antd";
 import type { MenuProps } from "antd";
 import { useEffect, useState } from "react";
@@ -43,25 +44,24 @@ const dauGoiItems: MenuProps['items'] = [
 
 const suaTamItems: MenuProps['items'] = [
   { key: '1', label: <Link to="/?search=Lifebuoy">Lifebuoy</Link> },
-  { key: '2', label: <Link to="/?search=Enchanteur">Enchanteur</Link> },
-  { key: '3', label: <Link to="/?search=Romano">Romano</Link> },
-  { key: '4', label: <Link to="/?search=Hazeline">Hazeline</Link> },
+  { key: '2', label: <Link to="/?search=Dove">Dove</Link> },
+  { key: '3', label: <Link to="/?search=Lashe">Lashe</Link> },
+  { key: '4', label: <Link to="/?search=Nivea">Nivea</Link> },
 ];
 
 const suaRuaMatItems: MenuProps['items'] = [
   { key: '1', label: <Link to="/?search=Cetaphil">Cetaphil</Link> },
-  { key: '2', label: <Link to="/?search=CeraVe">CeraVe</Link> },
+  { key: '2', label: <Link to="/?search=Senka">Senka</Link> },
   { key: '3', label: <Link to="/?search=Simple">Simple</Link> },
   { key: '4', label: <Link to="/?search=Hada+Labo">Hada Labo</Link> },
 ];
 
 const kemChongNangItems: MenuProps['items'] = [
-  { key: '1', label: <Link to="/?search=Anessa">Anessa</Link> },
-  { key: '2', label: <Link to="/?search=La+Roche-Posay">La Roche-Posay</Link> },
-  { key: '3', label: <Link to="/?search=Sunplay">Sunplay</Link> },
-  { key: '4', label: <Link to="/?search=Skin+Aqua">Skin Aqua</Link> },
+  { key: '1', label: <Link to="/?search=La+Roche-Posay">La Roche-Posay</Link> },
+  { key: '2', label: <Link to="/?search=Skin+Aqua">Skin Aqua</Link> },
 ];
 export const ClientLayout = () => {
+  
   const location = useLocation();
 const isHomePage = location.pathname === "/";
   const navigate = useNavigate();
@@ -84,8 +84,12 @@ const isHomePage = location.pathname === "/";
     if (querySearch !== searchValue) {
       setSearchValue(querySearch);
     }
-  }, [location.search]);
-
+  }, [location.search]);  
+const { pathname, search } = useLocation();
+  useEffect(() => {
+  
+    window.scrollTo(0, 0);
+  }, [pathname, search]);
   useEffect(() => {
     const timer = window.setTimeout(() => {
       if (isAuthPage) return;

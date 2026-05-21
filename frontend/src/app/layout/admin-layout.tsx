@@ -50,7 +50,7 @@ export const AdminLayout = () => {
         <Link to="/admin/dashboard" className="text-lg font-extrabold text-white">
           <Space>
             <ShopOutlined />
-            Uni Market Admin
+            5N Store Admin
           </Space>
         </Link>
         <div className="flex items-center gap-[14px]">
@@ -72,7 +72,7 @@ export const AdminLayout = () => {
         <Content className="bg-[var(--bg)] p-6">
           <div className="animate-in"><Outlet /></div>
           <div className="pt-10 text-center">
-            <Typography.Text type="secondary" className="text-xs">Uni Market Admin · IS207 · UIT</Typography.Text>
+            <Typography.Text type="secondary" className="text-xs">5N Store Admin · IS207 · UIT</Typography.Text>
           </div>
         </Content>
       </Layout>

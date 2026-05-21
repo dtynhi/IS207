@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 :root {
-  --primary: #0ea5e9;
-  --primary-hover: #0284c7;
-  --primary-dark: #0369a1;
+  --primary: #1dbd88;
+  --primary-hover: #1fb59e;
+  --primary-dark: #1fb59e;
   --primary-light: #e0f2fe;
-  --primary-soft: #f0f9ff;
+  --primary-soft: #05131c0b;
 
   --price: #e11d48;
   --sale: #e11d48;
@@ -15,7 +15,7 @@
   --white: #ffffff;
   --bg: #d8f3f4;
   --surface: #ffffff;
-  --border: #e2e8f0;
+  --border: #0e2b52;
   --border-light: #f1f5f9;
 
   --text: #0f172a;
@@ -672,7 +672,7 @@ a { color: inherit; text-decoration: none; }
 
 .animate-in { animation: slideUp 0.4s var(--ease-out) both; }
 .um-skeleton {
-  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background: linear-gradient(90deg, #abc4e5 25%, #f1f5f9 50%, #e2e8f0 75%);
   background-size: 1000px 100%;
   animation: shimmer 1.8s linear infinite;
   border-radius: var(--r-sm);
