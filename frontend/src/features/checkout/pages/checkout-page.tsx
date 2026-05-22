@@ -2,11 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 import { EnvironmentOutlined } from "@ant-design/icons";
 import { Button, Card, Empty, Form, Input, Row, Col, Space, Typography, Select, Radio } from "antd";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { Breadcrumb } from "../../../shared/components/breadcrumb";
 import { Price } from "../../../shared/components/price";
 import { CheckoutProductList } from "../components/checkout-product-list";
 import { useCheckoutPage } from "../hooks/use-checkout-page";
+import { getUserAddressApi } from "../../user/api/user.api";
+import { getUserId } from "../../../shared/session/storage";
 import type { CheckoutFormValues } from "../types/checkout.types";
+import type { UserAddress } from "../../user/types/user.types";
 
 const { Text } = Typography;
 const VN_ADDRESS_API = "https://provinces.open-api.vn/api";
@@ -20,12 +24,20 @@ type ProvinceDetail = {
 
 export const CheckoutPage = () => {
   const navigate = useNavigate();
+  const userId = getUserId();
   const [form] = Form.useForm<CheckoutFormValues>();
   const { cartQuery, orderMutation, submitOrder, contextHolder } = useCheckoutPage();
 
   const items = cartQuery.data?.items || [];
   const total = Number(cartQuery.data?.totalPrice || 0);
   const selectedProvinceName = Form.useWatch("province", form);
+
+  // Load user's saved addresses
+  const userAddressesQuery = useQuery({
+    queryKey: ["user-addresses-checkout", userId],
+    queryFn: () => getUserAddressApi(userId),
+    enabled: Boolean(userId),
+  });
 
   const provincesQuery = useQuery({
     queryKey: ["vn-address-provinces"],
@@ -64,6 +76,36 @@ export const CheckoutPage = () => {
       label: ward.name,
     }));
 
+  // Create options for saved addresses
+  const savedAddressOptions = (userAddressesQuery.data || []).map((addr: UserAddress) => ({
+    value: addr.idAddress,
+    label: `${addr.fullName} - ${addr.phone} - ${[addr.addressLine, addr.ward, addr.province].filter(Boolean).join(", ")}`,
+  }));
+
+  // Handle address selection
+  const handleSelectAddress = (addressId: string) => {
+    const selectedAddr = (userAddressesQuery.data || []).find((addr: UserAddress) => addr.idAddress === addressId);
+    if (selectedAddr) {
+      form.setFieldsValue({
+        fullName: selectedAddr.fullName,
+        phone: selectedAddr.phone,
+        province: selectedAddr.province,
+        ward: selectedAddr.ward,
+        addressLine: selectedAddr.addressLine,
+      });
+    }
+  };
+
+  // Auto-fill default address on first load
+  useEffect(() => {
+    if (userAddressesQuery.data && userAddressesQuery.data.length > 0) {
+      const defaultAddr = userAddressesQuery.data.find((addr: UserAddress) => addr.isDefault);
+      if (defaultAddr) {
+        handleSelectAddress(defaultAddr.idAddress);
+      }
+    }
+  }, [userAddressesQuery.data]);
+
   return (
     <div className="animate-in pt-6 pb-6">
       {contextHolder}
@@ -93,6 +135,22 @@ export const CheckoutPage = () => {
               initialValues={{ paymentMethod: "cod" }}
               onFinish={(values: CheckoutFormValues) => submitOrder(values)}
             >
+              {/* Saved addresses selector */}
+              {savedAddressOptions.length > 0 && (
+                <Row gutter={16} className="mb-5">
+                  <Col xs={24}>
+                    <Form.Item label="Chọn địa chỉ đã lưu (hoặc nhập mới)">
+                      <Select
+                        placeholder="Chọn một địa chỉ đã lưu"
+                        options={savedAddressOptions}
+                        onChange={handleSelectAddress}
+                        allowClear
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              )}
+
               <Row gutter={16}>
                 <Col xs={24} md={12}>
                   <Form.Item name="fullName" label="Họ tên" rules={[{ required: true, message: "Nhập họ tên" }]}>
@@ -147,7 +205,6 @@ export const CheckoutPage = () => {
                   </Form.Item>
                 </Col>
               </Row>
-
             </Form>
           </Card>
 

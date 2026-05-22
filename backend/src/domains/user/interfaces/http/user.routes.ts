@@ -61,9 +61,15 @@ router.get("/user/:id/address", async (req, res, next) => {
 router.post("/user/:id/address", async (req, res, next) => {
   try {
     const userId = z.string().parse(req.params.id);
-    const payload = z.object({ mainAddress: z.string().min(1) }).parse(req.body);
+    const payload = z.object({
+      fullName: z.string().min(1),
+      phone: z.string().min(1),
+      province: z.string().min(1),
+      ward: z.string().min(1),
+      addressLine: z.string().min(1),
+    }).parse(req.body);
 
-    const address = await createUserAddress(userId, payload.mainAddress);
+    const address = await createUserAddress(userId, payload);
     if (!address) {
       return sendError(res, 404, "USER_NOT_FOUND", "User not found");
     }
@@ -80,7 +86,11 @@ router.patch("/user/:id/address/:addressId", async (req, res, next) => {
     const addressId = z.string().parse(req.params.addressId);
     const payload = z
       .object({
-        mainAddress: z.string().min(1).optional(),
+        fullName: z.string().min(1).optional(),
+        phone: z.string().min(1).optional(),
+        province: z.string().min(1).optional(),
+        ward: z.string().min(1).optional(),
+        addressLine: z.string().min(1).optional(),
         isDefault: z.boolean().optional(),
       })
       .parse(req.body);

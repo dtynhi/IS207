@@ -27,7 +27,7 @@ type SeedUser = {
   email: string;
   phone: string;
   avatar: string;
-  addresses: Array<{ mainAddress: string; isDefault: boolean }>;
+  addresses: Array<{ fullName?: string; phone?: string; province?: string; ward?: string; addressLine: string; isDefault: boolean }>;
 };
 
 const SEED_DATA_PATH = path.join(__dirname, "seed-data.json");
@@ -83,10 +83,14 @@ export const syncSeedDataToFile = async () => {
     });
 
     const demoUsers: SeedUser[] = allUsersDb.map((u) => {
-      let parsedAddresses: Array<{ mainAddress: string; isDefault: boolean }> = [];
+      let parsedAddresses: Array<{ fullName?: string; phone?: string; province?: string; ward?: string; addressLine: string; isDefault: boolean }> = [];
       if (u.address && Array.isArray(u.address)) {
         parsedAddresses = u.address.map((addr: any) => ({
-          mainAddress: addr.mainAddress || "",
+          fullName: addr.fullName || "",
+          phone: addr.phone || "",
+          province: addr.province || "",
+          ward: addr.ward || "",
+          addressLine: addr.addressLine || addr.mainAddress || "",
           isDefault: addr.isDefault || false,
         }));
       }

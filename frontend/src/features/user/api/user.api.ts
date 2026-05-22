@@ -20,7 +20,7 @@ export const getUserAddressApi = async (userId: string) => {
   return response.data.data;
 };
 
-export const createUserAddressApi = async (userId: string, payload: { mainAddress: string }) => {
+export const createUserAddressApi = async (userId: string, payload: { fullName: string; phone: string; province: string; ward: string; addressLine: string }) => {
   const response = await apiClient.post<ApiSuccessResponse<UserAddress>>(`/user/${userId}/address`, payload);
   return response.data.data;
 };
@@ -28,7 +28,7 @@ export const createUserAddressApi = async (userId: string, payload: { mainAddres
 export const updateUserAddressApi = async (
   userId: string,
   addressId: string,
-  payload: { mainAddress?: string; isDefault?: boolean }
+  payload: { fullName?: string; phone?: string; province?: string; ward?: string; addressLine?: string; isDefault?: boolean }
 ) => {
   const response = await apiClient.patch<ApiSuccessResponse<UserAddress>>(
     `/user/${userId}/address/${addressId}`,
