@@ -5,7 +5,11 @@ import { toPaginationMeta, toSkipTake } from "../../shared/query/query-utils";
 
 type UserAddress = {
   idAddress: string;
-  mainAddress: string;
+  fullName: string;
+  phone: string;
+  province: string;
+  ward: string;
+  addressLine: string;
   isDefault: boolean;
 };
 
@@ -22,12 +26,20 @@ const toAddressArray = (value: unknown): UserAddressJson => {
 
     const record = item as Record<string, unknown>;
     const idAddress = typeof record.idAddress === "string" ? record.idAddress : crypto.randomUUID();
-    const mainAddress = typeof record.mainAddress === "string" ? record.mainAddress : "";
+    const fullName = typeof record.fullName === "string" ? record.fullName : "";
+    const phone = typeof record.phone === "string" ? record.phone : "";
+    const province = typeof record.province === "string" ? record.province : "";
+    const ward = typeof record.ward === "string" ? record.ward : "";
+    const addressLine = typeof record.addressLine === "string" ? record.addressLine : "";
     const isDefault = Boolean(record.isDefault);
 
     result.push({
       idAddress,
-      mainAddress,
+      fullName,
+      phone,
+      province,
+      ward,
+      addressLine,
       isDefault,
     });
   }
@@ -101,7 +113,16 @@ export const listUserAddresses = async (userId: string) => {
   return toAddressArray(user.address);
 };
 
-export const createUserAddress = async (userId: string, mainAddress: string) => {
+export const createUserAddress = async (
+  userId: string,
+  payload: {
+    fullName: string;
+    phone: string;
+    province: string;
+    ward: string;
+    addressLine: string;
+  }
+) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { id: true, address: true, deleted: true },
@@ -114,7 +135,11 @@ export const createUserAddress = async (userId: string, mainAddress: string) => 
   const addresses = toAddressArray(user.address);
   const nextAddress: UserAddress = {
     idAddress: crypto.randomUUID(),
-    mainAddress,
+    fullName: payload.fullName,
+    phone: payload.phone,
+    province: payload.province,
+    ward: payload.ward,
+    addressLine: payload.addressLine,
     isDefault: addresses.length === 0,
   };
 
@@ -133,7 +158,14 @@ export const createUserAddress = async (userId: string, mainAddress: string) => 
 export const updateUserAddress = async (
   userId: string,
   addressId: string,
-  payload: { mainAddress?: string; isDefault?: boolean }
+  payload: {
+    fullName?: string;
+    phone?: string;
+    province?: string;
+    ward?: string;
+    addressLine?: string;
+    isDefault?: boolean;
+  }
 ) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -151,8 +183,20 @@ export const updateUserAddress = async (
     return { ok: false as const, reason: "ADDRESS_NOT_FOUND" as const };
   }
 
-  if (payload.mainAddress !== undefined) {
-    addresses[index].mainAddress = payload.mainAddress;
+  if (payload.fullName !== undefined) {
+    addresses[index].fullName = payload.fullName;
+  }
+  if (payload.phone !== undefined) {
+    addresses[index].phone = payload.phone;
+  }
+  if (payload.province !== undefined) {
+    addresses[index].province = payload.province;
+  }
+  if (payload.ward !== undefined) {
+    addresses[index].ward = payload.ward;
+  }
+  if (payload.addressLine !== undefined) {
+    addresses[index].addressLine = payload.addressLine;
   }
 
   if (payload.isDefault) {

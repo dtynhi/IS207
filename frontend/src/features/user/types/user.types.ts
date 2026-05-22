@@ -9,7 +9,11 @@ export type UserProfile = {
 
 export type UserAddress = {
   idAddress: string;
-  mainAddress: string;
+  fullName: string;
+  phone: string;
+  province: string;
+  ward: string;
+  addressLine: string;
   isDefault: boolean;
 };
 
@@ -20,7 +24,7 @@ export type UserPurchase = {
   address: string;
   status: string;
   createdAt: string;
-  items: Array<{ quantity: number; price: number; discountPercentage: number; product?: { title: string } }>;
+  items: Array<{ quantity: number; price: number; discountPercentage: number; product?: { title: string; thumbnail?: string } }>;
 };
 
 export type UserProfileFormValues = {
@@ -30,11 +34,19 @@ export type UserProfileFormValues = {
 };
 
 export type UserAddressCreateFormValues = {
-  mainAddress: string;
+  fullName: string;
+  phone: string;
+  province: string;
+  ward: string;
+  addressLine: string;
 };
 
 export type UserAddressUpdatePayload = {
-  mainAddress?: string;
+  fullName?: string;
+  phone?: string;
+  province?: string;
+  ward?: string;
+  addressLine?: string;
   isDefault?: boolean;
 };
 

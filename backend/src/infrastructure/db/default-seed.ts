@@ -31,7 +31,7 @@ type SeedUser = {
   email: string;
   phone: string;
   avatar: string;
-  addresses: Array<{ mainAddress: string; isDefault: boolean }>;
+  addresses: Array<{ fullName?: string; phone?: string; province?: string; ward?: string; addressLine: string; isDefault: boolean } | { mainAddress?: string; isDefault: boolean }>;
 };
 
 const normalizeSlug = (text: string) =>
@@ -43,6 +43,37 @@ const normalizeSlug = (text: string) =>
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-");
+
+// Helper function to normalize address to new format
+const normalizeAddress = (addr: any) => {
+  if (addr.fullName !== undefined) {
+    // Already in new format
+    return {
+      idAddress: addr.idAddress || "",
+      fullName: addr.fullName,
+      phone: addr.phone || "",
+      province: addr.province || "",
+      ward: addr.ward || "",
+      addressLine: addr.addressLine || "",
+      isDefault: addr.isDefault || false,
+    };
+  }
+
+  // Convert from old format (mainAddress)
+  const mainAddress = addr.mainAddress || addr.addressLine || "";
+  // Simple parsing: take last part as province, middle as ward, rest as addressLine
+  const parts = mainAddress.split(",").map((p: string) => p.trim());
+  
+  return {
+    idAddress: addr.idAddress || "",
+    fullName: addr.fullName || "",
+    phone: addr.phone || "",
+    province: parts.length > 1 ? parts[parts.length - 1] : "TP.HCM",
+    ward: parts.length > 2 ? parts[parts.length - 2] : (parts.length > 1 ? parts[0] : ""),
+    addressLine: parts.length > 2 ? parts.slice(0, -2).join(", ") : (parts.length > 1 ? parts[0] : mainAddress),
+    isDefault: addr.isDefault || false,
+  };
+};
 
 
 import * as fs from "fs";
@@ -270,17 +301,21 @@ const seedProducts = async (categoryMap: Map<string, string>) => {
 
 const seedUsers = async () => {
   for (const user of demoUsers) {
+    const normalizedAddresses = user.addresses.map((addr, index) => {
+      const normalized = normalizeAddress(addr);
+      return {
+        idAddress: `${normalizeSlug(user.email)}-dia-chi-${index + 1}`,
+        ...normalized,
+      };
+    });
+
     await prisma.user.upsert({
       where: { email: user.email },
       update: {
         fullName: user.fullName,
         phone: user.phone,
         avatar: user.avatar,
-        address: user.addresses.map((addr, index) => ({
-          idAddress: `${normalizeSlug(user.email)}-dia-chi-${index + 1}`,
-          mainAddress: addr.mainAddress,
-          isDefault: addr.isDefault,
-        })) as Prisma.InputJsonValue,
+        address: normalizedAddresses as Prisma.InputJsonValue,
         status: "active",
         deleted: false,
       },
@@ -291,11 +326,7 @@ const seedUsers = async () => {
         tokenUser: `token-${normalizeSlug(user.email)}`,
         phone: user.phone,
         avatar: user.avatar,
-        address: user.addresses.map((addr, index) => ({
-          idAddress: `${normalizeSlug(user.email)}-dia-chi-${index + 1}`,
-          mainAddress: addr.mainAddress,
-          isDefault: addr.isDefault,
-        })) as Prisma.InputJsonValue,
+        address: normalizedAddresses as Prisma.InputJsonValue,
         status: "active",
         deleted: false,
       },

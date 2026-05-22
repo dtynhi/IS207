@@ -1,5 +1,5 @@
 import { InboxOutlined } from "@ant-design/icons";
-import { Card, Flex, List, Tag, Typography } from "antd";
+import { Card, Flex, List, Tag, Typography, Image } from "antd";
 import { Price } from "../../../shared/components/price";
 import { purchaseStatusMap, type UserPurchase } from "../types/user.types";
 
@@ -27,7 +27,13 @@ export const UserPurchaseCard = ({ order }: UserPurchaseCardProps) => {
           <List.Item className="!px-5 !py-2.5">
             <Flex align="center" justify="space-between" className="w-full" gap={12}>
               <Flex align="center" gap={10} className="min-w-0 flex-1">
-                <div className="flex h-12 w-12 items-center justify-center rounded-[10px] bg-[var(--primary-soft)] text-xl"><InboxOutlined /></div>
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[10px] bg-[var(--primary-soft)] text-xl overflow-hidden">
+                  {item.product?.thumbnail ? (
+                    <Image src={item.product.thumbnail} alt={item.product.title} preview={false} className="h-full w-full object-cover" />
+                  ) : (
+                    <InboxOutlined />
+                  )}
+                </div>
                 <Text ellipsis>{item.product?.title || "Sản phẩm"}</Text>
               </Flex>
               <Text type="secondary">x{item.quantity}</Text>

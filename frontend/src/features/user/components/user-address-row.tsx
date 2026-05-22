@@ -11,12 +11,24 @@ type UserAddressRowProps = {
 };
 
 export const UserAddressRow = ({ address, onEdit, onToggleDefault, onDelete }: UserAddressRowProps) => {
+  const formattedAddress = [address.addressLine, address.ward, address.province]
+    .filter(Boolean)
+    .join(", ");
+
   return (
-    <Flex align="center" justify="space-between" gap={12} className="border-b border-[var(--border-light)] py-[14px]">
-      <Text className="flex-1 text-sm">
-        {address.mainAddress}
-        {address.isDefault && <Tag color="purple" className="ml-2">Mặc định</Tag>}
-      </Text>
+    <Flex align="flex-start" justify="space-between" gap={12} className="border-b border-[var(--border-light)] py-[14px]">
+      <div className="flex-1">
+        <div>
+          <Text className="font-medium">{address.fullName}</Text>
+          {address.isDefault && <Tag color="purple" className="ml-2">Mặc định</Tag>}
+        </div>
+        <div className="mt-1">
+          <Text type="secondary" className="text-sm">{address.phone}</Text>
+        </div>
+        <div className="mt-1">
+          <Text className="text-sm">{formattedAddress}</Text>
+        </div>
+      </div>
 
       <Flex gap={10} align="center" className="shrink-0">
         <Switch size="small" checked={address.isDefault} onChange={(value) => onToggleDefault(address.idAddress, value)} />

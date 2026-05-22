@@ -27,7 +27,13 @@ test.describe("Backend feature parity flows", () => {
     expect(login.status()).toBe(200);
 
     const createAddress = await request.post(`/api/v1/user/${userId}/address`, {
-      data: { mainAddress: "123 Test Street" },
+      data: {
+        fullName: `User ${id}`,
+        phone: "0912345678",
+        province: "TP.HCM",
+        ward: "Quận 1",
+        addressLine: "123 Test Street",
+      },
     });
     expect(createAddress.status()).toBe(201);
 
