@@ -1,7 +1,7 @@
 import { CheckCircleOutlined } from "@ant-design/icons";
 import { Button, Card, Descriptions, Result, Skeleton, Space, Typography } from "antd";
 import { useNavigate } from "react-router-dom";
-import { purchaseStatusMap } from "../../user/types/user.types";
+import { purchasePaymentStatusMap, purchaseProcessStatusMap } from "../../user/constants/purchase-status";
 import { useCheckoutSuccess } from "../hooks/use-checkout-success";
 
 const { Text } = Typography;
@@ -11,8 +11,10 @@ export const CheckoutSuccessPage = () => {
   const { orderId, query } = useCheckoutSuccess();
 
   const data = (query.data || {}) as Record<string, unknown>;
-  const rawStatus = String(data.status || "pending");
-  const status = purchaseStatusMap[rawStatus]?.label || rawStatus;
+  const rawProcessStatus = String(data.status || "pending_confirm");
+  const rawPaymentStatus = String(data.paymentStatus || "unpaid");
+  const processStatus = purchaseProcessStatusMap[rawProcessStatus]?.label || rawProcessStatus;
+  const paymentStatus = purchasePaymentStatusMap[rawPaymentStatus]?.label || rawPaymentStatus;
 
   if (query.isPending) {
     return (
@@ -29,7 +31,7 @@ export const CheckoutSuccessPage = () => {
     { key: "fullName", label: "Người nhận", value: String(data.fullName || "") },
     { key: "phone", label: "SĐT", value: String(data.phone || "") },
     { key: "address", label: "Địa chỉ", value: String(data.address || "") },
-    { key: "status", label: "Trạng thái", value: status },
+    { key: "status", label: "Trạng thái", value: `${paymentStatus} · ${processStatus}` },
   ];
 
   return (

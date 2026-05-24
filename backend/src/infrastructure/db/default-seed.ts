@@ -356,7 +356,7 @@ const seedDemoCartsAndOrders = async () => {
       });
     }
 
-    const statusCycle: OrderStatus[] = ["pending", "processing", "completed"];
+    const statusCycle: OrderStatus[] = ["pending_confirm", "ready_to_pick", "delivered"];
     const order = await prisma.order.create({
       data: {
         userId: user.id,
@@ -364,6 +364,7 @@ const seedDemoCartsAndOrders = async () => {
         phone: user.phone || "0900000000",
         address: `Địa chỉ giao hàng mẫu của ${user.fullName}`,
         status: statusCycle[i % statusCycle.length],
+        paymentStatus: i % 2 === 0 ? "unpaid" : "paid",
       },
     });
 

@@ -1,23 +1,33 @@
 import { InboxOutlined } from "@ant-design/icons";
-import { Card, Flex, List, Tag, Typography, Image } from "antd";
+import { Button, Card, Flex, List, Popconfirm, Tag, Typography, Image } from "antd";
 import { Price } from "../../../shared/components/price";
-import { purchaseStatusMap, type UserPurchase } from "../types/user.types";
+import { purchasePaymentStatusMap, purchaseProcessStatusMap } from "../constants/purchase-status";
+import type { UserPurchase } from "../types/user.types";
 
 const { Text } = Typography;
 
 type UserPurchaseCardProps = {
   order: UserPurchase;
+  onCancel?: () => void;
+  isCancelling?: boolean;
 };
 
-export const UserPurchaseCard = ({ order }: UserPurchaseCardProps) => {
-  const status = purchaseStatusMap[order.status] || { color: "default", label: order.status };
+export const UserPurchaseCard = ({ order, onCancel, isCancelling }: UserPurchaseCardProps) => {
+  const processStatus = purchaseProcessStatusMap[order.status] || { color: "default", label: order.status };
+  const paymentStatus = order.paymentStatus
+    ? purchasePaymentStatusMap[order.paymentStatus] || { color: "default", label: order.paymentStatus }
+    : null;
   const total = order.items.reduce((sum, item) => sum + item.price * item.quantity * (1 - item.discountPercentage / 100), 0);
+  const canCancel = order.status === "pending_confirm" && order.paymentStatus !== "paid";
 
   return (
     <Card className="mb-3" styles={{ body: { padding: 0 } }}>
       <Flex justify="space-between" className="border-b border-[var(--border-light)] px-5 py-2.5">
         <Text type="secondary" className="text-[13px]">#{order.id.slice(0, 8).toUpperCase()}</Text>
-        <Tag color={status.color}>{status.label}</Tag>
+        <Flex align="center" gap={8}>
+          {paymentStatus && <Tag color={paymentStatus.color}>{paymentStatus.label}</Tag>}
+          <Tag color={processStatus.color}>{processStatus.label}</Tag>
+        </Flex>
       </Flex>
 
       <List
@@ -43,9 +53,27 @@ export const UserPurchaseCard = ({ order }: UserPurchaseCardProps) => {
         )}
       />
 
-      <Flex justify="end" align="center" gap={8} className="bg-[var(--primary-soft)] px-5 py-3">
-        <Text type="secondary" className="text-[13px]">Thành tiền:</Text>
-        <Price value={Math.floor(total)} size="lg" />
+      <Flex justify="space-between" align="center" className="bg-[var(--primary-soft)] px-5 py-3">
+        {canCancel ? (
+          <Popconfirm
+            title="Hủy đơn hàng"
+            description="Bạn có chắc muốn hủy đơn hàng này không?"
+            okText="Xác nhận hủy"
+            cancelText="Không"
+            okButtonProps={{ danger: true }}
+            onConfirm={onCancel}
+          >
+            <Button size="small" danger loading={isCancelling}>
+              Hủy đơn
+            </Button>
+          </Popconfirm>
+        ) : (
+          <span />
+        )}
+        <Flex align="center" gap={8}>
+          <Text type="secondary" className="text-[13px]">Thành tiền:</Text>
+          <Price value={Math.floor(total)} size="lg" />
+        </Flex>
       </Flex>
     </Card>
   );

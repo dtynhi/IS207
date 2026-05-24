@@ -35,3 +35,11 @@ bun.lockb
 /data
 backend/.env
 frontend/.env
+
+_bmad/
+_bmad-output/
+.agents/
+.claude/
+.github/
+diary/
+.agents/

@@ -53,3 +53,8 @@ export const getUserPurchaseApi = async (userId: string, page = 1, limit = 10) =
     meta: response.data.meta,
   };
 };
+
+export const cancelOrderApi = async (orderId: string, userId: string) => {
+  const response = await apiClient.post<ApiSuccessResponse<{ cancelled: boolean }>>(`/orders/${orderId}/cancel`, { userId });
+  return response.data.data;
+};

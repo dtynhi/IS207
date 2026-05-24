@@ -9,6 +9,7 @@ import { AdminMyAccountPage } from "../features/admin/pages/admin-my-account-pag
 import { AdminProductsPage } from "../features/admin/pages/admin-products-page";
 import { AdminRolesPage } from "../features/admin/pages/admin-roles-page";
 import { AdminSettingsPage } from "../features/admin/pages/admin-settings-page";
+import { AdminOrdersPage } from "../features/admin/pages/admin-orders-page";
 import { ForgotPasswordPage } from "../features/auth/pages/forgot-password-page";
 import { LoginPage } from "../features/auth/pages/login-page";
 import { OtpPage } from "../features/auth/pages/otp-page";
@@ -62,6 +63,7 @@ export const router = createBrowserRouter([
       { path: "dashboard", element: <AdminDashboardPage /> },
       { path: "products", element: <AdminProductsPage /> },
       { path: "categories", element: <AdminCategoriesPage /> },
+      { path: "orders", element: <AdminOrdersPage /> },
       { path: "roles", element: <AdminRolesPage /> },
       { path: "accounts", element: <AdminAccountsPage /> },
       { path: "my-account", element: <AdminMyAccountPage /> },

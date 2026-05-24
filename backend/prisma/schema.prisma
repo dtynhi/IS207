@@ -13,10 +13,22 @@ enum RecordStatus {
 }
 
 enum OrderStatus {
-  pending
-  processing
-  completed
+  pending_confirm
+  ready_to_pick
+  ready_to_ship
+  delivered
+  returned
   cancelled
+}
+
+enum PaymentStatus {
+  unpaid
+  paid
+}
+
+enum PaymentMethod {
+  COD
+  BANK_TRANSFER
 }
 
 model Role {
@@ -46,7 +58,9 @@ model Account {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  role        Role?    @relation(fields: [roleId], references: [id])
+  role           Role?    @relation(fields: [roleId], references: [id])
+  assignedOrders Order[]  @relation("OrderAssignee")
+  returnLogs     ReturnLog[]
 }
 
 model User {
@@ -81,7 +95,7 @@ model ProductCategory {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  parent      ProductCategory? @relation("CategoryTree", fields: [parentId], references: [id])
+  parent      ProductCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
   children    ProductCategory[] @relation("CategoryTree")
   products    Product[]
 }
@@ -128,29 +142,63 @@ model Cart {
 }
 
 model Order {
-  id          String   @id @default(cuid())
-  userId      String?
-  fullName    String
-  phone       String
-  address     String
-  status      OrderStatus @default(pending)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                  String        @id @default(cuid())
+  userId              String?
+  fullName            String
+  phone               String
+  address             String
+  status              OrderStatus   @default(pending_confirm)
+  paymentStatus       PaymentStatus @default(unpaid)
+  paymentMethod       PaymentMethod @default(COD)
+  assignedToAccountId String?
+  assignedAt          DateTime?
+  lockVersion         Int           @default(0)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 
-  user        User?    @relation(fields: [userId], references: [id])
-  items       OrderItem[]
+  user              User?     @relation(fields: [userId], references: [id])
+  assignedToAccount Account?  @relation("OrderAssignee", fields: [assignedToAccountId], references: [id])
+  items             OrderItem[]
+  statusLogs        OrderStatusLog[]
+  returnLog         ReturnLog?
 }
 
 model OrderItem {
-  id          String   @id @default(cuid())
-  orderId     String
-  productId   String
-  price       Int
-  discountPercentage Int @default(0)
-  quantity    Int      @default(1)
+  id                 String @id @default(cuid())
+  orderId            String
+  productId          String
+  price              Int
+  discountPercentage Int    @default(0)
+  quantity           Int    @default(1)
 
-  order       Order    @relation(fields: [orderId], references: [id])
-  product     Product  @relation(fields: [productId], references: [id])
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model OrderStatusLog {
+  id         String       @id @default(cuid())
+  orderId    String
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  reason     String?
+  actorType  String?
+  actorId    String?
+  createdAt  DateTime     @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+}
+
+model ReturnLog {
+  id                  String   @id @default(cuid())
+  orderId             String   @unique
+  result              String
+  reason              String?
+  restocked           Boolean  @default(false)
+  processedByAccountId String?
+  processedAt         DateTime @default(now())
+
+  order             Order    @relation(fields: [orderId], references: [id])
+  processedByAccount Account? @relation(fields: [processedByAccountId], references: [id])
 }
 
 model SettingGeneral {
@@ -166,9 +214,9 @@ model SettingGeneral {
 }
 
 model ForgotPassword {
-  id          String   @id @default(cuid())
-  email       String
-  otp         String
-  expireAt    DateTime
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  email     String
+  otp       String
+  expireAt  DateTime
+  createdAt DateTime @default(now())
 }

@@ -7,6 +7,7 @@ import {
   LogoutOutlined,
   SettingOutlined,
   ShopOutlined,
+  ShoppingCartOutlined,
   TeamOutlined,
   UserOutlined,
   FireOutlined,//icon ngọn lửa
@@ -35,6 +36,7 @@ export const AdminLayout = () => {
     { key: "/admin/dashboard", label: <Link to="/admin/dashboard">Dashboard</Link>, icon: <DashboardOutlined /> },
     { key: "/admin/products", label: <Link to="/admin/products">Sản phẩm</Link>, icon: <ShopOutlined /> },
     { key: "/admin/categories", label: <Link to="/admin/categories">Danh mục</Link>, icon: <FolderOpenOutlined /> },
+    { key: "/admin/orders", label: <Link to="/admin/orders">Đơn hàng</Link>, icon: <ShoppingCartOutlined /> },
     { key: "/admin/flash-sale", label: <Link to="/admin/flash-sale">Khuyến mãi</Link>, icon: <FireOutlined /> },//Thêm menu khuyến mãi
     { key: "/admin/roles", label: <Link to="/admin/roles">Vai trò</Link>, icon: <LockOutlined /> },
     { key: "/admin/accounts", label: <Link to="/admin/accounts">Tài khoản</Link>, icon: <TeamOutlined /> },

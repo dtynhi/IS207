@@ -130,3 +130,35 @@ export const updateAdminSettingsApi = async (payload: Record<string, unknown>) =
   const response = await apiClient.patch<ApiSuccessResponse<unknown>>("/admin/settings/general", payload);
   return response.data.data;
 };
+
+export const listAdminOrdersApi = async (params: Record<string, unknown>) => {
+  const response = await apiClient.get<ApiSuccessResponse<unknown[]>>("/admin/orders", { params });
+  return toList(response.data);
+};
+
+export const getAdminOrderDetailApi = async (id: string) => {
+  const response = await apiClient.get<ApiSuccessResponse<unknown>>(`/admin/orders/${id}`);
+  return response.data.data;
+};
+
+export const claimAdminOrderApi = async (id: string) => {
+  const response = await apiClient.post<ApiSuccessResponse<unknown>>(`/admin/orders/${id}/claim`);
+  return response.data.data;
+};
+
+export const releaseAdminOrderApi = async (id: string) => {
+  const response = await apiClient.post<ApiSuccessResponse<unknown>>(`/admin/orders/${id}/release`);
+  return response.data.data;
+};
+
+export const updateAdminOrderStatusApi = async (
+  id: string,
+  payload: {
+    status: "pending_confirm" | "ready_to_pick" | "ready_to_ship" | "delivered" | "returned" | "cancelled";
+    reason?: string;
+    lockVersion: number;
+  }
+) => {
+  const response = await apiClient.patch<ApiSuccessResponse<unknown>>(`/admin/orders/${id}/status`, payload);
+  return response.data.data;
+};

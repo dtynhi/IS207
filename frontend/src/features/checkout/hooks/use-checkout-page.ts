@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import { useRef } from "react";
 import { message } from "antd";
 import { useNavigate } from "react-router-dom";
@@ -6,6 +7,7 @@ import { getUserId } from "../../../shared/session/storage";
 import { getCartApi } from "../../cart/api/cart.api";
 import { createCheckoutOrderApi } from "../api/checkout.api";
 import type { CheckoutFormValues } from "../types/checkout.types";
+import type { ApiErrorResponse } from "../../../shared/api/types";
 
 export const useCheckoutPage = () => {
   const navigate = useNavigate();
@@ -35,7 +37,21 @@ export const useCheckoutPage = () => {
         navigate(`/checkout/success/${data.id}`);
       }
     },
-    onError: () => api.error("Đặt hàng thất bại"),
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        const payload = error.response?.data as ApiErrorResponse | undefined;
+        const code = payload?.error?.code;
+        if (code === "OUT_OF_STOCK") {
+          api.error("Sản phẩm đã hết hàng.");
+          return;
+        }
+        if (code === "PRODUCT_NOT_FOUND") {
+          api.error("Sản phẩm không còn tồn tại.");
+          return;
+        }
+      }
+      api.error("Đặt hàng thất bại");
+    },
   });
 
   const submitOrder = (values: CheckoutFormValues) => {

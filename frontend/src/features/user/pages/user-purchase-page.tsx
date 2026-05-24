@@ -4,7 +4,7 @@ import { UserSidebar } from "../components/user-sidebar";
 import { useUserPurchase } from "../hooks/use-user-purchase";
 
 export const UserPurchasePage = () => {
-  const { purchases } = useUserPurchase();
+  const { purchases, cancelOrder } = useUserPurchase();
   const items = purchases.data?.items || [];
 
   return (
@@ -17,7 +17,12 @@ export const UserPurchasePage = () => {
         </Card>
 
         {items.map((order) => (
-          <UserPurchaseCard key={order.id} order={order} />
+          <UserPurchaseCard
+            key={order.id}
+            order={order}
+            onCancel={() => cancelOrder.mutate(order.id)}
+            isCancelling={cancelOrder.isPending && cancelOrder.variables === order.id}
+          />
         ))}
       </div>
     </div>
