@@ -111,3 +111,50 @@ export type AdminSettingsFormValues = {
   address?: string;
   copyright?: string;
 };
+
+export type AdminOrderItemRow = {
+  id: string;
+  productId: string;
+  price: number;
+  discountPercentage: number;
+  quantity: number;
+  product?: {
+    id: string;
+    title: string;
+    slug?: string;
+    thumbnail?: string;
+  };
+};
+
+export type AdminOrderStatusLog = {
+  id: string;
+  fromStatus?: "pending_confirm" | "ready_to_pick" | "ready_to_ship" | "delivered" | "returned" | "cancelled";
+  toStatus: "pending_confirm" | "ready_to_pick" | "ready_to_ship" | "delivered" | "returned" | "cancelled";
+  reason?: string;
+  createdAt: string;
+  changedByAccount?: {
+    id: string;
+    fullName?: string;
+    email?: string;
+  };
+};
+
+export type AdminOrderRow = {
+  id: string;
+  fullName: string;
+  phone: string;
+  address: string;
+  status: "pending_confirm" | "ready_to_pick" | "ready_to_ship" | "delivered" | "returned" | "cancelled";
+  paymentStatus: "unpaid" | "paid";
+  lockVersion: number;
+  assignedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  assignedToAccount?: {
+    id: string;
+    fullName?: string;
+    email?: string;
+  };
+  items: AdminOrderItemRow[];
+  statusLogs?: AdminOrderStatusLog[];
+};
