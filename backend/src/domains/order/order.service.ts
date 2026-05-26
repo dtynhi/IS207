@@ -410,6 +410,15 @@ export const createReturnRequest = async (payload: {
       },
     });
 
+    await createStatusLog(tx, {
+      orderId: payload.orderId,
+      fromStatus: order.status as OrderStatus,
+      toStatus: order.status as OrderStatus,
+      actorType: "customer",
+      actorId: payload.userId,
+      reason: "Yêu cầu hoàn hàng",
+    });
+
     return { ok: true as const, request };
   });
 };
@@ -454,6 +463,28 @@ export const reviewReturnRequest = async (payload: {
         orderId: request.order.id,
         fromStatus: request.order.status as OrderStatus,
         toStatus: "awaiting_return",
+        actorType: "admin",
+        actorId: payload.adminId,
+        reason: payload.reviewReason,
+      });
+    } else {
+      if (!isTransitionAllowed(request.order.status as OrderStatus, "completed")) {
+        return { error: "INVALID_TRANSITION" as const };
+      }
+
+      const updated = await tx.order.updateMany({
+        where: { id: request.order.id, lockVersion: payload.lockVersion },
+        data: { status: "completed", completedAt: new Date(), lockVersion: { increment: 1 } },
+      });
+
+      if (updated.count === 0) {
+        return { error: "CONFLICT" as const, currentVersion: request.order.lockVersion };
+      }
+
+      await createStatusLog(tx, {
+        orderId: request.order.id,
+        fromStatus: request.order.status as OrderStatus,
+        toStatus: "completed",
         actorType: "admin",
         actorId: payload.adminId,
         reason: payload.reviewReason,
@@ -566,12 +597,44 @@ export const listAdminOrders = async (params: {
         assignedToAccount: {
           select: { id: true, fullName: true, email: true },
         },
+        returnRequest: true,
       },
     }),
     prisma.order.count({ where }),
   ]);
 
-  return { items, meta: toPaginationMeta(params, totalItems) };
+  let normalizedItems = items;
+  const rejectedOrders = items.filter(
+    (order) => order.returnRequest?.status === "rejected" && order.status !== "completed"
+  );
+
+  if (rejectedOrders.length > 0) {
+    const completedAt = new Date();
+    await prisma.$transaction(async (tx) => {
+      for (const order of rejectedOrders) {
+        await tx.order.update({
+          where: { id: order.id },
+          data: { status: "completed", completedAt, lockVersion: { increment: 1 } },
+        });
+
+        await createStatusLog(tx, {
+          orderId: order.id,
+          fromStatus: order.status as OrderStatus,
+          toStatus: "completed",
+          actorType: "system",
+          reason: "Auto complete after return request rejected",
+        });
+      }
+    });
+
+    normalizedItems = items.map((order) =>
+      order.returnRequest?.status === "rejected" && order.status !== "completed"
+        ? { ...order, status: "completed", completedAt }
+        : order
+    );
+  }
+
+  return { items: normalizedItems, meta: toPaginationMeta(params, totalItems) };
 };
 
 export const getAdminOrderDetail = async (id: string) => {
