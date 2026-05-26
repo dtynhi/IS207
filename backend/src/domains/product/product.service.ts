@@ -1,17 +1,6 @@
 import { prisma } from "../../infrastructure/db/prisma.client";
 import { getSearchValue, toPaginationMeta, toSkipTake, toSort } from "../../shared/query/query-utils";
 import type { ProductQueryParams } from "./product.query";
-// import { generateSeedFromDb } from "../../infrastructure/db/generate-seed";
-
-// Helper để trigger seed generation không block request
-// const triggerSeedUpdate = async () => {
-//   try {
-//     await generateSeedFromDb();
-//   } catch (error) {
-//     // Silent fail - log only
-//     console.error("[product-service] Lỗi update seed:", error);
-//   }
-// };
 
 export const listProducts = async (
   params: ProductQueryParams,
@@ -102,7 +91,7 @@ export const createProduct = async (payload: {
   thumbnail?: string;
   brand?: string;
 }) => {
-  const product = await prisma.product.create({
+  return prisma.product.create({
     data: {
       title: payload.title,
       price: payload.price,
@@ -121,44 +110,25 @@ export const createProduct = async (payload: {
       brand: payload.brand,
     },
   });
-
-  // Tự động update seed (async, không block)
-  // triggerSeedUpdate();
-
-  return product;
 };
 
 export const updateProduct = async (id: string, payload: Record<string, unknown>) => {
-  
-  //TUYỆT CHIÊU CHẶN ĐẦU: Tạo một bản sao dữ liệu để xử lý an toàn
   const safePayload = { ...payload };
 
-
-  // Kiểm tra xem trong các trường gửi lên có 'discountPercentage' không
   if ('discountPercentage' in safePayload) {
     const value = safePayload.discountPercentage;
-    
-    // Nếu giá trị gửi xuống là null, undefined, chuỗi rỗng hoặc số 0
     if (value === null || value === undefined || value === "" || value === 0) {
-      safePayload.discountPercentage = 0; // Ép chết về số 0 để tắt Flash Sale an toàn
+      safePayload.discountPercentage = 0;
     } else {
-      safePayload.discountPercentage = Number(value); // Đảm bảo luôn luôn là kiểu dữ liệu Số
+      safePayload.discountPercentage = Number(value);
     }
   }
 
-  // Lưu vào database bằng dữ liệu an toàn đã qua xử lý
-  return prisma.product.update({ 
-    where: { id }, 
-    data: safePayload 
-  });
+  return prisma.product.update({ where: { id }, data: safePayload });
 };
+
 export const updateProductStatus = async (id: string, status: "active" | "inactive") => {
-  const product = await prisma.product.update({ where: { id }, data: { status } });
-
-  // Tự động update seed (async, không block)
-  // triggerSeedUpdate();
-
-  return product;
+  return prisma.product.update({ where: { id }, data: { status } });
 };
 
 export const changeMultiProducts = async (payload: {
@@ -167,37 +137,17 @@ export const changeMultiProducts = async (payload: {
 }) => {
   if (payload.type === "active" || payload.type === "inactive") {
     const result = await prisma.product.updateMany({
-      where: {
-        id: {
-          in: payload.ids,
-        },
-      },
-      data: {
-        status: payload.type,
-      },
+      where: { id: { in: payload.ids } },
+      data: { status: payload.type },
     });
-
-    // Tự động update seed
-    // triggerSeedUpdate();
-
     return { affected: result.count };
   }
 
   if (payload.type === "delete-all") {
     const result = await prisma.product.updateMany({
-      where: {
-        id: {
-          in: payload.ids,
-        },
-      },
-      data: {
-        deleted: true,
-      },
+      where: { id: { in: payload.ids } },
+      data: { deleted: true },
     });
-
-    // Tự động update seed
-    // triggerSeedUpdate();
-
     return { affected: result.count };
   }
 
@@ -205,107 +155,217 @@ export const changeMultiProducts = async (payload: {
   for (const item of payload.ids) {
     const [id, positionRaw] = item.split("-");
     const position = Number(positionRaw);
-    if (!id || Number.isNaN(position)) {
-      continue;
-    }
-
-    await prisma.product.update({
-      where: {
-        id,
-      },
-      data: {
-        position,
-      },
-    });
-
+    if (!id || Number.isNaN(position)) continue;
+    await prisma.product.update({ where: { id }, data: { position } });
     affected += 1;
   }
-
-  // Tự động update seed
-  // triggerSeedUpdate();
-
   return { affected };
 };
 
 export const deleteProduct = async (id: string, deletedById?: string) => {
-  const product = await prisma.product.update({ where: { id }, data: { deleted: true, deletedById } });
-
-  // Tự động update seed
-  // triggerSeedUpdate();
-
-  return product;
+  return prisma.product.update({ where: { id }, data: { deleted: true, deletedById } });
 };
 
+
 export const createCampaign = async (data: any) => {
-  // Tạo chiến dịch mới
-  const campaign = await prisma.saleCampaign.create({
+ const campaign = await prisma.saleCampaign.create({
     data: {
       name: data.name,
       bannerUrl: data.bannerUrl,
       discount: data.discount,
       startTime: new Date(data.startTime),
       endTime: new Date(data.endTime),
-      isActive: true, 
+      isActive: false, 
     },
   });
 
-  // Áp dụng % giảm giá và gắn mã chiến dịch cho sản phẩm được chọn
   if (data.productIds && data.productIds.length > 0) {
     await prisma.product.updateMany({
       where: { id: { in: data.productIds } },
       data: { 
-        campaignId: campaign.id,
-        discountPercentage: data.discount 
+        campaignId: campaign.id
       },
     });
   } 
   return campaign;
 };
-
 export const getActiveCampaign = async () => {
-  const now = new Date();
-  return prisma.saleCampaign.findMany({
-    // Chỉ lấy chiến dịch đang bật và đang trong thời gian hiệu lực
+ const now = new Date();
+return prisma.saleCampaign.findMany({ 
     where: { 
-      isActive: true,
-     // startTime: { lte: now },
-      //endTime: { gte: now }
+      isActive: true, 
+            startTime: { lte: now }, 
+            endTime: { gt: now }
     },
     orderBy: { createdAt: 'desc' },
     include: { products: true } 
   });
 };
 
-export const deactivateActiveCampaign = async () => {
-  const activeCampaign = await prisma.saleCampaign.findFirst({
-    where: { isActive: true },
+export const deactivateActiveCampaign = async (id: string) => {
+  const campaign = await prisma.saleCampaign.findUnique({ 
+    where: { id } 
   });
-  if (!activeCampaign) return null;
+  
+  if (!campaign) return null;
 
-  // 1. Tắt chiến dịch
-  await prisma.saleCampaign.update({
-    where: { id: activeCampaign.id },
-    data: { isActive: false },
+  const now = new Date();
+
+  await prisma.saleCampaign.update({ 
+    where: { id }, 
+    data: { 
+      isActive: false,
+      endTime: now 
+    } 
   });
 
-  // 2. Trả giá sản phẩm về nguyên gốc
   await prisma.product.updateMany({
-    where: { campaignId: activeCampaign.id },
+    where: { campaignId: id },
     data: { discountPercentage: 0, campaignId: null },
   });
-
-  return activeCampaign;
+  return true;
 };
 
 export const getAllCampaigns = async () => {
-  return prisma.saleCampaign.findMany({
-    orderBy: { createdAt: 'desc' },
-  });
+  return prisma.saleCampaign.findMany({ orderBy: { createdAt: "desc" } });
 };
 
 export const getCampaignById = async (id: string) => {
-  return prisma.saleCampaign.findUnique({
-    where: { id },
+  return prisma.saleCampaign.findUnique({ where: { id }, include: { products: true } });
+};
+
+export const getActiveFlashSale = async () => {
+  const now = new Date(); 
+
+  return prisma.dailyFlashSale.findFirst({
+    where: { 
+      status: "ONGOING",
+      endTime: { gt: now } 
+    },
+    include: {
+      products: { where: { status: "active", deleted: false } },
+    },
+    orderBy: { startTime: "asc" },
+  });
+};
+export const getFlashSaleSessions = async () => {
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+
+  return prisma.dailyFlashSale.findMany({
+    where: {
+      startTime: { gte: startOfDay, lte: endOfDay },
+    },
+    include: {
+      products: { where: { status: "active", deleted: false } },
+    },
+    orderBy: { startTime: "asc" },
+  });
+};
+
+export const getAllFlashSaleAdmin = async () => {
+  return prisma.dailyFlashSale.findMany({
+    include: { products: true },
+    orderBy: { startTime: "desc" },
+  });
+};
+
+export const createFlashSaleSession = async (data: {
+  startTime: string;
+  endTime: string;
+  productIds: string[];
+}) => {
+  const session = await prisma.dailyFlashSale.create({
+    data: {
+      startTime: new Date(data.startTime),
+      endTime: new Date(data.endTime),
+      status: "UPCOMING",
+    },
+  });
+
+  if (data.productIds && data.productIds.length > 0) {
+    for (const productId of data.productIds) {
+      // Công thức tạo số ngẫu nhiên từ 10 đến 20
+      const randomDiscount = Math.floor(Math.random() * 11) + 10; 
+      
+      await prisma.product.update({
+        where: { id: productId },
+        data: { 
+          dailyFlashSaleId: session.id, 
+          discountPercentage: randomDiscount 
+        },
+      });
+    }
+  }
+
+  return prisma.dailyFlashSale.findUnique({
+    where: { id: session.id },
     include: { products: true }
   });
+};
+export const updateFlashSaleStatus = async (
+  id: string,
+  status: "UPCOMING" | "ONGOING" | "ENDED"
+) => {
+  return prisma.dailyFlashSale.update({
+    where: { id },
+    data: { status },
+    include: { products: true },
+  });
+};
+
+export const deleteFlashSaleSession = async (id: string) => {
+  // Tháo liên kết products
+  await prisma.product.updateMany({
+    where: { dailyFlashSaleId: id },
+    data: { dailyFlashSaleId: null },
+  });
+
+  return prisma.dailyFlashSale.delete({ where: { id } });
+};
+
+export const syncFlashSaleStatuses = async () => {
+  const now = new Date();
+
+  try {
+    await prisma.dailyFlashSale.updateMany({
+      where: {
+        status: "UPCOMING",
+        startTime: { lte: now },
+        endTime: { gt: now },
+      },
+      data: { status: "ONGOING" },
+    });
+
+    const endedSessions = await prisma.dailyFlashSale.findMany({
+      where: {
+        status: "ONGOING",
+        endTime: { lte: now },
+      },
+      include: { products: true }
+    });
+
+    for (const session of endedSessions) {
+      await prisma.dailyFlashSale.update({
+        where: { id: session.id },
+        data: { status: "ENDED" },
+      });
+
+      if (session.products && session.products.length > 0) {
+        const productIds = session.products.map(p => p.id);
+        await prisma.product.updateMany({
+          where: { id: { in: productIds } },
+          data: { 
+            discountPercentage: 0, 
+            dailyFlashSaleId: null 
+          }
+        });
+      }
+      console.log(`[FlashSale] Đã TẮT TỰ ĐỘNG ca Sale ${session.id} và khôi phục giá gốc!`);
+    }
+  } catch (error) {
+    console.error("[FlashSale] Lỗi khi đồng bộ trạng thái:", error);
+  }
 };
