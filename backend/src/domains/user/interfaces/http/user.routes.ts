@@ -6,6 +6,7 @@ import {
   createUserAddress,
   deleteUserAddress,
   getUserProfile,
+  getUserWallet,
   listUserAddresses,
   listUserPurchases,
   updateUserAddress,
@@ -136,6 +137,17 @@ router.get("/user/:id/purchase", async (req, res, next) => {
     const params = baseQueryParamsSchema.parse(req.query);
     const result = await listUserPurchases(userId, params);
     return sendSuccess(res, result.items, { meta: result.meta });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/user/:id/wallet", async (req, res, next) => {
+  try {
+    const userId = z.string().parse(req.params.id);
+    const wallet = await getUserWallet(userId);
+    if (!wallet) return sendError(res, 404, "USER_NOT_FOUND", "User not found");
+    return sendSuccess(res, wallet);
   } catch (error) {
     next(error);
   }

@@ -17,8 +17,10 @@ enum OrderStatus {
   ready_to_pick
   ready_to_ship
   delivered
+  awaiting_return
   returned
   cancelled
+  completed
 }
 
 enum PaymentStatus {
@@ -29,6 +31,28 @@ enum PaymentStatus {
 enum PaymentMethod {
   COD
   BANK_TRANSFER
+}
+
+enum WalletTransactionType {
+  credit
+  debit
+}
+
+enum RefundEventType {
+  cancel_refund
+  return_refund
+}
+
+enum RefundRequestStatus {
+  pending
+  completed
+  failed
+}
+
+enum ReturnRequestStatus {
+  pending
+  approved
+  rejected
 }
 
 model Role {
@@ -61,6 +85,7 @@ model Account {
   role           Role?    @relation(fields: [roleId], references: [id])
   assignedOrders Order[]  @relation("OrderAssignee")
   returnLogs     ReturnLog[]
+  reviewedReturnRequests ReturnRequest[] @relation("ReturnRequestReviewer")
 }
 
 model User {
@@ -80,6 +105,8 @@ model User {
 
   carts       Cart[]
   orders      Order[]
+  wallet      Wallet?
+  returnRequests ReturnRequest[]
 }
 
 model ProductCategory {
@@ -153,6 +180,8 @@ model Order {
   assignedToAccountId String?
   assignedAt          DateTime?
   lockVersion         Int           @default(0)
+  deliveredAt         DateTime?
+  completedAt         DateTime?
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
@@ -161,6 +190,9 @@ model Order {
   items             OrderItem[]
   statusLogs        OrderStatusLog[]
   returnLog         ReturnLog?
+  returnRequest     ReturnRequest?
+  refundRequests    RefundRequest[]
+  walletTransactions WalletTransaction[]
 }
 
 model OrderItem {
@@ -199,6 +231,61 @@ model ReturnLog {
 
   order             Order    @relation(fields: [orderId], references: [id])
   processedByAccount Account? @relation(fields: [processedByAccountId], references: [id])
+}
+
+model ReturnRequest {
+  id                   String             @id @default(cuid())
+  orderId              String             @unique
+  userId               String
+  reason               String
+  description          String?
+  mediaUrls            Json?
+  status               ReturnRequestStatus @default(pending)
+  reviewedByAccountId  String?
+  reviewedAt           DateTime?
+  reviewReason         String?
+  createdAt            DateTime           @default(now())
+
+  order              Order   @relation(fields: [orderId], references: [id])
+  user               User    @relation(fields: [userId], references: [id])
+  reviewedByAccount  Account? @relation("ReturnRequestReviewer", fields: [reviewedByAccountId], references: [id])
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  balance   Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User                 @relation(fields: [userId], references: [id])
+  transactions WalletTransaction[]
+}
+
+model WalletTransaction {
+  id        String                @id @default(cuid())
+  walletId  String
+  orderId   String?
+  type      WalletTransactionType
+  amount    Int
+  reason    String?
+  createdAt DateTime              @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id])
+  order  Order?  @relation(fields: [orderId], references: [id])
+}
+
+model RefundRequest {
+  id             String              @id @default(cuid())
+  orderId        String
+  eventType      RefundEventType
+  amount         Int
+  status         RefundRequestStatus @default(pending)
+  idempotencyKey String              @unique
+  createdAt      DateTime            @default(now())
+  completedAt    DateTime?
+
+  order Order @relation(fields: [orderId], references: [id])
 }
 
 model SettingGeneral {

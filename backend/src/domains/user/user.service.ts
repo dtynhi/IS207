@@ -247,12 +247,35 @@ export const deleteUserAddress = async (userId: string, addressId: string) => {
   return { ok: true as const };
 };
 
+export const getUserWallet = async (userId: string) => {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, deleted: true } });
+  if (!user || user.deleted) return null;
+
+  const wallet = await prisma.wallet.findUnique({
+    where: { userId },
+    include: {
+      transactions: {
+        orderBy: { createdAt: "desc" },
+        take: 50,
+      },
+    },
+  });
+
+  if (wallet) return wallet;
+
+  return prisma.wallet.create({
+    data: { userId },
+    include: { transactions: true },
+  });
+};
+
 export const listUserPurchases = async (userId: string, params: BaseQueryParams) => {
   const { skip, take } = toSkipTake(params);
 
   const where = {
     userId,
   };
+
 
   const [items, totalItems] = await Promise.all([
     prisma.order.findMany({
@@ -275,13 +298,38 @@ export const listUserPurchases = async (userId: string, params: BaseQueryParams)
             },
           },
         },
+        statusLogs: {
+          orderBy: { createdAt: "desc" },
+          take: 5,
+        },
       },
     }),
     prisma.order.count({ where }),
   ]);
 
+  const normalized = items.map((order) => {
+    const cancellationReason =
+      order.statusLogs.find((log) => log.toStatus === "cancelled")?.reason || undefined;
+
+    if (order.status !== "completed") {
+      return {
+        ...order,
+        cancellationReason: order.status === "cancelled" ? cancellationReason : undefined,
+      };
+    }
+
+    const lastPublicLog = order.statusLogs.find((log) => log.toStatus !== "completed");
+    const publicStatus = lastPublicLog?.toStatus || order.status;
+
+    return {
+      ...order,
+      status: publicStatus,
+      cancellationReason: publicStatus === "cancelled" ? cancellationReason : undefined,
+    };
+  });
+
   return {
-    items,
+    items: normalized,
     meta: toPaginationMeta(params, totalItems),
   };
 };
