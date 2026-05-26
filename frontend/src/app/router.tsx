@@ -29,6 +29,7 @@ import { UserPurchasePage } from "../features/user/pages/user-purchase-page";
 import { UserWalletPage } from "../features/user/pages/user-wallet-page";
 import { FlashSalePage } from "../features/flash-sale/pages/flash-sale-page";
 import { AdminFlashSalePage } from "../features/admin/pages/admin-flash-sale-page";
+import { AdminCampaignsPage } from "../features/admin/pages/admin-campaigns-page";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -71,6 +72,7 @@ export const router = createBrowserRouter([
       { path: "my-account", element: <AdminMyAccountPage /> },
       { path: "settings", element: <AdminSettingsPage /> },
       { path: "flash-sale", element: <AdminFlashSalePage /> },//Thêm route admin flash sale
+      { path: "campaigns", element: <AdminCampaignsPage /> },
     ],
   },
 ]);
