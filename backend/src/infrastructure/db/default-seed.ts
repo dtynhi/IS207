@@ -364,7 +364,7 @@ const seedDemoCartsAndOrders = async () => {
         phone: user.phone || "0900000000",
         address: `Địa chỉ giao hàng mẫu của ${user.fullName}`,
         status: statusCycle[i % statusCycle.length],
-        paymentStatus: i % 2 === 0 ? "unpaid" : "paid",
+        // paymentStatus: i % 2 === 0 ? "unpaid" : "paid",
       },
     });
 

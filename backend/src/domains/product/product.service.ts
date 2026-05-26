@@ -235,3 +235,77 @@ export const deleteProduct = async (id: string, deletedById?: string) => {
 
   return product;
 };
+
+export const createCampaign = async (data: any) => {
+  // Tạo chiến dịch mới
+  const campaign = await prisma.saleCampaign.create({
+    data: {
+      name: data.name,
+      bannerUrl: data.bannerUrl,
+      discount: data.discount,
+      startTime: new Date(data.startTime),
+      endTime: new Date(data.endTime),
+      isActive: true, 
+    },
+  });
+
+  // Áp dụng % giảm giá và gắn mã chiến dịch cho sản phẩm được chọn
+  if (data.productIds && data.productIds.length > 0) {
+    await prisma.product.updateMany({
+      where: { id: { in: data.productIds } },
+      data: { 
+        campaignId: campaign.id,
+        discountPercentage: data.discount 
+      },
+    });
+  } 
+  return campaign;
+};
+
+export const getActiveCampaign = async () => {
+  const now = new Date();
+  return prisma.saleCampaign.findMany({
+    // Chỉ lấy chiến dịch đang bật và đang trong thời gian hiệu lực
+    where: { 
+      isActive: true,
+     // startTime: { lte: now },
+      //endTime: { gte: now }
+    },
+    orderBy: { createdAt: 'desc' },
+    include: { products: true } 
+  });
+};
+
+export const deactivateActiveCampaign = async () => {
+  const activeCampaign = await prisma.saleCampaign.findFirst({
+    where: { isActive: true },
+  });
+  if (!activeCampaign) return null;
+
+  // 1. Tắt chiến dịch
+  await prisma.saleCampaign.update({
+    where: { id: activeCampaign.id },
+    data: { isActive: false },
+  });
+
+  // 2. Trả giá sản phẩm về nguyên gốc
+  await prisma.product.updateMany({
+    where: { campaignId: activeCampaign.id },
+    data: { discountPercentage: 0, campaignId: null },
+  });
+
+  return activeCampaign;
+};
+
+export const getAllCampaigns = async () => {
+  return prisma.saleCampaign.findMany({
+    orderBy: { createdAt: 'desc' },
+  });
+};
+
+export const getCampaignById = async (id: string) => {
+  return prisma.saleCampaign.findUnique({
+    where: { id },
+    include: { products: true }
+  });
+};
