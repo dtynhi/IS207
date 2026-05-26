@@ -36,7 +36,7 @@ const statusLabel: Record<AdminOrderRow["status"], string> = {
   ready_to_ship: "Chờ giao hàng",
   delivered: "Đã giao",
   awaiting_return: "Đợi hoàn hàng",
-  returned: "Trả hàng",
+  returned: "Đã trả hàng",
   cancelled: "Đã hủy",
   completed: "Hoàn thành",
 };
@@ -214,7 +214,7 @@ export const AdminOrdersPage = () => {
               { value: "ready_to_ship", label: "Chờ giao hàng" },
               { value: "delivered", label: "Đã giao" },
               { value: "awaiting_return", label: "Đợi hoàn hàng" },
-              { value: "returned", label: "Trả hàng" },
+              { value: "returned", label: "Đã trả hàng" },
               { value: "cancelled", label: "Đã hủy" },
               { value: "completed", label: "Hoàn thành" },
             ]}
@@ -460,20 +460,25 @@ export const AdminOrdersPage = () => {
             <List<AdminOrderStatusLog>
               dataSource={detail.statusLogs || []}
               locale={{ emptyText: "Chưa có lịch sử" }}
-              renderItem={(log) => (
-                <List.Item>
-                  <Space direction="vertical" size={0}>
-                    <Text>
-                      {log.fromStatus ? statusLabel[log.fromStatus] : "Khởi tạo"} → {statusLabel[log.toStatus]}
-                    </Text>
-                    <Text type="secondary">
-                      {toDisplayDate(log.createdAt)}
-                      {log.changedByAccount?.fullName ? ` · ${log.changedByAccount.fullName}` : ""}
-                    </Text>
-                    {log.reason && <Text type="secondary">Lý do: {log.reason}</Text>}
-                  </Space>
-                </List.Item>
-              )}
+              renderItem={(log) => {
+                const fromLabel = log.fromStatus ? statusLabel[log.fromStatus] : "Khởi tạo";
+                const toLabel = statusLabel[log.toStatus];
+                const hasStatusChange = !log.fromStatus || log.fromStatus !== log.toStatus;
+                const title = hasStatusChange ? `${fromLabel} → ${toLabel}` : log.reason ?? toLabel;
+
+                return (
+                  <List.Item>
+                    <Space direction="vertical" size={0}>
+                      <Text>{title}</Text>
+                      <Text type="secondary">
+                        {toDisplayDate(log.createdAt)}
+                        {log.changedByAccount?.fullName ? ` · ${log.changedByAccount.fullName}` : ""}
+                      </Text>
+                      {hasStatusChange && log.reason && <Text type="secondary">Lý do: {log.reason}</Text>}
+                    </Space>
+                  </List.Item>
+                );
+              }}
             />
           </>
         )}
