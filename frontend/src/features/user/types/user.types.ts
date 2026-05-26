@@ -25,6 +25,7 @@ export type UserPurchase = {
   status: string;
   paymentStatus?: "unpaid" | "paid";
   cancellationReason?: string;
+  returnRequest?: { id: string; status: "pending" | "approved" | "rejected" };
   createdAt: string;
   items: Array<{ quantity: number; price: number; discountPercentage: number; product?: { title: string; thumbnail?: string } }>;
 };

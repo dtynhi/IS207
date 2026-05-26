@@ -38,7 +38,7 @@ const statusLabel: Record<AdminOrderRow["status"], string> = {
   awaiting_return: "Đợi hoàn hàng",
   returned: "Trả hàng",
   cancelled: "Đã hủy",
-  completed: "Hoàn thành (nội bộ)",
+  completed: "Hoàn thành",
 };
 
 const paymentColor: Record<AdminOrderRow["paymentStatus"], string> = {
@@ -216,7 +216,7 @@ export const AdminOrdersPage = () => {
               { value: "awaiting_return", label: "Đợi hoàn hàng" },
               { value: "returned", label: "Trả hàng" },
               { value: "cancelled", label: "Đã hủy" },
-              { value: "completed", label: "Hoàn thành (nội bộ)" },
+              { value: "completed", label: "Hoàn thành" },
             ]}
           />
           <Select
@@ -256,6 +256,22 @@ export const AdminOrdersPage = () => {
                 <Tag color={statusColor[record.status]}>{statusLabel[record.status]}</Tag>
               </Space>
             ),
+          },
+          {
+            title: "Hoàn hàng",
+            render: (_, record) => {
+              if (!record.returnRequest) return "-";
+              if (record.returnRequest.status === "pending") {
+                return <Tag color="gold">Chờ duyệt</Tag>;
+              }
+              if (record.returnRequest.status === "approved") {
+                return <Tag color="green">Đã duyệt</Tag>;
+              }
+              if (record.returnRequest.status === "rejected") {
+                return <Tag color="red">Bị từ chối</Tag>;
+              }
+              return "-";
+            },
           },
           {
             title: "Phụ trách",

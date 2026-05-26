@@ -46,6 +46,17 @@ export const UserPurchaseCard = ({
     setReturnOpen(false);
   };
 
+  const getReturnRequestBadge = () => {
+    if (!order.returnRequest) return null;
+    const statusMap: Record<string, { color: string; label: string }> = {
+      pending: { color: "warning", label: "Chờ duyệt" },
+      approved: { color: "success", label: "Đã duyệt hoàn hàng" },
+      rejected: { color: "error", label: "Bị từ chối" },
+    };
+    const status = statusMap[order.returnRequest.status];
+    return status ? <Tag color={status.color}>{status.label}</Tag> : null;
+  };
+
   return (
     <Card className="mb-3" styles={{ body: { padding: 0 } }}>
       <Flex justify="space-between" className="border-b border-[var(--border-light)] px-5 py-2.5">
@@ -53,6 +64,7 @@ export const UserPurchaseCard = ({
         <Flex align="center" gap={8}>
           {paymentStatus && <Tag color={paymentStatus.color}>{paymentStatus.label}</Tag>}
           <Tag color={processStatus.color}>{processStatus.label}</Tag>
+          {getReturnRequestBadge()}
         </Flex>
       </Flex>
 

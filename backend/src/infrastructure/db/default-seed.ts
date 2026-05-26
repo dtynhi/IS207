@@ -304,8 +304,8 @@ const seedUsers = async () => {
     const normalizedAddresses = user.addresses.map((addr, index) => {
       const normalized = normalizeAddress(addr);
       return {
-        idAddress: `${normalizeSlug(user.email)}-dia-chi-${index + 1}`,
         ...normalized,
+        idAddress: `${normalizeSlug(user.email)}-dia-chi-${index + 1}`,
       };
     });
 
