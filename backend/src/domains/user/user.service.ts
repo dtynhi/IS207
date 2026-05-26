@@ -302,6 +302,7 @@ export const listUserPurchases = async (userId: string, params: BaseQueryParams)
           orderBy: { createdAt: "desc" },
           take: 5,
         },
+        returnRequest: true,
       },
     }),
     prisma.order.count({ where }),

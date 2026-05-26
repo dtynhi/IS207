@@ -103,10 +103,10 @@ export const AdminCampaignsPage = () => {
     }
   };
 
-  const handleStopCampaign = async () => {
+const handleStopCampaign = async (id: string) => {
     try {
       message.loading({ content: 'Đang tắt chiến dịch...', key: 'stop' });
-      await deactivateCampaignApi();
+      await deactivateCampaignApi(id); // Truyền id xuống API
       message.success({ content: "Đã kết thúc chiến dịch sớm thành công!", key: 'stop' });
       
       queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -116,7 +116,6 @@ export const AdminCampaignsPage = () => {
       message.error({ content: error.message || "Không thể tắt chiến dịch!", key: 'stop' });
     }
   };
-
   const campaignColumns = [
     { title: 'Tên chiến dịch', dataIndex: 'name', key: 'name', render: (text: string) => <Text strong>{text}</Text> },
     { 
@@ -138,13 +137,16 @@ export const AdminCampaignsPage = () => {
         const start = new Date(record.startTime);
         const end = new Date(record.endTime);
         
-        if (!record.isActive) return <Tag color="default">Đã bị tắt</Tag>;
-        if (now < start) return <Tag color="blue">Sắp diễn ra</Tag>;
         if (now > end) return <Tag color="default">Đã kết thúc</Tag>;
+        
+        if (now < start) return <Tag color="blue">Sắp diễn ra</Tag>;
+        
+        if (!record.isActive) return <Tag color="red">Đã bị dừng</Tag>;
+        
         return <Tag color="green" className="animate-pulse">Đang chạy</Tag>;
       }
     },
-    {
+{
       title: 'Thao tác',
       key: 'action',
       render: (_:any, record: any) => {
@@ -154,15 +156,15 @@ export const AdminCampaignsPage = () => {
         const isRunning = record.isActive && now >= start && now <= end;
 
         return isRunning ? (
-          <Popconfirm title="Dừng chiến dịch này?" description="Sản phẩm sẽ quay về giá gốc ngay lập tức." onConfirm={handleStopCampaign} okText="Dừng" cancelText="Hủy" okButtonProps={{ danger: true }}>
+          // Đổi đoạn onConfirm thành onConfirm={() => handleStopCampaign(record.id)}
+          <Popconfirm title="Dừng chiến dịch này?" description="Sản phẩm sẽ quay về giá gốc ngay lập tức." onConfirm={() => handleStopCampaign(record.id)} okText="Dừng" cancelText="Hủy" okButtonProps={{ danger: true }}>
             <Button danger size="small" icon={<StopOutlined />}>Dừng ngay</Button>
           </Popconfirm>
         ) : (
           <Text type="secondary">-</Text>
         );
       }
-    }
-  ];
+    }  ];
 
   return (
     <div className="bg-[#f5f5f5] min-h-screen p-6 animate-in">

@@ -148,7 +148,7 @@ model Product {
   deletedById        String?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
-
+  soldCount Int      @default(0)
   productCategory ProductCategory? @relation(fields: [productCategoryId], references: [id])
   carts           Cart[]
   orderItems      OrderItem[]
@@ -157,6 +157,7 @@ model Product {
   dailyFlashSale   DailyFlashSale? @relation(fields: [dailyFlashSaleId], references: [id])
   campaignId       String?
   saleCampaign     SaleCampaign?   @relation(fields: [campaignId], references: [id])
+
 }
 
 model Cart {
@@ -313,7 +314,7 @@ model ForgotPassword {
   createdAt DateTime @default(now())
 }
 
-model SaleCampaign {
+model saleCampaign {
   id        String   @id @default(uuid())
   name      String // Tên sự kiện
   startTime DateTime // Thời gian bắt đầu

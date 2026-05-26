@@ -30,7 +30,8 @@ export const UserPurchaseCard = ({
     : null;
   const total = order.items.reduce((sum, item) => sum + item.price * item.quantity * (1 - item.discountPercentage / 100), 0);
   const canCancel = order.status === "pending_confirm";
-  const canRequestReturn = order.status === "delivered";
+  const hasReturnRequest = Boolean(order.returnRequest);
+  const canRequestReturn = order.status === "delivered" && !hasReturnRequest;
 
   const submitReturn = async () => {
     if (!onRequestReturn) return;
@@ -45,6 +46,18 @@ export const UserPurchaseCard = ({
     returnForm.resetFields();
     setReturnOpen(false);
   };
+
+  const getReturnRequestBadge = () => {
+    if (!order.returnRequest) return null;
+    const statusMap: Record<string, { color: string; label: string }> = {
+      pending: { color: "warning", label: "Chờ duyệt" },
+      approved: { color: "success", label: "Đã duyệt hoàn hàng" },
+      rejected: { color: "error", label: "Bị từ chối" },
+    };
+    const status = statusMap[order.returnRequest.status];
+    return status ? <Tag color={status.color}>{status.label}</Tag> : null;
+  };
+  const returnRequestBadge = hasReturnRequest ? getReturnRequestBadge() : null;
 
   return (
     <Card className="mb-3" styles={{ body: { padding: 0 } }}>
@@ -101,6 +114,7 @@ export const UserPurchaseCard = ({
               </Button>
             </Popconfirm>
           )}
+          {returnRequestBadge}
           {canRequestReturn && (
             <Button size="small" onClick={() => setReturnOpen(true)} loading={isRequestingReturn}>
               Yêu cầu hoàn hàng

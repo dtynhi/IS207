@@ -5,6 +5,7 @@ export type Product = {
   price: number;
   discountPercentage: number;
   stock: number;
+  soldCount: number; 
   thumbnail: string | null;
   slug: string;
   school: string | null;
@@ -12,6 +13,7 @@ export type Product = {
   status: "active" | "inactive";
   productCategoryId: string | null;
   featured: boolean;
+  dailyFlashSaleId: string | null; 
   createdAt: string;
   updatedAt: string;
 };
@@ -32,4 +34,15 @@ export type ProductListParams = {
   minPrice?: number;
   maxPrice?: number;
   flashSale?: boolean;
+};
+
+
+export type FlashSaleStatus = "UPCOMING" | "ONGOING" | "ENDED";
+
+export type FlashSaleSession = {
+  id: string;
+  startTime: string; // ISO datetime
+  endTime: string;   // ISO datetime
+  status: FlashSaleStatus;
+  products: Product[];
 };
