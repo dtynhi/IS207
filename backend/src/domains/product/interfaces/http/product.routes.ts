@@ -11,6 +11,11 @@ import {
   listProducts,
   updateProduct,
   updateProductStatus,
+  createCampaign,
+  getActiveCampaign,
+  deactivateActiveCampaign,
+  getAllCampaigns,
+  getCampaignById
 } from "../../product.service";
 import { productQuerySchema } from "../../product.query";
 
@@ -160,4 +165,48 @@ router.delete("/admin/products/:id", requireAdmin, async (req, res, next) => {
   }
 });
 
+router.post("/admin/campaigns/deactivate", requireAdmin, async (req, res, next) => {
+  try {
+    const result = await deactivateActiveCampaign();
+    return sendSuccess(res, result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/admin/campaigns", requireAdmin, async (req, res, next) => {
+  try {
+    const campaigns = await getAllCampaigns();
+    return sendSuccess(res, campaigns);
+  } catch (error) {
+    next(error);
+  }
+});
+router.get("/campaigns/active", async (req, res, next) => {
+  try {
+    const campaign = await getActiveCampaign();
+    return sendSuccess(res, campaign);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/campaigns/:id", async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const campaign = await getCampaignById(id);
+    return sendSuccess(res, campaign);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/admin/campaigns", requireAdmin, async (req, res, next) => {
+  try {
+    const newCampaign = await createCampaign(req.body);
+    return sendSuccess(res, newCampaign, { statusCode: 201 });
+  } catch (error) {
+    next(error);
+  }
+});
 export default router;

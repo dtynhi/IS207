@@ -26,8 +26,10 @@ import { ChangePasswordPage } from "../features/user/pages/change-password-page"
 import { UserAddressPage } from "../features/user/pages/user-address-page";
 import { UserProfilePage } from "../features/user/pages/user-profile-page";
 import { UserPurchasePage } from "../features/user/pages/user-purchase-page";
+import { UserWalletPage } from "../features/user/pages/user-wallet-page";
 import { FlashSalePage } from "../features/flash-sale/pages/flash-sale-page";
 import { AdminFlashSalePage } from "../features/admin/pages/admin-flash-sale-page";
+import { AdminCampaignsPage } from "../features/admin/pages/admin-campaigns-page";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -48,6 +50,7 @@ export const router = createBrowserRouter([
       { path: "user/profile", element: <UserProfilePage /> },
       { path: "user/address", element: <UserAddressPage /> },
       { path: "user/purchase", element: <UserPurchasePage /> },
+      { path: "user/wallet", element: <UserWalletPage /> },
       { path: "user/change-password", element: <ChangePasswordPage /> },
       { path: "health", element: <HealthPage /> },
     ],
@@ -69,6 +72,7 @@ export const router = createBrowserRouter([
       { path: "my-account", element: <AdminMyAccountPage /> },
       { path: "settings", element: <AdminSettingsPage /> },
       { path: "flash-sale", element: <AdminFlashSalePage /> },//Thêm route admin flash sale
+      { path: "campaigns", element: <AdminCampaignsPage /> },
     ],
   },
 ]);

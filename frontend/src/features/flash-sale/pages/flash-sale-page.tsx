@@ -2,8 +2,6 @@ import { useState, useMemo } from "react";
 import { Typography, Breadcrumb, Menu, Layout } from "antd";
 import { FlashSaleCard } from "../components/flash-sale-card";
 import { useProductsQuery } from "../../products/hooks/use-products-query";
-
-// 👉 1. Import thêm 2 món này để gọi kho Danh mục ra "ghép đôi"
 import { useQuery } from "@tanstack/react-query";
 import { getCategories } from "../../products/api/product.api";
 
@@ -11,16 +9,13 @@ const { Title } = Typography;
 const { Sider, Content } = Layout;
 
 export const FlashSalePage = () => {
-  // Lấy danh sách Sản phẩm
   const { data: productsData, isPending: isProductsPending } = useProductsQuery({ page: 1, limit: 100 });
   const allProducts = productsData?.items || [];
 
-  // 👉 2. Lấy danh sách Danh mục từ API của team bạn
   const { data: categoriesData } = useQuery({ 
     queryKey: ["client-categories"], 
     queryFn: getCategories 
   });
-  // Xử lý an toàn cấu trúc dữ liệu trả về (có thể nằm trong items hoặc trực tiếp)
   const allCategories = categoriesData || [];
   // Lọc ra TẤT CẢ sản phẩm đang sale
   const flashSaleProducts = allProducts.filter((item: any) => item.discountPercentage > 0);
@@ -31,21 +26,17 @@ export const FlashSalePage = () => {
   // Đổi state để lưu trữ theo ID thay vì tên
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
 
-  // Lọc sản phẩm ra lưới theo ID Danh mục
   const displayedProducts = useMemo(() => {
     if (selectedCategoryId === 'all') return flashSaleProducts;
-    // Lọc ra những sản phẩm có mã Danh mục trùng với selectedCategoryId
     return flashSaleProducts.filter((p: any) => String(p.productCategoryId) === selectedCategoryId);
   }, [flashSaleProducts, selectedCategoryId]);
 
-  //  3. Cấu hình Menu Sidebar: Ghép ID với Tên thực tế
   const menuItems = [
     { key: 'all', label: 'Tất Cả Sản Phẩm' },
     ...activeCategoryIds.map((id) => {
       // Đi tìm cái Danh mục có mã ID tương ứng
       const categoryObj = allCategories.find((cat: any) => String(cat.id) === String(id));
       
-     // Nếu tìm được thì lấy tên, không thì hiển thị "Danh mục chưa rõ tên"
         const categoryName = categoryObj ? categoryObj.title : `Danh mục chưa rõ tên`;      return {
         key: String(id),
         label: categoryName,
@@ -53,7 +44,6 @@ export const FlashSalePage = () => {
     })
   ];
 
-  // Tìm tên danh mục để in ra cái Tiêu đề to đùng bên phải
   const selectedCatObj = allCategories.find((cat: any) => String(cat.id) === selectedCategoryId);
   const headerTitle = selectedCategoryId === 'all' 
     ? 'TẤT CẢ SẢN PHẨM SALE' 

@@ -1,6 +1,6 @@
 import { apiClient } from "../../../shared/api/client";
 import type { ApiSuccessResponse } from "../../../shared/api/types";
-import type { UserAddress, UserProfile, UserPurchase } from "../types/user.types";
+import type { UserAddress, UserProfile, UserPurchase, UserWallet } from "../types/user.types";
 
 export const getUserProfileApi = async (userId: string) => {
   const response = await apiClient.get<ApiSuccessResponse<UserProfile>>(`/user/profile/${userId}`);
@@ -56,5 +56,18 @@ export const getUserPurchaseApi = async (userId: string, page = 1, limit = 10) =
 
 export const cancelOrderApi = async (orderId: string, userId: string) => {
   const response = await apiClient.post<ApiSuccessResponse<{ cancelled: boolean }>>(`/orders/${orderId}/cancel`, { userId });
+  return response.data.data;
+};
+
+export const createReturnRequestApi = async (
+  orderId: string,
+  payload: { userId: string; reason: string; description?: string; mediaUrls?: string[] }
+) => {
+  const response = await apiClient.post<ApiSuccessResponse<unknown>>(`/orders/${orderId}/return-request`, payload);
+  return response.data.data;
+};
+
+export const getUserWalletApi = async (userId: string) => {
+  const response = await apiClient.get<ApiSuccessResponse<UserWallet>>(`/user/${userId}/wallet`);
   return response.data.data;
 };

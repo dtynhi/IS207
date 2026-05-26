@@ -11,6 +11,7 @@ import {
   TeamOutlined,
   UserOutlined,
   FireOutlined,//icon ngọn lửa
+  GiftOutlined //icon quà tặng
 } from "@ant-design/icons";
 import { Alert, Button, Layout, Menu, Space, Typography } from "antd";
 
@@ -37,7 +38,8 @@ export const AdminLayout = () => {
     { key: "/admin/products", label: <Link to="/admin/products">Sản phẩm</Link>, icon: <ShopOutlined /> },
     { key: "/admin/categories", label: <Link to="/admin/categories">Danh mục</Link>, icon: <FolderOpenOutlined /> },
     { key: "/admin/orders", label: <Link to="/admin/orders">Đơn hàng</Link>, icon: <ShoppingCartOutlined /> },
-    { key: "/admin/flash-sale", label: <Link to="/admin/flash-sale">Khuyến mãi</Link>, icon: <FireOutlined /> },//Thêm menu khuyến mãi
+    { key: "/admin/flash-sale", label: <Link to="/admin/flash-sale">Flash Sale</Link>, icon: <FireOutlined /> },
+    { key: "/admin/campaigns", label: <Link to="/admin/campaigns">Chiến dịch</Link>, icon: <GiftOutlined/> },
     { key: "/admin/roles", label: <Link to="/admin/roles">Vai trò</Link>, icon: <LockOutlined /> },
     { key: "/admin/accounts", label: <Link to="/admin/accounts">Tài khoản</Link>, icon: <TeamOutlined /> },
     { key: "/admin/my-account", label: <Link to="/admin/my-account">Tài khoản tôi</Link>, icon: <UserOutlined /> },

@@ -304,8 +304,8 @@ const seedUsers = async () => {
     const normalizedAddresses = user.addresses.map((addr, index) => {
       const normalized = normalizeAddress(addr);
       return {
-        idAddress: `${normalizeSlug(user.email)}-dia-chi-${index + 1}`,
         ...normalized,
+        idAddress: `${normalizeSlug(user.email)}-dia-chi-${index + 1}`,
       };
     });
 
@@ -364,7 +364,7 @@ const seedDemoCartsAndOrders = async () => {
         phone: user.phone || "0900000000",
         address: `Địa chỉ giao hàng mẫu của ${user.fullName}`,
         status: statusCycle[i % statusCycle.length],
-        paymentStatus: i % 2 === 0 ? "unpaid" : "paid",
+        // paymentStatus: i % 2 === 0 ? "unpaid" : "paid",
       },
     });
 
@@ -406,9 +406,14 @@ const hasExistingBusinessData = async () => {
 };
 
 const clearAllSeedableData = async () => {
+  await prisma.walletTransaction.deleteMany();
+  await prisma.refundRequest.deleteMany();
+  await prisma.returnRequest.deleteMany();
+  await prisma.returnLog.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.cart.deleteMany();
   await prisma.order.deleteMany();
+  await prisma.wallet.deleteMany();
   await prisma.product.deleteMany();
   await prisma.productCategory.deleteMany();
   await prisma.forgotPassword.deleteMany();

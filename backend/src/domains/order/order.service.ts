@@ -7,8 +7,10 @@ type OrderStatus =
   | "ready_to_pick"
   | "ready_to_ship"
   | "delivered"
+  | "awaiting_return"
   | "returned"
-  | "cancelled";
+  | "cancelled"
+  | "completed";
 
 type PaymentStatus = "unpaid" | "paid";
 type PaymentMethod = "COD" | "BANK_TRANSFER";
@@ -36,9 +38,11 @@ const orderTransitions: Record<OrderStatus, OrderStatus[]> = {
   pending_confirm: ["ready_to_pick", "cancelled"],
   ready_to_pick: ["ready_to_ship", "cancelled"],
   ready_to_ship: ["delivered", "cancelled"],
-  delivered: ["returned"],
-  returned: [],
-  cancelled: [],
+  delivered: ["awaiting_return", "completed", "cancelled"],
+  awaiting_return: ["returned"],
+  returned: ["completed"],
+  cancelled: ["completed"],
+  completed: [],
 };
 
 const isTransitionAllowed = (from: OrderStatus, to: OrderStatus) => {
@@ -83,6 +87,66 @@ const restoreStock = async (tx: Prisma.TransactionClient, orderId: string) => {
   }
 };
 
+const getOrderTotalAmountTx = async (tx: Prisma.TransactionClient, orderId: string) => {
+  const items = await tx.orderItem.findMany({
+    where: { orderId },
+    select: { price: true, quantity: true, discountPercentage: true },
+  });
+
+  return items.reduce((sum, item) => {
+    const discountedPrice = item.price * (1 - item.discountPercentage / 100);
+    return sum + Math.round(discountedPrice * item.quantity);
+  }, 0);
+};
+
+const getOrCreateWallet = async (tx: Prisma.TransactionClient, userId: string) => {
+  const existing = await tx.wallet.findUnique({ where: { userId } });
+  if (existing) return existing;
+  return tx.wallet.create({ data: { userId } });
+};
+
+const creditWallet = async (
+  tx: Prisma.TransactionClient,
+  payload: { userId: string; orderId: string; amount: number; reason?: string }
+) => {
+  const wallet = await getOrCreateWallet(tx, payload.userId);
+
+  await tx.walletTransaction.create({
+    data: {
+      walletId: wallet.id,
+      orderId: payload.orderId,
+      type: "credit",
+      amount: payload.amount,
+      reason: payload.reason,
+    },
+  });
+
+  return tx.wallet.update({
+    where: { id: wallet.id },
+    data: { balance: { increment: payload.amount } },
+  });
+};
+
+const createRefundRequest = async (
+  tx: Prisma.TransactionClient,
+  payload: { orderId: string; eventType: "cancel_refund" | "return_refund"; amount: number }
+) => {
+  const idempotencyKey = `${payload.orderId}:${payload.eventType}`;
+
+  const refundRequest = await tx.refundRequest.upsert({
+    where: { idempotencyKey },
+    update: {},
+    create: {
+      orderId: payload.orderId,
+      eventType: payload.eventType,
+      amount: payload.amount,
+      idempotencyKey,
+    },
+  });
+
+  return { ok: true as const, refundRequest, alreadyCompleted: refundRequest.status === "completed" };
+};
+
 const adminOrderInclude: Prisma.OrderInclude = {
   items: {
     include: {
@@ -100,6 +164,7 @@ const adminOrderInclude: Prisma.OrderInclude = {
     orderBy: { createdAt: "desc" },
   },
   returnLog: true,
+  returnRequest: true,
 };
 
 export const createOrder = async (payload: {
@@ -267,7 +332,17 @@ export const cancelOrderByCustomer = async (orderId: string, userId: string) => 
     if (!order) return { error: "NOT_FOUND" as const };
     if (order.userId !== userId) return { error: "FORBIDDEN" as const };
     if (order.status !== "pending_confirm") return { error: "CANNOT_CANCEL" as const };
-    if (order.paymentStatus === "paid") return { error: "ALREADY_PAID" as const };
+
+    // If the order is already paid, create a refund record and credit the user's wallet (idempotent)
+    if (order.paymentStatus === "paid") {
+      const amount = await getOrderTotalAmountTx(tx, orderId);
+      const refundRes = await createRefundRequest(tx, { orderId: orderId, eventType: "cancel_refund", amount });
+      if (refundRes.ok && !refundRes.alreadyCompleted) {
+        // credit wallet and mark refund completed
+        await creditWallet(tx, { userId: order.userId!, orderId, amount, reason: "Refund for cancelled order" });
+        await tx.refundRequest.update({ where: { id: refundRes.refundRequest.id }, data: { status: "completed", completedAt: new Date() } });
+      }
+    }
 
     await restoreStock(tx, orderId);
 
@@ -284,7 +359,118 @@ export const cancelOrderByCustomer = async (orderId: string, userId: string) => 
       actorId: userId,
     });
 
+    await tx.order.update({
+      where: { id: orderId },
+      data: { status: "completed", completedAt: new Date() },
+    });
+
+    await createStatusLog(tx, {
+      orderId,
+      fromStatus: "cancelled",
+      toStatus: "completed",
+      actorType: "system",
+    });
+
     return { ok: true as const };
+  });
+};
+
+export const createReturnRequest = async (payload: {
+  orderId: string;
+  userId: string;
+  reason: string;
+  description?: string;
+  mediaUrls?: string[];
+}) => {
+  return prisma.$transaction(async (tx) => {
+    const order = await tx.order.findUnique({
+      where: { id: payload.orderId },
+      select: { id: true, userId: true, status: true, deliveredAt: true },
+    });
+
+    if (!order) return { error: "NOT_FOUND" as const };
+    if (order.userId !== payload.userId) return { error: "FORBIDDEN" as const };
+    if (order.status !== "delivered") return { error: "INVALID_STATUS" as const };
+    if (!order.deliveredAt) return { error: "MISSING_DELIVERED_AT" as const };
+
+    const cutoff = new Date(order.deliveredAt);
+    cutoff.setDate(cutoff.getDate() + 10);
+    if (new Date() > cutoff) return { error: "EXPIRED" as const };
+
+    const existing = await tx.returnRequest.findUnique({ where: { orderId: payload.orderId } });
+    if (existing) return { error: "ALREADY_REQUESTED" as const };
+
+    const request = await tx.returnRequest.create({
+      data: {
+        orderId: payload.orderId,
+        userId: payload.userId,
+        reason: payload.reason,
+        description: payload.description,
+        mediaUrls: payload.mediaUrls,
+      },
+    });
+
+    return { ok: true as const, request };
+  });
+};
+
+export const reviewReturnRequest = async (payload: {
+  requestId: string;
+  adminId: string;
+  decision: "approved" | "rejected";
+  reviewReason?: string;
+  lockVersion: number;
+}) => {
+  return prisma.$transaction(async (tx) => {
+    const request = await tx.returnRequest.findUnique({
+      where: { id: payload.requestId },
+      include: {
+        order: { select: { id: true, status: true, lockVersion: true, assignedToAccountId: true } },
+      },
+    });
+
+    if (!request) return { error: "NOT_FOUND" as const };
+    if (request.status !== "pending") return { error: "ALREADY_REVIEWED" as const };
+    if (request.order.assignedToAccountId !== payload.adminId) return { error: "NOT_ASSIGNED" as const };
+    if (request.order.lockVersion !== payload.lockVersion) {
+      return { error: "CONFLICT" as const, currentVersion: request.order.lockVersion };
+    }
+
+    if (payload.decision === "approved") {
+      if (!isTransitionAllowed(request.order.status as OrderStatus, "awaiting_return")) {
+        return { error: "INVALID_TRANSITION" as const };
+      }
+
+      const updated = await tx.order.updateMany({
+        where: { id: request.order.id, lockVersion: payload.lockVersion },
+        data: { status: "awaiting_return", lockVersion: { increment: 1 } },
+      });
+
+      if (updated.count === 0) {
+        return { error: "CONFLICT" as const, currentVersion: request.order.lockVersion };
+      }
+
+      await createStatusLog(tx, {
+        orderId: request.order.id,
+        fromStatus: request.order.status as OrderStatus,
+        toStatus: "awaiting_return",
+        actorType: "admin",
+        actorId: payload.adminId,
+        reason: payload.reviewReason,
+      });
+    }
+
+    const updatedRequest = await tx.returnRequest.update({
+      where: { id: payload.requestId },
+      data: {
+        status: payload.decision,
+        reviewedByAccountId: payload.adminId,
+        reviewedAt: new Date(),
+        reviewReason: payload.reviewReason,
+      },
+    });
+
+    return { ok: true as const, request: updatedRequest };
   });
 };
 
@@ -449,7 +635,15 @@ export const updateOrderStatusByAdmin = async (payload: {
   return prisma.$transaction(async (tx) => {
     const current = await tx.order.findUnique({
       where: { id: payload.orderId },
-      select: { id: true, status: true, lockVersion: true, assignedToAccountId: true, paymentMethod: true },
+      select: {
+        id: true,
+        status: true,
+        lockVersion: true,
+        assignedToAccountId: true,
+        paymentMethod: true,
+        paymentStatus: true,
+        userId: true,
+      },
     });
 
     if (!current) return { error: "NOT_FOUND" as const };
@@ -462,6 +656,7 @@ export const updateOrderStatusByAdmin = async (payload: {
     }
 
     const autoPay = payload.status === "delivered" && current.paymentMethod === "COD";
+    const shouldAutoComplete = payload.status === "cancelled";
 
     const updated = await tx.order.updateMany({
       where: { id: payload.orderId, lockVersion: payload.lockVersion },
@@ -469,6 +664,8 @@ export const updateOrderStatusByAdmin = async (payload: {
         status: payload.status,
         lockVersion: { increment: 1 },
         ...(autoPay && { paymentStatus: "paid" }),
+        ...(payload.status === "delivered" && { deliveredAt: new Date() }),
+        ...(payload.status === "completed" && { completedAt: new Date() }),
       },
     });
 
@@ -478,6 +675,29 @@ export const updateOrderStatusByAdmin = async (payload: {
 
     if (payload.status === "cancelled") {
       await restoreStock(tx, payload.orderId);
+
+      if (current.paymentStatus === "paid") {
+        if (!current.userId) return { error: "NO_USER" as const };
+        const amount = await getOrderTotalAmountTx(tx, payload.orderId);
+        const refund = await createRefundRequest(tx, {
+          orderId: payload.orderId,
+          eventType: "cancel_refund",
+          amount,
+        });
+
+        if (refund.ok && !refund.alreadyCompleted) {
+          await creditWallet(tx, {
+            userId: current.userId,
+            orderId: payload.orderId,
+            amount,
+            reason: "Refund for cancelled order",
+          });
+          await tx.refundRequest.update({
+            where: { id: refund.refundRequest.id },
+            data: { status: "completed", completedAt: new Date() },
+          });
+        }
+      }
     }
 
     if (current.status !== payload.status) {
@@ -488,6 +708,20 @@ export const updateOrderStatusByAdmin = async (payload: {
         actorType: "admin",
         actorId: payload.adminId,
         reason: payload.reason,
+      });
+    }
+
+    if (shouldAutoComplete) {
+      await tx.order.update({
+        where: { id: payload.orderId },
+        data: { status: "completed", completedAt: new Date(), lockVersion: { increment: 1 } },
+      });
+
+      await createStatusLog(tx, {
+        orderId: current.id,
+        fromStatus: "cancelled",
+        toStatus: "completed",
+        actorType: "system",
       });
     }
 
@@ -503,7 +737,7 @@ export const listPendingReturns = async (params: { page: number; limit: number }
     prisma.order.findMany({
       skip,
       take: params.limit,
-      where: { status: "returned", returnLog: null },
+      where: { status: "awaiting_return", returnLog: null },
       orderBy: { updatedAt: "asc" },
       include: {
         items: {
@@ -518,7 +752,7 @@ export const listPendingReturns = async (params: { page: number; limit: number }
         },
       },
     }),
-    prisma.order.count({ where: { status: "returned", returnLog: null } }),
+    prisma.order.count({ where: { status: "awaiting_return", returnLog: null } }),
   ]);
 
   return {
@@ -534,7 +768,7 @@ export const listPendingReturns = async (params: { page: number; limit: number }
 
 export const getReturnDetail = async (orderId: string) => {
   return prisma.order.findUnique({
-    where: { id: orderId, status: "returned" },
+    where: { id: orderId, status: "awaiting_return" },
     include: {
       items: {
         include: {
@@ -563,12 +797,20 @@ export const processReturn = async (payload: {
   return prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({
       where: { id: payload.orderId },
-      select: { id: true, status: true, returnLog: { select: { id: true } } },
+      select: {
+        id: true,
+        status: true,
+        userId: true,
+        assignedToAccountId: true,
+        returnLog: { select: { id: true } },
+      },
     });
 
     if (!order) return { error: "NOT_FOUND" as const };
-    if (order.status !== "returned") return { error: "NOT_RETURNED" as const };
+    if (order.status !== "awaiting_return") return { error: "NOT_AWAITING_RETURN" as const };
     if (order.returnLog) return { error: "ALREADY_PROCESSED" as const };
+    if (!order.userId) return { error: "NO_USER" as const };
+    if (order.assignedToAccountId !== payload.adminId) return { error: "NOT_ASSIGNED" as const };
 
     let restocked = false;
 
@@ -576,6 +818,20 @@ export const processReturn = async (payload: {
       await restoreStock(tx, payload.orderId);
       restocked = true;
     }
+
+    await tx.order.update({
+      where: { id: payload.orderId },
+      data: { status: "returned", lockVersion: { increment: 1 } },
+    });
+
+    await createStatusLog(tx, {
+      orderId: payload.orderId,
+      fromStatus: "awaiting_return",
+      toStatus: "returned",
+      actorType: "admin",
+      actorId: payload.adminId,
+      reason: payload.reason,
+    });
 
     const returnLog = await tx.returnLog.create({
       data: {
@@ -587,6 +843,117 @@ export const processReturn = async (payload: {
       },
     });
 
+    const amount = await getOrderTotalAmountTx(tx, payload.orderId);
+    const refund = await createRefundRequest(tx, {
+      orderId: payload.orderId,
+      eventType: "return_refund",
+      amount,
+    });
+
+    if (refund.ok && !refund.alreadyCompleted) {
+      await creditWallet(tx, {
+        userId: order.userId,
+        orderId: payload.orderId,
+        amount,
+        reason: "Refund for returned order",
+      });
+      await tx.refundRequest.update({
+        where: { id: refund.refundRequest.id },
+        data: { status: "completed", completedAt: new Date() },
+      });
+    }
+
+    await tx.order.update({
+      where: { id: payload.orderId },
+      data: { status: "completed", completedAt: new Date(), lockVersion: { increment: 1 } },
+    });
+
+    await createStatusLog(tx, {
+      orderId: payload.orderId,
+      fromStatus: "returned",
+      toStatus: "completed",
+      actorType: "system",
+    });
+
     return { ok: true as const, returnLog };
   });
+};
+
+export const listReturnRequests = async (params: { page: number; limit: number }) => {
+  const skip = (params.page - 1) * params.limit;
+
+  const [items, totalItems] = await Promise.all([
+    prisma.returnRequest.findMany({
+      skip,
+      take: params.limit,
+      where: { status: "pending" },
+      orderBy: { createdAt: "asc" },
+      include: {
+        order: {
+          include: {
+            items: {
+              include: {
+                product: {
+                  select: { id: true, title: true, slug: true, thumbnail: true },
+                },
+              },
+            },
+          },
+        },
+        user: { select: { id: true, fullName: true, email: true } },
+      },
+    }),
+    prisma.returnRequest.count({ where: { status: "pending" } }),
+  ]);
+
+  return {
+    items,
+    meta: {
+      page: params.page,
+      limit: params.limit,
+      totalItems,
+      totalPages: Math.ceil(totalItems / params.limit),
+    },
+  };
+};
+
+export const autoCompleteDeliveredOrders = async () => {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 10);
+
+  const candidates = await prisma.order.findMany({
+    where: {
+      status: "delivered",
+      deliveredAt: { lte: cutoff },
+      OR: [
+        { returnRequest: { is: null } },
+        { returnRequest: { is: { status: "rejected" } } },
+      ],
+    },
+    select: { id: true },
+  });
+
+  for (const order of candidates) {
+    await prisma.$transaction(async (tx) => {
+      const current = await tx.order.findUnique({
+        where: { id: order.id },
+        select: { id: true, status: true },
+      });
+
+      if (!current || current.status !== "delivered") return;
+
+      await tx.order.update({
+        where: { id: current.id },
+        data: { status: "completed", completedAt: new Date(), lockVersion: { increment: 1 } },
+      });
+
+      await createStatusLog(tx, {
+        orderId: current.id,
+        fromStatus: "delivered",
+        toStatus: "completed",
+        actorType: "system",
+        reason: "Auto complete after 10 days with no return request",
+      });
+    });
+  }
 };

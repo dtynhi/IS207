@@ -1,4 +1,4 @@
-import { LockOutlined, ShoppingOutlined, SolutionOutlined, UserOutlined } from "@ant-design/icons";
+import { LockOutlined, ShoppingOutlined, SolutionOutlined, UserOutlined, WalletOutlined } from "@ant-design/icons";
 import { Avatar, Flex, Typography } from "antd";
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -9,6 +9,7 @@ const items: { path: string; label: string; icon: ReactNode }[] = [
   { path: "/user/profile", label: "Hồ sơ", icon: <UserOutlined /> },
   { path: "/user/address", label: "Địa chỉ", icon: <SolutionOutlined /> },
   { path: "/user/purchase", label: "Đơn mua", icon: <ShoppingOutlined /> },
+  { path: "/user/wallet", label: "Ví của tôi", icon: <WalletOutlined /> },
   { path: "/user/change-password", label: "Đổi mật khẩu", icon: <LockOutlined /> },
 ];
 

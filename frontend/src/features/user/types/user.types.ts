@@ -24,8 +24,24 @@ export type UserPurchase = {
   address: string;
   status: string;
   paymentStatus?: "unpaid" | "paid";
+  cancellationReason?: string;
   createdAt: string;
   items: Array<{ quantity: number; price: number; discountPercentage: number; product?: { title: string; thumbnail?: string } }>;
+};
+
+export type UserWalletTransaction = {
+  id: string;
+  orderId?: string;
+  type: "credit" | "debit";
+  amount: number;
+  reason?: string;
+  createdAt: string;
+};
+
+export type UserWallet = {
+  id: string;
+  balance: number;
+  transactions: UserWalletTransaction[];
 };
 
 export type UserProfileFormValues = {
