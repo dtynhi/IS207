@@ -1,82 +1,161 @@
 import { Link } from "react-router-dom";
+import { Progress, message } from "antd"; // Gộp import antd
+import { FireOutlined, LockOutlined } from "@ant-design/icons"; // Thêm icon ổ khóa
 import { Price } from "../../../shared/components/price";
 import type { Product } from "../../products/types/product.types";
 import { useProductDetailActions } from "../../products/hooks/use-product-detail-actions";
-import { message } from "antd";
-
-// Gọi cái kho chứa chìa khóa ID ra
 import { getUserId } from "../../../shared/session/storage";
 
-export const FlashSaleCard = ({ product }: { product: Product }) => {
+// Tụi mình thêm props "status" để Card biết mình đang ở ca Sale nào
+export const FlashSaleCard = ({ product, status = "ONGOING" }: { product: Product, status?: string }) => {
   const finalPrice = Math.floor(product.price * (1 - product.discountPercentage / 100));
+  const userId = getUserId();
 
-  //Lấy ID thật của khách hàng (Nếu chưa đăng nhập, nó sẽ bị rỗng)
-  const userId = getUserId(); 
-  
   const { addCart, contextHolder } = useProductDetailActions({
-    userId: userId || "", // Truyền ID thật vào API
+    userId: userId || "",
     productId: product.id,
-    quantity: 1, 
+    quantity: 1,
   });
 
+  const soldCount = product.soldCount ?? 0;
+  const totalStock = (product.stock ?? 0) + soldCount;
+  const soldPercent = totalStock > 0 ? Math.round((soldCount / totalStock) * 100) : 0;
+
+  const progressColor =
+    soldPercent >= 80 ? "#ef4444" :
+    soldPercent >= 50 ? "#f97316" :
+    "#EE6AA7";
+
+  const stockLabel =
+    product.stock === 0 ? "Đã hết hàng" :
+    product.stock <= 5 ? `Còn ${product.stock} sản phẩm` :
+    soldPercent >= 70 ? "Đang bán chạy!" : "Đang có hàng";
+
+  // LOGIC KIỂM TRA SẮP DIỄN RA
+  const isUpcoming = status === "UPCOMING";
+
   return (
-    <div className="bg-white rounded-md p-2 flex flex-col h-full relative border border-gray-200 hover:shadow-md transition-shadow">
-      
+    <div className={`bg-white rounded-md p-2 flex flex-col h-full relative border border-gray-200 hover:shadow-md transition-all overflow-hidden ${isUpcoming ? 'opacity-80' : ''}`}>
       {contextHolder}
 
+      {/* Badge giảm giá */}
       {product.discountPercentage > 0 && (
-        <div className="absolute top-0 left-0 bg-red-600 text-white text-[11px] font-bold px-1.5 py-0.5 rounded-br-md z-10">
-          GIẢM {product.discountPercentage}%
+        <div className="absolute top-0 left-0 bg-red-600 text-white text-[11px] font-bold px-1.5 py-0.5 rounded-br-md z-10 flex items-center gap-0.5 shadow-sm">
+          <FireOutlined className="text-yellow-300 text-[10px]" />
+          -{product.discountPercentage}%
         </div>
       )}
 
-      <Link to={`/products/${product.slug}`} className="w-full aspect-square mb-2 block">
-          {product.thumbnail ? (
-            <img 
-              src={product.thumbnail} 
-              alt={product.title} 
-              className="w-full h-full object-contain" 
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = "https://placehold.co/400x400/e2e8f0/64748b?text=Not+Found";
-              }}
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">No Image</div>
-          )}
+      {/* Badge báo hiệu Sắp diễn ra */}
+      {isUpcoming && (
+        <div className="absolute top-0 right-0 bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-bl-md z-10">
+          SẮP MỞ BÁN
+        </div>
+      )}
+
+      {/* Ảnh sản phẩm */}
+      <Link to={`/products/${product.slug}`} className="w-full aspect-square mb-2 block relative group">
+        {product.thumbnail ? (
+          <img
+            src={product.thumbnail}
+            alt={product.title}
+            className={`w-full h-full object-contain transition-transform ${isUpcoming ? 'grayscale-[30%]' : 'group-hover:scale-105'}`}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = "https://placehold.co/400x400/e2e8f0/64748b?text=Not+Found";
+            }}
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+            No Image
+          </div>
+        )}
+        
+        {/* Lớp phủ màn mờ mờ ảo ảo nếu chưa mở bán */}
+        {isUpcoming && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/40">
+            <div className="bg-black/60 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1">
+               <LockOutlined /> Chờ mở bán
+            </div>
+          </div>
+        )}
       </Link>
 
-      <Link to={`/products/${product.slug}`} className="text-sm font-medium text-gray-800 line-clamp-2 mb-2 flex-grow hover:text-orange-500">
-          {product.title}
+      <Link
+        to={`/products/${product.slug}`}
+        className="text-sm font-medium text-gray-800 line-clamp-2 mb-2 flex-grow hover:text-orange-500"
+      >
+        {product.title}
       </Link>
 
       <div className="mt-auto">
-        <div className="flex flex-col mb-2">
-           <Price value={finalPrice} size="md" className="text-red-600 font-bold" />
-           {product.discountPercentage > 0 && (
-              <span className="text-xs text-gray-400 line-through">
-                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
-              </span>
-           )}
+        {/* Giá - Logic che giá kinh điển ở đây */}
+        <div className="flex flex-col mb-1.5 min-h-[40px] justify-end">
+          {isUpcoming ? (
+            // Nếu sắp diễn ra: Hiện giá ảo tung chảo
+            <div className="text-red-600 font-black text-lg tracking-widest flex items-center gap-1">
+              <span className="text-sm">₫</span>?.?00
+            </div>
+          ) : (
+            // Nếu đang diễn ra: Hiện giá thật
+            <Price value={finalPrice} size="md" className="text-red-600 font-bold" />
+          )}
+          
+          {/* Giá gốc gạch ngang */}
+          {product.discountPercentage > 0 && (
+            <span className="text-xs text-gray-400 line-through">
+              {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(product.price)}
+            </span>
+          )}
         </div>
 
-        <button 
-            className={`w-full bg-[#EE6AA7] hover:bg-[#FF69B4] text-white font-bold py-1.5 rounded-full text-sm transition-colors shadow-md ${addCart.isPending ? 'opacity-70 cursor-not-allowed' : ''}`}          
-            disabled={addCart.isPending} 
-            onClick={(e) => {
-             e.preventDefault();
-             
-             //Logic chặn người lạ: Chưa đăng nhập thì cấm thêm giỏ
-             if (!userId) {
-                message.warning("Bạn cần đăng nhập để thêm vào giỏ hàng nhé!");
-                return; // Dừng lại, không chạy API bên dưới nữa
-             }
+        {/* Progress bar đã bán - Dấu đi nếu chưa bán */}
+        {totalStock > 0 && !isUpcoming && (
+          <div className="mb-2">
+            <Progress
+              percent={soldPercent}
+              showInfo={false}
+              strokeColor={progressColor}
+              trailColor="#f1f5f9"
+              size={["100%", 6]}
+              className="!mb-0.5"
+            />
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-semibold" style={{ color: progressColor }}>
+                {stockLabel}
+              </span>
+              {soldCount > 0 && (
+                <span className="text-[10px] text-gray-400">Đã bán {soldCount}</span>
+              )}
+            </div>
+          </div>
+        )}
 
-             //Đã đăng nhập rồi thì cho đẩy vô Database
-             addCart.mutate(); 
+        {/* Nút thêm giỏ hàng - Khóa lại nếu chưa tới giờ */}
+        <button
+          className={`w-full text-white font-bold py-1.5 rounded-full text-sm transition-all shadow-sm
+            ${isUpcoming 
+              ? "bg-gray-400 cursor-not-allowed opacity-80" 
+              : product.stock === 0
+              ? "bg-gray-300 cursor-not-allowed"
+              : addCart.isPending
+              ? "bg-[#EE6AA7] opacity-70 cursor-not-allowed"
+              : "bg-[#EE6AA7] hover:bg-[#FF69B4] hover:shadow-md"
+            }`}
+          disabled={addCart.isPending || product.stock === 0 || isUpcoming}
+          onClick={(e) => {
+            e.preventDefault();
+            if (!userId) {
+              message.warning("Bạn cần đăng nhập để thêm vào giỏ hàng nhé!");
+              return;
+            }
+            addCart.mutate();
           }}
         >
-          {addCart.isPending ? 'Đang thêm...' : 'Thêm vào giỏ'}
+          {isUpcoming ? "Sắp mở bán" 
+           : product.stock === 0 ? "Hết hàng"
+           : addCart.isPending ? "Đang thêm..."
+           : "Thêm vào giỏ"}
         </button>
       </div>
     </div>

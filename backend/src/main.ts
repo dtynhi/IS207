@@ -1,6 +1,7 @@
 import app from "./app";
 import { autoCompleteDeliveredOrders } from "./domains/order/order.service";
 import { ensureDefaultSeedData, getSeedSummary } from "./infrastructure/db/default-seed";
+import { startFlashSaleCron } from "./domains/product/flash-sale.cron";
 
 const port = Number(process.env.PORT || 4000);
 
@@ -27,7 +28,12 @@ const bootstrap = async () => {
 
   runAutoComplete();
   setInterval(runAutoComplete, 60 * 60 * 1000);
+
+  startFlashSaleCron();
+  console.log("[backend] He thong Flash Sale tu dong da duoc kich hoat!");
+  
 };
+
 
 bootstrap().catch((error) => {
   console.error("[backend] khoi dong that bai:", error);
