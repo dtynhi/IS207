@@ -154,11 +154,27 @@ export const releaseAdminOrderApi = async (id: string) => {
 export const updateAdminOrderStatusApi = async (
   id: string,
   payload: {
-    status: "pending_confirm" | "ready_to_pick" | "ready_to_ship" | "delivered" | "returned" | "cancelled";
+    status: "pending_confirm" | "ready_to_pick" | "ready_to_ship" | "delivered" | "awaiting_return" | "returned" | "cancelled" | "completed";
     reason?: string;
     lockVersion: number;
   }
 ) => {
   const response = await apiClient.patch<ApiSuccessResponse<unknown>>(`/admin/orders/${id}/status`, payload);
+  return response.data.data;
+};
+
+export const reviewReturnRequestApi = async (
+  id: string,
+  payload: { decision: "approved" | "rejected"; reviewReason?: string; lockVersion: number }
+) => {
+  const response = await apiClient.patch<ApiSuccessResponse<unknown>>(`/admin/return-requests/${id}/review`, payload);
+  return response.data.data;
+};
+
+export const processReturnApi = async (
+  orderId: string,
+  payload: { result: "approved" | "rejected"; reason?: string }
+) => {
+  const response = await apiClient.patch<ApiSuccessResponse<unknown>>(`/admin/orders/${orderId}/return`, payload);
   return response.data.data;
 };

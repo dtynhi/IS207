@@ -4,7 +4,7 @@ import { UserSidebar } from "../components/user-sidebar";
 import { useUserPurchase } from "../hooks/use-user-purchase";
 
 export const UserPurchasePage = () => {
-  const { purchases, cancelOrder } = useUserPurchase();
+  const { purchases, cancelOrder, requestReturn } = useUserPurchase();
   const items = purchases.data?.items || [];
 
   return (
@@ -22,6 +22,8 @@ export const UserPurchasePage = () => {
             order={order}
             onCancel={() => cancelOrder.mutate(order.id)}
             isCancelling={cancelOrder.isPending && cancelOrder.variables === order.id}
+            onRequestReturn={(payload) => requestReturn.mutate({ orderId: order.id, ...payload })}
+            isRequestingReturn={requestReturn.isPending && requestReturn.variables?.orderId === order.id}
           />
         ))}
       </div>

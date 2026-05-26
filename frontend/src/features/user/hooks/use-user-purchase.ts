@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getUserId } from "../../../shared/session/storage";
-import { cancelOrderApi, getUserPurchaseApi } from "../api/user.api";
+import { cancelOrderApi, createReturnRequestApi, getUserPurchaseApi } from "../api/user.api";
 
 export const useUserPurchase = () => {
   const userId = getUserId();
@@ -19,5 +19,18 @@ export const useUserPurchase = () => {
     },
   });
 
-  return { userId, purchases, cancelOrder };
+  const requestReturn = useMutation({
+    mutationFn: (payload: { orderId: string; reason: string; description?: string; mediaUrls?: string[] }) =>
+      createReturnRequestApi(payload.orderId, {
+        userId,
+        reason: payload.reason,
+        description: payload.description,
+        mediaUrls: payload.mediaUrls,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-purchase", userId] });
+    },
+  });
+
+  return { userId, purchases, cancelOrder, requestReturn };
 };

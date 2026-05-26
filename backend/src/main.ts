@@ -1,4 +1,5 @@
 import app from "./app";
+import { autoCompleteDeliveredOrders } from "./domains/order/order.service";
 import { ensureDefaultSeedData, getSeedSummary } from "./infrastructure/db/default-seed";
 
 const port = Number(process.env.PORT || 4000);
@@ -15,6 +16,17 @@ const bootstrap = async () => {
     }
     console.log("[backend] thong tin seed:", getSeedSummary());
   });
+
+  const runAutoComplete = async () => {
+    try {
+      await autoCompleteDeliveredOrders();
+    } catch (error) {
+      console.error("[backend] auto-complete orders failed:", error);
+    }
+  };
+
+  runAutoComplete();
+  setInterval(runAutoComplete, 60 * 60 * 1000);
 };
 
 bootstrap().catch((error) => {

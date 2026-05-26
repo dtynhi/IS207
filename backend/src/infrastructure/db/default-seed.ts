@@ -406,9 +406,14 @@ const hasExistingBusinessData = async () => {
 };
 
 const clearAllSeedableData = async () => {
+  await prisma.walletTransaction.deleteMany();
+  await prisma.refundRequest.deleteMany();
+  await prisma.returnRequest.deleteMany();
+  await prisma.returnLog.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.cart.deleteMany();
   await prisma.order.deleteMany();
+  await prisma.wallet.deleteMany();
   await prisma.product.deleteMany();
   await prisma.productCategory.deleteMany();
   await prisma.forgotPassword.deleteMany();

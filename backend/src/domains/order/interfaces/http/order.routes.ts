@@ -8,10 +8,12 @@ import {
   cancelOrderByCustomer,
   claimOrder,
   createOrder,
+  createReturnRequest,
   getAdminOrderDetail,
   getOrderDetail,
   getOrderTotalAmount,
   getReturnDetail,
+  listReturnRequests,
   listAdminOrders,
   listOrders,
   listPendingReturns,
@@ -19,6 +21,7 @@ import {
   markOrderUser,
   processReturn,
   releaseOrder,
+  reviewReturnRequest,
   updateOrderPaymentStatus,
   updateOrderStatusByAdmin,
 } from "../../order.service";
@@ -178,6 +181,41 @@ router.post("/orders/:id/cancel", async (req, res, next) => {
   }
 });
 
+router.post("/orders/:id/return-request", async (req, res, next) => {
+  try {
+    const id = z.string().parse(req.params.id);
+    const payload = z
+      .object({
+        userId: z.string(),
+        reason: z.string().min(1),
+        description: z.string().optional(),
+        mediaUrls: z.array(z.string().min(1)).optional(),
+      })
+      .parse(req.body);
+
+    const result = await createReturnRequest({
+      orderId: id,
+      userId: payload.userId,
+      reason: payload.reason,
+      description: payload.description,
+      mediaUrls: payload.mediaUrls,
+    });
+
+    if ("error" in result) {
+      if (result.error === "NOT_FOUND") return sendError(res, 404, "NOT_FOUND", "Order not found");
+      if (result.error === "FORBIDDEN") return sendError(res, 403, "FORBIDDEN", "This order does not belong to you");
+      if (result.error === "INVALID_STATUS") return sendError(res, 400, "INVALID_STATUS", "Order is not delivered");
+      if (result.error === "MISSING_DELIVERED_AT") return sendError(res, 400, "INVALID_STATUS", "Order is missing delivery time");
+      if (result.error === "EXPIRED") return sendError(res, 400, "EXPIRED", "Return request window has expired");
+      if (result.error === "ALREADY_REQUESTED") return sendError(res, 409, "ALREADY_REQUESTED", "Return request already exists");
+    }
+
+    return sendSuccess(res, result.request, { statusCode: 201 });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // ─── Admin endpoints ──────────────────────────────────────────────────────────
 
 router.get("/admin/orders", requireAdmin, async (req, res, next) => {
@@ -241,7 +279,16 @@ router.patch("/admin/orders/:id/status", requireAdmin, async (req, res, next) =>
 
     const payload = z
       .object({
-        status: z.enum(["pending_confirm", "ready_to_pick", "ready_to_ship", "delivered", "returned", "cancelled"]),
+        status: z.enum([
+          "pending_confirm",
+          "ready_to_pick",
+          "ready_to_ship",
+          "delivered",
+          "awaiting_return",
+          "returned",
+          "cancelled",
+          "completed",
+        ]),
         reason: z.string().trim().optional(),
         lockVersion: z.coerce.number().int().min(0),
       })
@@ -259,6 +306,7 @@ router.patch("/admin/orders/:id/status", requireAdmin, async (req, res, next) =>
       if (result.error === "NOT_FOUND") return sendError(res, 404, "NOT_FOUND", "Order not found");
       if (result.error === "NOT_ASSIGNED") return sendError(res, 403, "ORDER_NOT_ASSIGNED", "Order must be assigned to you");
       if (result.error === "INVALID_TRANSITION") return sendError(res, 400, "INVALID_STATUS", "Invalid status transition");
+      if (result.error === "NO_USER") return sendError(res, 400, "NO_USER", "Order is not associated with a user");
       if (result.error === "CONFLICT") {
         return sendError(res, 409, "ORDER_CONFLICT", "Order was updated by another admin", {
           currentVersion: result.currentVersion,
@@ -287,6 +335,66 @@ router.patch("/admin/orders/:id/payment", requireAdmin, async (req, res, next) =
     }
 
     return sendSuccess(res, result.order);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ─── Return request review endpoints ───────────────────────────────────────────
+
+router.get("/admin/return-requests", requireAdmin, async (req, res, next) => {
+  try {
+    const params = z
+      .object({
+        page: z.coerce.number().int().min(1).default(1),
+        limit: z.coerce.number().int().min(1).max(100).default(20),
+      })
+      .parse(req.query);
+
+    const result = await listReturnRequests(params);
+    return sendSuccess(res, result.items, { meta: result.meta });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/admin/return-requests/:id/review", requireAdmin, async (req, res, next) => {
+  try {
+    const id = z.string().parse(req.params.id);
+    const adminId = (req as AdminRequest).adminId;
+    if (!adminId) return sendError(res, 401, "ADMIN_NOT_FOUND", "Admin authentication required");
+
+    const payload = z
+      .object({
+        decision: z.enum(["approved", "rejected"]),
+        reviewReason: z.string().trim().optional(),
+        lockVersion: z.coerce.number().int().min(0),
+      })
+      .parse(req.body);
+
+    const result = await reviewReturnRequest({
+      requestId: id,
+      adminId,
+      decision: payload.decision,
+      reviewReason: payload.reviewReason,
+      lockVersion: payload.lockVersion,
+    });
+
+    if ("error" in result) {
+      if (result.error === "NOT_FOUND") return sendError(res, 404, "NOT_FOUND", "Return request not found");
+      if (result.error === "ALREADY_REVIEWED") {
+        return sendError(res, 409, "ALREADY_REVIEWED", "Return request already reviewed");
+      }
+      if (result.error === "NOT_ASSIGNED") return sendError(res, 403, "ORDER_NOT_ASSIGNED", "Order must be assigned to you");
+      if (result.error === "INVALID_TRANSITION") return sendError(res, 400, "INVALID_STATUS", "Invalid status transition");
+      if (result.error === "CONFLICT") {
+        return sendError(res, 409, "ORDER_CONFLICT", "Order was updated by another admin", {
+          currentVersion: result.currentVersion,
+        });
+      }
+    }
+
+    return sendSuccess(res, result.request);
   } catch (error) {
     next(error);
   }
@@ -338,8 +446,12 @@ router.patch("/admin/orders/:id/return", requireAdmin, async (req, res, next) =>
 
     if ("error" in outcome) {
       if (outcome.error === "NOT_FOUND") return sendError(res, 404, "NOT_FOUND", "Order not found");
-      if (outcome.error === "NOT_RETURNED") return sendError(res, 400, "NOT_RETURNED", "Order is not in returned status");
+      if (outcome.error === "NOT_AWAITING_RETURN") {
+        return sendError(res, 400, "NOT_AWAITING_RETURN", "Order is not awaiting return");
+      }
       if (outcome.error === "ALREADY_PROCESSED") return sendError(res, 409, "ALREADY_PROCESSED", "Return has already been processed");
+      if (outcome.error === "NOT_ASSIGNED") return sendError(res, 403, "ORDER_NOT_ASSIGNED", "Order must be assigned to you");
+      if (outcome.error === "NO_USER") return sendError(res, 400, "NO_USER", "Order is not associated with a user");
     }
 
     return sendSuccess(res, outcome.returnLog);

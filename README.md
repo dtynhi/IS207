@@ -1,6 +1,7 @@
 # Uni Market
 
 Uni Market is a monorepo with:
+
 - Backend API: TypeScript + Express + Prisma + PostgreSQL (`backend/`)
 - Frontend app: React + Vite + Tailwind + Ant Design (`frontend/`)
 
@@ -62,17 +63,75 @@ VITE_API_BASE_URL=http://localhost:4000/api/v1
 
 ## 3) Setup Database
 
-Run these commands from repo root:
+Follow these steps to prepare the database. Prisma reads the `.env` file located next to the `schema.prisma` file, so either run the commands from `backend/` or reference the schema path explicitly.
+
+1. Create backend env
+
+```bash
+cp backend/.env.example backend/.env
+# Edit backend/.env and set DATABASE_URL to your local Postgres
+# e.g. DATABASE_URL=postgresql://postgres:postgres@localhost:5432/unimarket_backend
+```
+
+2. Generate Prisma client
+
+From repo root (recommended):
 
 ```bash
 npm run prisma:generate
-npm run db:push
+# or (explicit schema):
+# npx prisma generate --schema backend/prisma/schema.prisma
 ```
 
-Optional: force seed data (overwrite bootstrap data):
+3. Apply existing migrations (safe for CI / production)
+
+This applies all migration files that have not yet been applied to the database. Run from repo root:
 
 ```bash
+npx prisma migrate deploy --schema backend/prisma/schema.prisma
+```
+
+4. Development: create new migration and apply locally
+
+If you're developing and need to create a migration from schema changes, run from the backend folder so Prisma reads backend/.env automatically:
+
+```bash
+cd backend
+npx prisma migrate dev --name add-descriptive-name
+# If drift is detected, prisma may prompt to reset the database (destructive). Answer carefully.
+```
+
+5. Reset local database (destructive)
+
+To wipe and reapply all migrations on a local dev DB (use with caution):
+
+```bash
+cd backend
+npx prisma migrate reset --schema prisma/schema.prisma --force
+# This drops all data, re-applies migrations and runs the seed script.
+```
+
+6. Seed data
+
+```bash
+# Runs the repo-level seed script defined for backend
 npm run seed
+```
+
+Troubleshooting & notes
+
+- If Prisma cannot find your `.env`, `cd backend` before running migrate/generate or pass the `--schema backend/prisma/schema.prisma` flag so Prisma loads backend/.env.
+- `npx prisma migrate deploy` only applies migrations that are not yet applied — it will not re-run already-applied migrations.
+- If you see a drift warning, consider running `npx prisma migrate dev` in dev to reconcile or discuss with the team; resetting the DB will remove data.
+
+Optional CI example
+
+- In CI/CD pipelines use:
+
+```bash
+npx prisma generate --schema backend/prisma/schema.prisma
+npx prisma migrate deploy --schema backend/prisma/schema.prisma
+npm run seed # optional
 ```
 
 Note: backend also auto-seeds default data on startup (idempotent).

@@ -128,8 +128,8 @@ export type AdminOrderItemRow = {
 
 export type AdminOrderStatusLog = {
   id: string;
-  fromStatus?: "pending_confirm" | "ready_to_pick" | "ready_to_ship" | "delivered" | "returned" | "cancelled";
-  toStatus: "pending_confirm" | "ready_to_pick" | "ready_to_ship" | "delivered" | "returned" | "cancelled";
+  fromStatus?: "pending_confirm" | "ready_to_pick" | "ready_to_ship" | "delivered" | "awaiting_return" | "returned" | "cancelled" | "completed";
+  toStatus: "pending_confirm" | "ready_to_pick" | "ready_to_ship" | "delivered" | "awaiting_return" | "returned" | "cancelled" | "completed";
   reason?: string;
   createdAt: string;
   changedByAccount?: {
@@ -144,7 +144,7 @@ export type AdminOrderRow = {
   fullName: string;
   phone: string;
   address: string;
-  status: "pending_confirm" | "ready_to_pick" | "ready_to_ship" | "delivered" | "returned" | "cancelled";
+  status: "pending_confirm" | "ready_to_pick" | "ready_to_ship" | "delivered" | "awaiting_return" | "returned" | "cancelled" | "completed";
   paymentStatus: "unpaid" | "paid";
   lockVersion: number;
   assignedAt?: string;
@@ -157,4 +157,13 @@ export type AdminOrderRow = {
   };
   items: AdminOrderItemRow[];
   statusLogs?: AdminOrderStatusLog[];
+  returnRequest?: {
+    id: string;
+    status: "pending" | "approved" | "rejected";
+    reason: string;
+    description?: string;
+    mediaUrls?: string[];
+    reviewReason?: string;
+    reviewedAt?: string;
+  };
 };

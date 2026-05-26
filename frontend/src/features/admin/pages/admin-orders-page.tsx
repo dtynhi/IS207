@@ -24,8 +24,10 @@ const statusColor: Record<AdminOrderRow["status"], string> = {
   ready_to_pick: "blue",
   ready_to_ship: "cyan",
   delivered: "green",
+  awaiting_return: "orange",
   returned: "volcano",
   cancelled: "red",
+  completed: "default",
 };
 
 const statusLabel: Record<AdminOrderRow["status"], string> = {
@@ -33,8 +35,10 @@ const statusLabel: Record<AdminOrderRow["status"], string> = {
   ready_to_pick: "Chờ lấy hàng",
   ready_to_ship: "Chờ giao hàng",
   delivered: "Đã giao",
+  awaiting_return: "Đợi hoàn hàng",
   returned: "Trả hàng",
   cancelled: "Đã hủy",
+  completed: "Hoàn thành (nội bộ)",
 };
 
 const paymentColor: Record<AdminOrderRow["paymentStatus"], string> = {
@@ -51,7 +55,8 @@ const getNextStatuses = (status: AdminOrderRow["status"]) => {
   if (status === "pending_confirm") return ["pending_confirm", "ready_to_pick", "cancelled"];
   if (status === "ready_to_pick") return ["ready_to_pick", "ready_to_ship", "cancelled"];
   if (status === "ready_to_ship") return ["ready_to_ship", "delivered", "cancelled"];
-  if (status === "delivered") return ["delivered", "returned"];
+  if (status === "delivered") return ["delivered", "awaiting_return"];
+  if (status === "awaiting_return") return ["awaiting_return"];
   return [status];
 };
 
@@ -77,8 +82,19 @@ export const AdminOrdersPage = () => {
   });
   const [detail, setDetail] = useState<AdminOrderRow | null>(null);
   const [statusForm] = Form.useForm<{ status: AdminOrderRow["status"]; reason?: string }>();
+  const [reviewForm] = Form.useForm<{ reviewReason?: string }>();
+  const [processForm] = Form.useForm<{ reason?: string }>();
 
-  const { query, detailMutation, claimMutation, releaseMutation, statusMutation, contextHolder } = useAdminOrders(filters);
+  const {
+    query,
+    detailMutation,
+    claimMutation,
+    releaseMutation,
+    statusMutation,
+    reviewReturnMutation,
+    processReturnMutation,
+    contextHolder,
+  } = useAdminOrders(filters);
 
   const tableData = useMemo(() => (query.data?.items || []) as AdminOrderRow[], [query.data]);
 
@@ -87,6 +103,8 @@ export const AdminOrdersPage = () => {
       const data = (await detailMutation.mutateAsync(record.id)) as AdminOrderRow;
       setDetail(data);
       statusForm.setFieldsValue({ status: data.status, reason: "" });
+      reviewForm.resetFields();
+      processForm.resetFields();
     } catch {
       setDetail(null);
     }
@@ -106,6 +124,43 @@ export const AdminOrdersPage = () => {
       })) as AdminOrderRow;
       setDetail(updated);
       statusForm.setFieldsValue({ status: updated.status, reason: "" });
+    } catch {
+      // handled by mutation or validation
+    }
+  };
+
+  const reviewReturn = async (decision: "approved" | "rejected") => {
+    if (!detail?.returnRequest) return;
+    try {
+      const values = await reviewForm.validateFields();
+      await reviewReturnMutation.mutateAsync({
+        id: detail.returnRequest.id,
+        payload: {
+          decision,
+          reviewReason: values.reviewReason?.trim() || undefined,
+          lockVersion: detail.lockVersion,
+        },
+      });
+      const refreshed = (await detailMutation.mutateAsync(detail.id)) as AdminOrderRow;
+      setDetail(refreshed);
+    } catch {
+      // handled by mutation or validation
+    }
+  };
+
+  const processReturn = async (result: "approved" | "rejected") => {
+    if (!detail) return;
+    try {
+      const values = await processForm.validateFields();
+      await processReturnMutation.mutateAsync({
+        id: detail.id,
+        payload: {
+          result,
+          reason: values.reason?.trim() || undefined,
+        },
+      });
+      const refreshed = (await detailMutation.mutateAsync(detail.id)) as AdminOrderRow;
+      setDetail(refreshed);
     } catch {
       // handled by mutation or validation
     }
@@ -158,8 +213,10 @@ export const AdminOrdersPage = () => {
               { value: "ready_to_pick", label: "Chờ lấy hàng" },
               { value: "ready_to_ship", label: "Chờ giao hàng" },
               { value: "delivered", label: "Đã giao" },
+              { value: "awaiting_return", label: "Đợi hoàn hàng" },
               { value: "returned", label: "Trả hàng" },
               { value: "cancelled", label: "Đã hủy" },
+              { value: "completed", label: "Hoàn thành (nội bộ)" },
             ]}
           />
           <Select
@@ -285,6 +342,81 @@ export const AdminOrdersPage = () => {
             </div>
 
             <Divider />
+
+            {detail.returnRequest && (
+              <>
+                <Title level={5}>Yêu cầu hoàn hàng</Title>
+                <Space direction="vertical" className="w-full" size="small">
+                  <Text><strong>Lý do:</strong> {detail.returnRequest.reason}</Text>
+                  {detail.returnRequest.description && <Text><strong>Mô tả:</strong> {detail.returnRequest.description}</Text>}
+                  {Array.isArray(detail.returnRequest.mediaUrls) && detail.returnRequest.mediaUrls.length ? (
+                    <Text><strong>Minh chứng:</strong> {detail.returnRequest.mediaUrls.join(", ")}</Text>
+                  ) : null}
+                  {detail.returnRequest.reviewReason && (
+                    <Text><strong>Ghi chú duyệt:</strong> {detail.returnRequest.reviewReason}</Text>
+                  )}
+                  <Text><strong>Trạng thái yêu cầu:</strong> {detail.returnRequest.status}</Text>
+                </Space>
+
+                {detail.returnRequest.status === "pending" && (
+                  <Form form={reviewForm} layout="vertical" className="mt-3">
+                    <Form.Item name="reviewReason" label="Ghi chú duyệt (tuỳ chọn)">
+                      <Input.TextArea rows={2} disabled={!isAssignedToMe} />
+                    </Form.Item>
+                    <Space>
+                      <Button
+                        type="primary"
+                        onClick={() => reviewReturn("approved")}
+                        disabled={!isAssignedToMe}
+                        loading={reviewReturnMutation.isPending}
+                      >
+                        Duyệt hoàn hàng
+                      </Button>
+                      <Button
+                        danger
+                        onClick={() => reviewReturn("rejected")}
+                        disabled={!isAssignedToMe}
+                        loading={reviewReturnMutation.isPending}
+                      >
+                        Từ chối
+                      </Button>
+                    </Space>
+                  </Form>
+                )}
+
+                <Divider />
+              </>
+            )}
+
+            {detail.status === "awaiting_return" && (
+              <>
+                <Title level={5}>Xử lý hàng hoàn về</Title>
+                <Form form={processForm} layout="vertical">
+                  <Form.Item name="reason" label="Ghi chú kiểm tra (tuỳ chọn)">
+                    <Input.TextArea rows={2} disabled={!isAssignedToMe} />
+                  </Form.Item>
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => processReturn("approved")}
+                      disabled={!isAssignedToMe}
+                      loading={processReturnMutation.isPending}
+                    >
+                      Hàng OK → nhập kho & hoàn tiền
+                    </Button>
+                    <Button
+                      danger
+                      onClick={() => processReturn("rejected")}
+                      disabled={!isAssignedToMe}
+                      loading={processReturnMutation.isPending}
+                    >
+                      Hàng lỗi → hoàn tiền
+                    </Button>
+                  </Space>
+                </Form>
+                <Divider />
+              </>
+            )}
 
             <Title level={5}>Cập nhật trạng thái</Title>
             <Form form={statusForm} layout="vertical">
