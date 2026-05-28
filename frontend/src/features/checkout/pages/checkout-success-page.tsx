@@ -41,7 +41,7 @@ export const CheckoutSuccessPage = () => {
           icon={<CheckCircleOutlined className="text-[var(--primary)]" />}
           status="success"
           title="Đặt hàng thành công!"
-          subTitle="Cảm ơn bạn đã mua sắm tại Uni Market."
+          subTitle="Cảm ơn bạn đã mua sắm tại 5N Store."
           extra={[
             <Space key="actions">
               <Button onClick={() => navigate("/user/purchase")} className="h-11 rounded-xl px-7">Xem đơn mua</Button>

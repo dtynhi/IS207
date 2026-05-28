@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useRef } from "react";
 import { message } from "antd";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom"; // THÊM useSearchParams
 import { getUserId } from "../../../shared/session/storage";
 import { getCartApi } from "../../cart/api/cart.api";
 import { createCheckoutOrderApi } from "../api/checkout.api";
@@ -11,6 +11,7 @@ import type { ApiErrorResponse } from "../../../shared/api/types";
 
 export const useCheckoutPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams(); // THÊM DÒNG NÀY ĐỂ LẤY URL PARAMS
   const userId = getUserId();
   const [api, contextHolder] = message.useMessage();
   const lastPaymentMethodRef = useRef<string | undefined>(undefined);
@@ -26,13 +27,11 @@ export const useCheckoutPage = () => {
     onSuccess: (data) => {
       api.success("Đặt hàng thành công!");
       if (lastPaymentMethodRef.current === "bank") {
-        // If backend returned a paymentUrl, redirect browser to it (gateway)
         if (data.paymentUrl) {
           window.location.href = data.paymentUrl;
           return;
         }
-        // fallback to internal sandbox page
-        navigate(`/checkout/pay/sandbox/${data.id}`);
+        navigate(`/checkout/sandbox/${data.id}`);
       } else {
         navigate(`/checkout/success/${data.id}`);
       }
@@ -55,15 +54,24 @@ export const useCheckoutPage = () => {
   });
 
   const submitOrder = (values: CheckoutFormValues) => {
-    const items = (cartQuery.data?.items || []).map((item) => ({
-      productId: item.productId,
-      quantity: item.quantity,
-    }));
+    // 1. Lấy danh sách ID giỏ hàng được chọn từ URL (truyền sang từ trang Giỏ hàng)
+    const selectedItemIds = searchParams.get("items")?.split(",") || [];
 
-    // remember payment method for post-success navigation
+    // 2. CHỈ LỌC lấy những sản phẩm nằm trong danh sách được chọn để gửi cho Backend
+    const items = (cartQuery.data?.items || [])
+      .filter((item) => selectedItemIds.includes(item.id))
+      .map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      }));
+
+    if (items.length === 0) {
+      api.error("Không có sản phẩm nào để thanh toán!");
+      return;
+    }
+
     lastPaymentMethodRef.current = values.paymentMethod;
 
-    // Build a formatted address string so backend keeps using the existing `address` field
     const addressParts = [
       values.addressLine,
       values.ward,
@@ -76,12 +84,12 @@ export const useCheckoutPage = () => {
       phone: values.phone,
       address: addressParts.join(", "),
       paymentMethod: values.paymentMethod,
-      returnUrl: `${window.location.origin}/checkout/success/{orderId}`,
-      items,
+      returnUrl: `${window.location.origin}/checkout/sandbox-return`,
+      items, // Danh sách items đã được lọc chuẩn xác!
     };
 
     orderMutation.mutate(payload);
   };
 
-  return { userId, cartQuery, orderMutation, submitOrder, contextHolder };
+  return { cartQuery, orderMutation, submitOrder, contextHolder };
 };

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { EnvironmentOutlined } from "@ant-design/icons";
 import { Button, Card, Empty, Form, Input, Row, Col, Space, Typography, Select, Radio } from "antd";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
 import { Breadcrumb } from "../../../shared/components/breadcrumb";
 import { Price } from "../../../shared/components/price";
@@ -24,12 +24,22 @@ type ProvinceDetail = {
 
 export const CheckoutPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const userId = getUserId();
   const [form] = Form.useForm<CheckoutFormValues>();
   const { cartQuery, orderMutation, submitOrder, contextHolder } = useCheckoutPage();
 
-  const items = cartQuery.data?.items || [];
-  const total = Number(cartQuery.data?.totalPrice || 0);
+  // ---> 3. THÊM NGUYÊN ĐOẠN CODE LỌC SẢN PHẨM NÀY VÀO <---
+  // Lấy các ID sản phẩm được chọn từ đường dẫn (URL)
+  const selectedItemIds = searchParams.get("items")?.split(",") || [];
+// Lấy toàn bộ sản phẩm trong giỏ và CHỈ giữ lại những món có ID nằm trong danh sách đã chọn
+  const allItems = cartQuery.data?.items || [];
+  const items = allItems.filter(item => selectedItemIds.includes(item.id));
+  
+  // Tính lại tổng tiền của các sản phẩm được chọn
+  const total = items.reduce((sum, item) => sum + Number(item.totalPrice), 0);
+  // --------------------------------------------------------
+
   const selectedProvinceName = Form.useWatch("province", form);
 
   // Load user's saved addresses

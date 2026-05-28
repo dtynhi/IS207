@@ -253,9 +253,17 @@ export const createOrder = async (payload: {
 
         if (updated.count === 0) throw new OrderPlacementError("OUT_OF_STOCK", productId);
       }
-
+// Trích xuất danh sách các productId đã đặt mua từ mảng payload items gửi lên
+const purchasedProductIds = items.map((item) => item.productId);
       if (payload.userId) {
-        await tx.cart.deleteMany({ where: { userId: payload.userId } });
+        await tx.cart.deleteMany({
+  where: {
+    userId: payload.userId,
+    productId: {
+      in: purchasedProductIds, // Lệnh 'in' giúp lọc đúng những ID trong mảng để xóa
+    },
+  },
+});
       }
 
       return { ok: true, data: order } as const;
