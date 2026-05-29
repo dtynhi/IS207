@@ -30,6 +30,8 @@ import { UserWalletPage } from "../features/user/pages/user-wallet-page";
 import { FlashSalePage } from "../features/flash-sale/pages/flash-sale-page";
 import { AdminFlashSalePage } from "../features/admin/pages/admin-flash-sale-page";
 import { AdminCampaignsPage } from "../features/admin/pages/admin-campaigns-page";
+import { CouponListPage } from "../features/coupons/pages/coupon-list.page";
+import { CouponFormPage } from "../features/coupons/pages/coupon-form.page";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -67,11 +69,14 @@ export const router = createBrowserRouter([
       { path: "products", element: <AdminProductsPage /> },
       { path: "categories", element: <AdminCategoriesPage /> },
       { path: "orders", element: <AdminOrdersPage /> },
+      { path: "coupons", element: <CouponListPage /> },
+      { path: "coupons/create", element: <CouponFormPage /> },
+      { path: "coupons/edit/:id", element: <CouponFormPage /> },
       { path: "roles", element: <AdminRolesPage /> },
       { path: "accounts", element: <AdminAccountsPage /> },
       { path: "my-account", element: <AdminMyAccountPage /> },
       { path: "settings", element: <AdminSettingsPage /> },
-      { path: "flash-sale", element: <AdminFlashSalePage /> },//Thêm route admin flash sale
+      { path: "flash-sale", element: <AdminFlashSalePage /> },
       { path: "campaigns", element: <AdminCampaignsPage /> },
     ],
   },

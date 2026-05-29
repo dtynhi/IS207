@@ -1,5 +1,6 @@
 import type { Order, Prisma } from "@prisma/client";
 import { prisma } from "../../infrastructure/db/prisma.client";
+import { calculateDiscount, incrementCouponUsage, validateCouponForUse } from "../coupon/coupon.service";
 import { getSearchValue, toPaginationMeta, toSkipTake, toSort } from "../../shared/query/query-utils";
 
 type OrderStatus =
@@ -16,11 +17,11 @@ type PaymentStatus = "unpaid" | "paid";
 type PaymentMethod = "COD" | "BANK_TRANSFER";
 type ActorType = "customer" | "admin" | "system";
 
-type OrderCreateFailureReason = "PRODUCT_NOT_FOUND" | "OUT_OF_STOCK";
+type OrderCreateFailureReason = "PRODUCT_NOT_FOUND" | "OUT_OF_STOCK" | "INVALID_COUPON";
 
 type OrderCreateResult =
   | { ok: true; data: Order }
-  | { ok: false; reason: OrderCreateFailureReason; productId?: string };
+  | { ok: false; reason: OrderCreateFailureReason; productId?: string; message?: string };
 
 class OrderPlacementError extends Error {
   reason: OrderCreateFailureReason;
@@ -88,6 +89,13 @@ const restoreStock = async (tx: Prisma.TransactionClient, orderId: string) => {
 };
 
 const getOrderTotalAmountTx = async (tx: Prisma.TransactionClient, orderId: string) => {
+  const order = await tx.order.findUnique({
+    where: { id: orderId },
+    select: { finalAmount: true },
+  });
+
+  if (order && order.finalAmount > 0) return order.finalAmount;
+
   const items = await tx.orderItem.findMany({
     where: { orderId },
     select: { price: true, quantity: true, discountPercentage: true },
@@ -173,6 +181,7 @@ export const createOrder = async (payload: {
   phone: string;
   address: string;
   paymentMethod?: PaymentMethod;
+  couponCode?: string;
   items: Array<{ productId: string; quantity: number }>;
 }): Promise<OrderCreateResult> => {
   try {
@@ -214,12 +223,36 @@ export const createOrder = async (payload: {
         }
       }
 
+      const originalAmount = products.reduce((sum, product) => {
+        const itemQuantity = quantityByProduct.get(product.id) ?? 0;
+        const discountedPrice = product.price * (1 - product.discountPercentage / 100);
+        return sum + Math.round(discountedPrice * itemQuantity);
+      }, 0);
+
+      let discountAmount = 0;
+      let finalAmount = originalAmount;
+      let appliedCoupon = null;
+
+      if (payload.couponCode) {
+        try {
+          appliedCoupon = await validateCouponForUse(payload.couponCode, originalAmount, Array.from(productIds), tx);
+          discountAmount = calculateDiscount(appliedCoupon, originalAmount);
+          finalAmount = Math.max(originalAmount - discountAmount, 0);
+        } catch (error: any) {
+          return { ok: false, reason: "INVALID_COUPON", message: error.message } as const;
+        }
+      }
+
       const order = await tx.order.create({
         data: {
           userId: payload.userId,
           fullName: payload.fullName,
           phone: payload.phone,
           address: payload.address,
+          couponCode: payload.couponCode?.trim().toUpperCase() || null,
+          originalAmount,
+          discountAmount,
+          finalAmount,
           paymentMethod: payload.paymentMethod ?? "COD",
         },
       });
@@ -253,17 +286,22 @@ export const createOrder = async (payload: {
 
         if (updated.count === 0) throw new OrderPlacementError("OUT_OF_STOCK", productId);
       }
-// Trích xuất danh sách các productId đã đặt mua từ mảng payload items gửi lên
-const purchasedProductIds = items.map((item) => item.productId);
+
+      if (appliedCoupon) {
+        await incrementCouponUsage(appliedCoupon.id, tx);
+      }
+
+      // Trích xuất danh sách các productId đã đặt mua từ mảng payload items gửi lên
+      const purchasedProductIds = items.map((item) => item.productId);
       if (payload.userId) {
         await tx.cart.deleteMany({
-  where: {
-    userId: payload.userId,
-    productId: {
-      in: purchasedProductIds, // Lệnh 'in' giúp lọc đúng những ID trong mảng để xóa
-    },
-  },
-});
+          where: {
+            userId: payload.userId,
+            productId: {
+              in: purchasedProductIds, // Lệnh 'in' giúp lọc đúng những ID trong mảng để xóa
+            },
+          },
+        });
       }
 
       return { ok: true, data: order } as const;
@@ -541,6 +579,13 @@ export const markOrderPaidByAdmin = async (orderId: string, adminId: string) => 
 };
 
 export const getOrderTotalAmount = async (orderId: string) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { finalAmount: true },
+  });
+
+  if (order && order.finalAmount > 0) return order.finalAmount;
+
   const items = await prisma.orderItem.findMany({
     where: { orderId },
     select: { price: true, quantity: true, discountPercentage: true },
