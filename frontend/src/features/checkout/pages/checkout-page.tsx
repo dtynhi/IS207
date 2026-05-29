@@ -239,9 +239,7 @@ export const CheckoutPage = () => {
                   maxLength={50}
                 />
                 <Button
-enabled? no
-                
-                type="primary"
+                  type="primary"
                   loading={couponApplying}
                   onClick={() => applyCoupon(couponInput)}
                 >
