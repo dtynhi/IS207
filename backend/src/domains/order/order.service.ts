@@ -233,8 +233,17 @@ export const createOrder = async (payload: {
       let discountAmount = 0;
       let finalAmount = originalAmount;
       let appliedCoupon = null;
-      const voucherCount = payload.couponCodes?.length ?? (payload.couponCode ? 1 : 0);
-      const couponCodeToApply = payload.couponCode?.trim().toUpperCase() || payload.couponCodes?.[0]?.trim().toUpperCase();
+
+      if (payload.couponCodes && payload.couponCodes.length > 1) {
+        return {
+          ok: false,
+          reason: "INVALID_COUPON",
+          message: "Mỗi đơn hàng chỉ được áp dụng tối đa 1 voucher",
+        } as const;
+      }
+
+      const couponCodeToApply =
+        payload.couponCode?.trim().toUpperCase() || payload.couponCodes?.[0]?.trim().toUpperCase();
 
       if (couponCodeToApply) {
         try {
@@ -243,7 +252,7 @@ export const createOrder = async (payload: {
             originalAmount,
             Array.from(productIds),
             payload.userId,
-            voucherCount,
+            1,
             tx,
           );
           discountAmount = calculateDiscount(appliedCoupon, originalAmount);

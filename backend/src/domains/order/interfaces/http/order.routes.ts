@@ -109,7 +109,7 @@ router.post("/orders", async (req, res, next) => {
         phone: z.string().min(1),
         address: z.string().min(1),
         couponCode: z.string().trim().optional(),
-        couponCodes: z.array(z.string().trim()).optional(),
+        couponCodes: z.array(z.string().trim()).max(1).optional(),
         items: z.array(z.object({ productId: z.string(), quantity: z.number().int().min(1) })).min(1),
       })
       .parse(req.body);

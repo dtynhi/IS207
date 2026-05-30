@@ -29,8 +29,6 @@ router.post("/", async (req: Request, res: Response) => {
       totalUsageLimit: req.body.totalUsageLimit ?? req.body.maxUses,
       maxUsagePerUser: req.body.maxUsagePerUser,
       mode: req.body.mode,
-      allowStacking: req.body.allowStacking,
-      maxVouchersPerOrder: req.body.maxVouchersPerOrder,
       refundPolicy: req.body.refundPolicy,
       minOrderAmount: req.body.minOrderAmount,
       applyTo: req.body.applyTo,
@@ -53,7 +51,12 @@ router.get("/", async (req: Request, res: Response) => {
       sortBy: (req.query.sortBy as string) ?? "createdAt",
       sortOrder: (req.query.sortOrder as "asc" | "desc") ?? "desc",
       search: req.query.search as string,
-      status: req.query.status as "active" | "inactive",
+      computedStatus: req.query.computedStatus as
+        | "ACTIVE"
+        | "EXPIRED"
+        | "DISABLED"
+        | "OUT_OF_USAGE"
+        | undefined,
     });
     res.json(result);
   } catch (error: any) {
@@ -88,8 +91,6 @@ router.put("/:id", async (req: Request, res: Response) => {
       totalUsageLimit: req.body.totalUsageLimit ?? req.body.maxUses,
       maxUsagePerUser: req.body.maxUsagePerUser,
       mode: req.body.mode,
-      allowStacking: req.body.allowStacking,
-      maxVouchersPerOrder: req.body.maxVouchersPerOrder,
       refundPolicy: req.body.refundPolicy,
       minOrderAmount: req.body.minOrderAmount,
       applyTo: req.body.applyTo,
@@ -117,6 +118,9 @@ router.delete("/:id", async (req: Request, res: Response) => {
 router.post("/validate", async (req: Request, res: Response) => {
   try {
     const { code, orderTotal, productIds, userId, voucherCount } = req.body;
+    if (voucherCount != null && Number(voucherCount) > 1) {
+      return res.status(400).json({ error: "Mỗi đơn hàng chỉ được áp dụng tối đa 1 voucher" });
+    }
     const coupon = await validateCouponForUse(code, orderTotal, productIds, userId, voucherCount);
     const discount = calculateDiscount(coupon, orderTotal);
     const finalPrice = orderTotal - discount;
@@ -135,6 +139,9 @@ router.post("/validate", async (req: Request, res: Response) => {
 router.post("/apply", async (req: Request, res: Response) => {
   try {
     const { code, orderTotal, productIds, userId, voucherCount } = req.body;
+    if (voucherCount != null && Number(voucherCount) > 1) {
+      return res.status(400).json({ error: "Mỗi đơn hàng chỉ được áp dụng tối đa 1 voucher" });
+    }
     const coupon = await validateCouponForUse(code, orderTotal, productIds, userId, voucherCount);
     const discount = calculateDiscount(coupon, orderTotal);
 

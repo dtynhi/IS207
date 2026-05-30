@@ -1,5 +1,7 @@
 import { apiClient } from "../../../shared/api/client";
 
+export type VoucherComputedStatus = "ACTIVE" | "EXPIRED" | "DISABLED" | "OUT_OF_USAGE";
+
 export interface Coupon {
   id: string;
   code: string;
@@ -13,6 +15,7 @@ export interface Coupon {
   minOrderAmount: number;
   applyTo?: Record<string, unknown>;
   status: "active" | "inactive";
+  computedStatus?: VoucherComputedStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -27,8 +30,6 @@ export interface CreateCouponPayload {
   totalUsageLimit?: number;
   maxUsagePerUser?: number;
   mode?: "PUBLIC" | "PRIVATE" | "LIMITED";
-  allowStacking?: boolean;
-  maxVouchersPerOrder?: number;
   refundPolicy?: "NONE" | "ON_CANCEL" | "ON_RETURN";
   minOrderAmount?: number;
   applyTo?: Record<string, unknown>;
@@ -49,12 +50,17 @@ export interface ListCouponsResponse {
 
 export const couponAPI = {
   // List coupons
-  list: async (page = 1, limit = 20, search = "", status?: string) => {
+  list: async (
+    page = 1,
+    limit = 20,
+    search = "",
+    computedStatus?: VoucherComputedStatus,
+  ) => {
     const params = new URLSearchParams();
     params.set("page", page.toString());
     params.set("limit", limit.toString());
     if (search) params.set("search", search);
-    if (status) params.set("status", status);
+    if (computedStatus) params.set("computedStatus", computedStatus);
 
     const response = await apiClient.get(`/coupons?${params}`);
     return response.data as ListCouponsResponse;

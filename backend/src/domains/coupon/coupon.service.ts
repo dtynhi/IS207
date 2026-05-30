@@ -3,9 +3,13 @@ import { getSearchValue, toPaginationMeta, toSkipTake } from "../../shared/query
 import type { Prisma } from "@prisma/client";
 import type { CouponQueryParams } from "./coupon.query";
 
+export type CouponClassification = "PERCENT_DISCOUNT" | "FIXED_DISCOUNT" | "FREE_SHIPPING";
+export type VoucherStatus = "ACTIVE" | "EXPIRED" | "DISABLED" | "OUT_OF_USAGE";
+
 export interface CreateCouponInput {
   code: string;
   description?: string;
+  classification?: CouponClassification;
   type: "percent" | "amount";
   value: number;
   startsAt?: Date;
@@ -13,8 +17,6 @@ export interface CreateCouponInput {
   totalUsageLimit?: number;
   maxUsagePerUser?: number;
   mode?: "PUBLIC" | "PRIVATE" | "LIMITED";
-  allowStacking?: boolean;
-  maxVouchersPerOrder?: number;
   refundPolicy?: "NONE" | "ON_CANCEL" | "ON_RETURN";
   minOrderAmount?: number;
   applyTo?: Prisma.InputJsonValue;
@@ -26,8 +28,73 @@ export interface UpdateCouponInput extends Partial<CreateCouponInput> {
 }
 
 // Validate coupon input
+export const getCouponComputedStatus = (coupon: {
+  status: string;
+  startsAt?: Date | string | null;
+  endsAt?: Date | string | null;
+  usedCount: number;
+  totalUsageLimit?: number | null;
+}): VoucherStatus => {
+  const now = new Date();
+
+  if (coupon.endsAt && now > new Date(coupon.endsAt)) {
+    return "EXPIRED";
+  }
+
+  if (coupon.status !== "active") {
+    return "DISABLED";
+  }
+
+  if (coupon.startsAt && now < new Date(coupon.startsAt)) {
+    return "DISABLED";
+  }
+
+  if (coupon.totalUsageLimit != null && coupon.usedCount >= coupon.totalUsageLimit) {
+    return "OUT_OF_USAGE";
+  }
+
+  return "ACTIVE";
+};
+
+const withComputedStatus = <T extends Parameters<typeof getCouponComputedStatus>[0]>(coupon: T) => ({
+  ...coupon,
+  computedStatus: getCouponComputedStatus(coupon),
+});
+
+const validateClassification = (classification: CouponClassification): boolean =>
+  ["PERCENT_DISCOUNT", "FIXED_DISCOUNT", "FREE_SHIPPING"].includes(classification);
+
+const resolveCouponClassification = (input: {
+  classification?: CouponClassification;
+  type: "percent" | "amount";
+}): CouponClassification => {
+  if (input.classification && validateClassification(input.classification)) {
+    return input.classification;
+  }
+
+  return input.type === "percent" ? "PERCENT_DISCOUNT" : "FIXED_DISCOUNT";
+};
+
+const ensureTypeMatchesClassification = (classification: CouponClassification, type: string, value: number) => {
+  if (classification === "PERCENT_DISCOUNT" && type !== "percent") {
+    throw new Error("Classification PERCENT_DISCOUNT yêu cầu type là 'percent'");
+  }
+  if (classification === "FIXED_DISCOUNT" && type !== "amount") {
+    throw new Error("Classification FIXED_DISCOUNT yêu cầu type là 'amount'");
+  }
+  if (classification === "FREE_SHIPPING") {
+    if (type !== "amount") {
+      throw new Error("Classification FREE_SHIPPING yêu cầu type là 'amount'");
+    }
+    if (value !== 0) {
+      throw new Error("FREE_SHIPPING phải có value = 0");
+    }
+  }
+};
+
 export const validateCoupon = (input: CreateCouponInput): string[] => {
   const errors: string[] = [];
+  const classification = resolveCouponClassification(input);
 
   if (!input.code || input.code.trim().length === 0) {
     errors.push("Code là bắt buộc");
@@ -39,10 +106,22 @@ export const validateCoupon = (input: CreateCouponInput): string[] => {
     errors.push("Type phải là 'percent' hoặc 'amount'");
   }
 
-  if (input.value <= 0) {
-    errors.push("Value phải > 0");
+  if (input.value < 0) {
+    errors.push("Value phải >= 0");
   } else if (input.type === "percent" && input.value > 100) {
     errors.push("Value phần trăm không được vượt quá 100");
+  }
+
+  if (classification === "FREE_SHIPPING" && input.value !== 0) {
+    errors.push("FREE_SHIPPING phải có value = 0");
+  }
+
+  if (classification === "PERCENT_DISCOUNT" && input.type !== "percent") {
+    errors.push("PERCENT_DISCOUNT yêu cầu type là 'percent'");
+  }
+
+  if (classification === "FIXED_DISCOUNT" && input.type !== "amount") {
+    errors.push("FIXED_DISCOUNT yêu cầu type là 'amount'");
   }
 
   if (input.startsAt && input.endsAt && new Date(input.startsAt) >= new Date(input.endsAt)) {
@@ -56,14 +135,6 @@ export const validateCoupon = (input: CreateCouponInput): string[] => {
 
   if (input.maxUsagePerUser !== undefined && input.maxUsagePerUser !== null && input.maxUsagePerUser < 1) {
     errors.push("maxUsagePerUser phải >= 1");
-  }
-
-  if (input.maxVouchersPerOrder !== undefined && input.maxVouchersPerOrder !== null && input.maxVouchersPerOrder < 1) {
-    errors.push("maxVouchersPerOrder phải >= 1");
-  }
-
-  if (input.allowStacking !== undefined && typeof input.allowStacking !== "boolean") {
-    errors.push("allowStacking phải là boolean");
   }
 
   if (input.mode && !["PUBLIC", "PRIVATE", "LIMITED"].includes(input.mode)) {
@@ -108,8 +179,8 @@ export const createCoupon = async (input: CreateCouponInput) => {
       totalUsageLimit: input.totalUsageLimit,
       maxUsagePerUser: input.maxUsagePerUser,
       mode: input.mode ?? "PUBLIC",
-      allowStacking: input.allowStacking ?? false,
-      maxVouchersPerOrder: input.maxVouchersPerOrder,
+      allowStacking: false,
+      maxVouchersPerOrder: 1,
       refundPolicy: input.refundPolicy ?? "NONE",
       minOrderAmount: input.minOrderAmount ?? 0,
       applyTo: input.applyTo,
@@ -125,6 +196,7 @@ export const updateCoupon = async (input: UpdateCouponInput) => {
   if (data.code && data.type) {
     const errors = validateCoupon({
       code: data.code,
+      classification: data.classification,
       type: data.type,
       value: data.value ?? 0,
       status: data.status ?? "active",
@@ -154,8 +226,6 @@ export const updateCoupon = async (input: UpdateCouponInput) => {
       code: data.code ? data.code.toUpperCase() : undefined,
       totalUsageLimit: data.totalUsageLimit,
       mode: data.mode,
-      allowStacking: data.allowStacking,
-      maxVouchersPerOrder: data.maxVouchersPerOrder,
       refundPolicy: data.refundPolicy,
     },
   });
@@ -163,9 +233,13 @@ export const updateCoupon = async (input: UpdateCouponInput) => {
 
 // Get coupon by ID
 export const getCouponById = async (id: string) => {
-  return prisma.coupon.findUnique({
+  const coupon = await prisma.coupon.findUnique({
     where: { id },
   });
+  if (!coupon) {
+    return null;
+  }
+  return withComputedStatus(coupon);
 };
 
 // Get coupon by code
@@ -206,45 +280,34 @@ export const getVoucherUsage = async (
   });
 };
 
-export const validateCouponForUse = async (
-  code: string,
+const validateSingleCouponForUse = async (
+  coupon: any,
   orderTotal: number,
   productIds?: string[],
   userId?: string,
   voucherCount = 1,
   tx?: Prisma.TransactionClient,
 ) => {
-  const coupon = await getCouponByCode(code, tx);
-
   if (!coupon) {
     throw new Error("Coupon không tồn tại");
   }
 
-  if (coupon.status !== "active") {
+  const computedStatus = getCouponComputedStatus(coupon);
+  if (computedStatus !== "ACTIVE") {
+    if (computedStatus === "EXPIRED") {
+      throw new Error("Coupon đã hết hạn");
+    }
+    if (computedStatus === "OUT_OF_USAGE") {
+      throw new Error("Coupon đã dùng hết");
+    }
     throw new Error("Coupon không hoạt động");
   }
 
+  if (voucherCount > 1) {
+    throw new Error("Mỗi đơn hàng chỉ được áp dụng tối đa 1 voucher");
+  }
+
   const now = new Date();
-  if (coupon.startsAt && now < new Date(coupon.startsAt)) {
-    throw new Error("Coupon chưa bắt đầu");
-  }
-
-  if (coupon.endsAt && now > new Date(coupon.endsAt)) {
-    throw new Error("Coupon đã hết hạn");
-  }
-
-  if (coupon.totalUsageLimit != null && coupon.usedCount >= coupon.totalUsageLimit) {
-    throw new Error("Coupon đã dùng hết");
-  }
-
-  const maxVouchersAllowed = coupon.maxVouchersPerOrder ?? 1;
-  if (voucherCount > maxVouchersAllowed) {
-    throw new Error(`Chỉ được phép sử dụng tối đa ${maxVouchersAllowed} voucher cho đơn hàng này`);
-  }
-
-  if (!coupon.allowStacking && voucherCount > 1) {
-    throw new Error("Voucher này không cho phép ghép cùng voucher khác");
-  }
 
   if (orderTotal < coupon.minOrderAmount) {
     throw new Error(`Đơn hàng phải >= ${coupon.minOrderAmount} để dùng coupon`);
@@ -296,6 +359,18 @@ export const validateCouponForUse = async (
   }
 
   return coupon;
+};
+
+export const validateCouponForUse = async (
+  code: string,
+  orderTotal: number,
+  productIds?: string[],
+  userId?: string,
+  voucherCount = 1,
+  tx?: Prisma.TransactionClient,
+) => {
+  const coupon = await getCouponByCode(code, tx);
+  return validateSingleCouponForUse(coupon, orderTotal, productIds, userId, voucherCount, tx);
 };
 
 export const incrementCouponUsage = async (
@@ -422,22 +497,89 @@ export const deleteVoucherAssignment = async (assignmentId: string) => {
   });
 };
 
+const buildComputedStatusPrismaWhere = (
+  computedStatus: VoucherStatus,
+  now: Date,
+): Prisma.CouponWhereInput => {
+  const notExpired: Prisma.CouponWhereInput = {
+    OR: [{ endsAt: null }, { endsAt: { gte: now } }],
+  };
+
+  switch (computedStatus) {
+    case "EXPIRED":
+      return { endsAt: { lt: now } };
+    case "DISABLED":
+      return {
+        AND: [
+          notExpired,
+          {
+            OR: [{ status: { not: "active" } }, { startsAt: { gt: now } }],
+          },
+        ],
+      };
+    case "OUT_OF_USAGE":
+      return {
+        AND: [
+          notExpired,
+          { status: "active" },
+          { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+          { totalUsageLimit: { not: null } },
+        ],
+      };
+    case "ACTIVE":
+      return {
+        AND: [
+          { status: "active" },
+          notExpired,
+          { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+        ],
+      };
+    default:
+      return {};
+  }
+};
+
 // List coupons
 export const listCoupons = async (params: CouponQueryParams) => {
   const { skip, take } = toSkipTake(params);
   const search = getSearchValue(params);
+  const now = new Date();
 
-  const where: Record<string, unknown> = {};
+  const conditions: Prisma.CouponWhereInput[] = [];
 
-  if (params.status) {
-    where.status = params.status;
+  if (params.computedStatus) {
+    conditions.push(buildComputedStatusPrismaWhere(params.computedStatus, now));
   }
 
   if (search) {
-    where.OR = [
-      { code: { contains: search, mode: "insensitive" } },
-      { description: { contains: search, mode: "insensitive" } },
-    ];
+    conditions.push({
+      OR: [
+        { code: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ],
+    });
+  }
+
+  const where: Prisma.CouponWhereInput = conditions.length > 0 ? { AND: conditions } : {};
+
+  const needsUsageFilter =
+    params.computedStatus === "ACTIVE" || params.computedStatus === "OUT_OF_USAGE";
+
+  if (needsUsageFilter && params.computedStatus) {
+    const all = await prisma.coupon.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+    });
+    const filtered = all.filter(
+      (coupon) => getCouponComputedStatus(coupon) === params.computedStatus,
+    );
+    const totalItems = filtered.length;
+    const items = filtered.slice(skip, skip + take);
+
+    return {
+      items: items.map((coupon) => withComputedStatus(coupon)),
+      meta: toPaginationMeta(params, totalItems),
+    };
   }
 
   const [items, totalItems] = await Promise.all([
@@ -451,7 +593,7 @@ export const listCoupons = async (params: CouponQueryParams) => {
   ]);
 
   return {
-    items,
+    items: items.map((coupon) => withComputedStatus(coupon)),
     meta: toPaginationMeta(params, totalItems),
   };
 };

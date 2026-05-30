@@ -53,8 +53,6 @@ export const CouponFormPage = () => {
         totalUsageLimit: (data as any).totalUsageLimit,
         maxUsagePerUser: (data as any).maxUsagePerUser,
         mode: (data as any).mode,
-        allowStacking: (data as any).allowStacking,
-        maxVouchersPerOrder: (data as any).maxVouchersPerOrder,
         refundPolicy: (data as any).refundPolicy,
         minOrderAmount: data.minOrderAmount,
         status: data.status === "active",
@@ -80,8 +78,6 @@ export const CouponFormPage = () => {
         totalUsageLimit: values.totalUsageLimit,
         maxUsagePerUser: values.maxUsagePerUser,
         mode: values.mode,
-        allowStacking: values.allowStacking,
-        maxVouchersPerOrder: values.maxVouchersPerOrder,
         refundPolicy: values.refundPolicy,
         minOrderAmount: values.minOrderAmount || 0,
         status: values.status ? "active" : "inactive",
@@ -233,19 +229,6 @@ export const CouponFormPage = () => {
             <Col xs={24} sm={12}>
               <Form.Item label="Chế độ (mode)" name="mode">
                 <Select options={[{ label: "PUBLIC", value: "PUBLIC" }, { label: "PRIVATE", value: "PRIVATE" }, { label: "LIMITED", value: "LIMITED" }]} />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item label="Cho ghép voucher (stacking)" name="allowStacking" valuePropName="checked">
-                <Switch />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item label="Max vouchers / đơn" name="maxVouchersPerOrder">
-                <InputNumber min={1} placeholder="1" className="w-full" />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>

@@ -2,8 +2,18 @@ import { useEffect, useState } from "react";
 import { Table, Button, Space, Input, Select, Modal, message, Tooltip, Tag } from "antd";
 import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import { couponAPI, type Coupon } from "../api/coupon.api";
+import { couponAPI, type Coupon, type VoucherComputedStatus } from "../api/coupon.api";
 import AssignmentModal from "../components/assignment-modal";
+
+const VOUCHER_STATUS_DISPLAY: Record<
+  VoucherComputedStatus,
+  { color: string; label: string }
+> = {
+  ACTIVE: { color: "green", label: "Active" },
+  EXPIRED: { color: "orange", label: "Expired" },
+  DISABLED: { color: "red", label: "Disabled" },
+  OUT_OF_USAGE: { color: "default", label: "Hết lượt" },
+};
 
 export const CouponListPage = () => {
   const navigate = useNavigate();
@@ -15,14 +25,21 @@ export const CouponListPage = () => {
     total: 0,
   });
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<string | undefined>();
+  const [computedStatusFilter, setComputedStatusFilter] = useState<
+    VoucherComputedStatus | undefined
+  >();
   const [assignmentCouponId, setAssignmentCouponId] = useState<string | null>(null);
   const [assignmentVisible, setAssignmentVisible] = useState(false);
 
   const loadCoupons = async () => {
     setLoading(true);
     try {
-      const data = await couponAPI.list(pagination.current, pagination.pageSize, search, status);
+      const data = await couponAPI.list(
+        pagination.current,
+        pagination.pageSize,
+        search,
+        computedStatusFilter,
+      );
       setCoupons(data.items);
       setPagination((prev) => ({ ...prev, total: data.meta.total }));
     } catch (error: any) {
@@ -34,7 +51,7 @@ export const CouponListPage = () => {
 
   useEffect(() => {
     loadCoupons();
-  }, [pagination.current, pagination.pageSize, search, status]);
+  }, [pagination.current, pagination.pageSize, search, computedStatusFilter]);
 
   const handleDelete = (id: string) => {
     Modal.confirm({
@@ -113,14 +130,14 @@ export const CouponListPage = () => {
     },
     {
       title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
-      width: 100,
-      render: (status: string) => (
-        <Tag color={status === "active" ? "green" : "red"}>
-          {status === "active" ? "Hoạt động" : "Tắt"}
-        </Tag>
-      ),
+      dataIndex: "computedStatus",
+      key: "computedStatus",
+      width: 120,
+      render: (_: unknown, record: Coupon) => {
+        const key = record.computedStatus ?? "DISABLED";
+        const { color, label } = VOUCHER_STATUS_DISPLAY[key] ?? VOUCHER_STATUS_DISPLAY.DISABLED;
+        return <Tag color={color}>{label}</Tag>;
+      },
     },
     {
       title: "Hành động",
@@ -181,11 +198,16 @@ export const CouponListPage = () => {
         <Select
           placeholder="Lọc theo trạng thái"
           allowClear
-          value={status}
-          onChange={setStatus}
+          value={computedStatusFilter}
+          onChange={(value) => {
+            setComputedStatusFilter(value);
+            setPagination((prev) => ({ ...prev, current: 1 }));
+          }}
           options={[
-            { label: "Hoạt động", value: "active" },
-            { label: "Tắt", value: "inactive" },
+            { label: "Active", value: "ACTIVE" },
+            { label: "Expired", value: "EXPIRED" },
+            { label: "Disabled", value: "DISABLED" },
+            { label: "Hết lượt", value: "OUT_OF_USAGE" },
           ]}
           style={{ width: 200 }}
         />
