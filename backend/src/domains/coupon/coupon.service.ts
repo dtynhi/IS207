@@ -3,13 +3,11 @@ import { getSearchValue, toPaginationMeta, toSkipTake } from "../../shared/query
 import type { Prisma } from "@prisma/client";
 import type { CouponQueryParams } from "./coupon.query";
 
-export type CouponClassification = "PERCENT_DISCOUNT" | "FIXED_DISCOUNT" | "FREE_SHIPPING";
 export type VoucherStatus = "ACTIVE" | "EXPIRED" | "DISABLED" | "OUT_OF_USAGE";
 
 export interface CreateCouponInput {
   code: string;
   description?: string;
-  classification?: CouponClassification;
   type: "percent" | "amount";
   value: number;
   startsAt?: Date;
@@ -61,40 +59,8 @@ const withComputedStatus = <T extends Parameters<typeof getCouponComputedStatus>
   computedStatus: getCouponComputedStatus(coupon),
 });
 
-const validateClassification = (classification: CouponClassification): boolean =>
-  ["PERCENT_DISCOUNT", "FIXED_DISCOUNT", "FREE_SHIPPING"].includes(classification);
-
-const resolveCouponClassification = (input: {
-  classification?: CouponClassification;
-  type: "percent" | "amount";
-}): CouponClassification => {
-  if (input.classification && validateClassification(input.classification)) {
-    return input.classification;
-  }
-
-  return input.type === "percent" ? "PERCENT_DISCOUNT" : "FIXED_DISCOUNT";
-};
-
-const ensureTypeMatchesClassification = (classification: CouponClassification, type: string, value: number) => {
-  if (classification === "PERCENT_DISCOUNT" && type !== "percent") {
-    throw new Error("Classification PERCENT_DISCOUNT yêu cầu type là 'percent'");
-  }
-  if (classification === "FIXED_DISCOUNT" && type !== "amount") {
-    throw new Error("Classification FIXED_DISCOUNT yêu cầu type là 'amount'");
-  }
-  if (classification === "FREE_SHIPPING") {
-    if (type !== "amount") {
-      throw new Error("Classification FREE_SHIPPING yêu cầu type là 'amount'");
-    }
-    if (value !== 0) {
-      throw new Error("FREE_SHIPPING phải có value = 0");
-    }
-  }
-};
-
 export const validateCoupon = (input: CreateCouponInput): string[] => {
   const errors: string[] = [];
-  const classification = resolveCouponClassification(input);
 
   if (!input.code || input.code.trim().length === 0) {
     errors.push("Code là bắt buộc");
@@ -110,18 +76,6 @@ export const validateCoupon = (input: CreateCouponInput): string[] => {
     errors.push("Value phải >= 0");
   } else if (input.type === "percent" && input.value > 100) {
     errors.push("Value phần trăm không được vượt quá 100");
-  }
-
-  if (classification === "FREE_SHIPPING" && input.value !== 0) {
-    errors.push("FREE_SHIPPING phải có value = 0");
-  }
-
-  if (classification === "PERCENT_DISCOUNT" && input.type !== "percent") {
-    errors.push("PERCENT_DISCOUNT yêu cầu type là 'percent'");
-  }
-
-  if (classification === "FIXED_DISCOUNT" && input.type !== "amount") {
-    errors.push("FIXED_DISCOUNT yêu cầu type là 'amount'");
   }
 
   if (input.startsAt && input.endsAt && new Date(input.startsAt) >= new Date(input.endsAt)) {
@@ -168,7 +122,7 @@ export const createCoupon = async (input: CreateCouponInput) => {
     throw new Error("Code coupon đã tồn tại");
   }
 
-  return prisma.coupon.create({
+  const coupon = await prisma.coupon.create({
     data: {
       code: input.code.toUpperCase(),
       description: input.description,
@@ -187,6 +141,7 @@ export const createCoupon = async (input: CreateCouponInput) => {
       status: input.status,
     },
   });
+  return withComputedStatus(coupon);
 };
 
 // Update coupon
@@ -196,7 +151,6 @@ export const updateCoupon = async (input: UpdateCouponInput) => {
   if (data.code && data.type) {
     const errors = validateCoupon({
       code: data.code,
-      classification: data.classification,
       type: data.type,
       value: data.value ?? 0,
       status: data.status ?? "active",
@@ -219,16 +173,25 @@ export const updateCoupon = async (input: UpdateCouponInput) => {
     }
   }
 
-  return prisma.coupon.update({
+  const coupon = await prisma.coupon.update({
     where: { id },
     data: {
-      ...data,
       code: data.code ? data.code.toUpperCase() : undefined,
+      description: data.description,
+      type: data.type,
+      value: data.value,
+      startsAt: data.startsAt,
+      endsAt: data.endsAt,
       totalUsageLimit: data.totalUsageLimit,
+      maxUsagePerUser: data.maxUsagePerUser,
       mode: data.mode,
       refundPolicy: data.refundPolicy,
+      minOrderAmount: data.minOrderAmount,
+      applyTo: data.applyTo,
+      status: data.status,
     },
   });
+  return withComputedStatus(coupon);
 };
 
 // Get coupon by ID
@@ -353,7 +316,8 @@ const validateSingleCouponForUse = async (
       throw new Error("Voucher chỉ dành cho người dùng được cấp quyền");
     }
 
-    if (userQuota != null && usage?.usedCount != null && usage.usedCount >= userQuota) {
+    const usedCount = usage?.usedCount ?? 0;
+    if (userQuota != null && usedCount >= userQuota) {
       throw new Error("Bạn đã sử dụng voucher này quá số lần cho phép");
     }
   }
@@ -462,7 +426,25 @@ export const refundVoucherUsage = async (
   });
 };
 
-export const createVoucherAssignment = async (couponId: string, userId: string, grantedById?: string, input?: { allowedUses?: number; extraUses?: number; expiresAt?: Date; note?: string; }) => {
+export const createVoucherAssignment = async (
+  couponId: string,
+  userId: string,
+  grantedById?: string,
+  input?: { allowedUses?: number; extraUses?: number; expiresAt?: Date; note?: string },
+) => {
+  const coupon = await prisma.coupon.findUnique({ where: { id: couponId } });
+  if (!coupon) {
+    throw new Error("Coupon không tồn tại");
+  }
+  if (coupon.mode !== "PRIVATE") {
+    throw new Error("Chỉ voucher PRIVATE mới cần gán user (assignment)");
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || user.deleted) {
+    throw new Error("User không tồn tại");
+  }
+
   return prisma.voucherAssignment.upsert({
     where: { voucherId_userId: { voucherId: couponId, userId } },
     update: {
@@ -488,6 +470,10 @@ export const createVoucherAssignment = async (couponId: string, userId: string, 
 export const listVoucherAssignments = async (couponId: string) => {
   return prisma.voucherAssignment.findMany({
     where: { voucherId: couponId },
+    include: {
+      user: { select: { id: true, email: true, fullName: true, phone: true } },
+    },
+    orderBy: { grantedAt: "desc" },
   });
 };
 

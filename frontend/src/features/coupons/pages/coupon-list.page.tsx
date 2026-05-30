@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Table, Button, Space, Input, Select, Modal, message, Tooltip, Tag } from "antd";
 import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import { couponAPI, type Coupon, type VoucherComputedStatus } from "../api/coupon.api";
+import { couponAPI, type Coupon, type VoucherComputedStatus, type VoucherMode } from "../api/coupon.api";
 import AssignmentModal from "../components/assignment-modal";
 
 const VOUCHER_STATUS_DISPLAY: Record<
@@ -30,6 +30,12 @@ export const CouponListPage = () => {
   >();
   const [assignmentCouponId, setAssignmentCouponId] = useState<string | null>(null);
   const [assignmentVisible, setAssignmentVisible] = useState(false);
+
+  const MODE_LABELS: Record<VoucherMode, string> = {
+    PUBLIC: "Công khai",
+    LIMITED: "Cần đăng nhập",
+    PRIVATE: "Riêng tư (whitelist)",
+  };
 
   const loadCoupons = async () => {
     setLoading(true);
@@ -118,6 +124,13 @@ export const CouponListPage = () => {
       },
     },
     {
+      title: "Mode",
+      dataIndex: "mode",
+      key: "mode",
+      width: 130,
+      render: (mode: VoucherMode | undefined) => MODE_LABELS[mode ?? "PUBLIC"] ?? mode,
+    },
+    {
       title: "Hết hạn",
       dataIndex: "endsAt",
       key: "endsAt",
@@ -153,11 +166,20 @@ export const CouponListPage = () => {
               onClick={() => navigate(`/admin/coupons/edit/${record.id}`)}
             />
           </Tooltip>
-          <Tooltip title="Assignments">
-            <Button type="text" size="small" onClick={() => { setAssignmentCouponId(record.id); setAssignmentVisible(true); }}>
-              Assign
-            </Button>
-          </Tooltip>
+          {record.mode === "PRIVATE" && (
+            <Tooltip title="Gán user được dùng (PRIVATE)">
+              <Button
+                type="text"
+                size="small"
+                onClick={() => {
+                  setAssignmentCouponId(record.id);
+                  setAssignmentVisible(true);
+                }}
+              >
+                Gán user
+              </Button>
+            </Tooltip>
+          )}
           <Tooltip title="Xóa">
             <Button
               type="text"
