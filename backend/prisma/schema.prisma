@@ -82,9 +82,9 @@ model Account {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
-  role           Role?       @relation(fields: [roleId], references: [id])
-  assignedOrders Order[]     @relation("OrderAssignee")
-  returnLogs     ReturnLog[]
+  role                   Role?           @relation(fields: [roleId], references: [id])
+  assignedOrders         Order[]         @relation("OrderAssignee")
+  returnLogs             ReturnLog[]
   reviewedReturnRequests ReturnRequest[] @relation("ReturnRequestReviewer")
 }
 
@@ -103,9 +103,9 @@ model User {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
-  carts       Cart[]
-  orders      Order[]
-  wallet      Wallet?
+  carts          Cart[]
+  orders         Order[]
+  wallet         Wallet?
   returnRequests ReturnRequest[]
 }
 
@@ -128,37 +128,36 @@ model ProductCategory {
 }
 
 model Product {
-  id                 String       @id @default(cuid())
+  id                 String           @id @default(cuid())
   title              String
   description        String?
   price              Int
-  discountPercentage Int          @default(0)
-  stock              Int          @default(0)
+  discountPercentage Int              @default(0)
+  stock              Int              @default(0)
   thumbnail          String?
   images             Json?
-  slug               String       @unique
+  slug               String           @unique
   school             String?
   brand              String?
-  position           Int          @default(0)
-  featured           Boolean      @default(false)
-  status             RecordStatus @default(active)
-  deleted            Boolean      @default(false)
+  position           Int              @default(0)
+  featured           Boolean          @default(false)
+  status             RecordStatus     @default(active)
+  deleted            Boolean          @default(false)
   productCategoryId  String?
   createdById        String?
   deletedById        String?
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
-  soldCount Int      @default(0)
-  productCategory ProductCategory? @relation(fields: [productCategoryId], references: [id])
-  carts           Cart[]
-  orderItems      OrderItem[]
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  soldCount          Int              @default(0)
+  productCategory    ProductCategory? @relation(fields: [productCategoryId], references: [id])
+  carts              Cart[]
+  orderItems         OrderItem[]
 
   dailyFlashSaleId String?
   dailyFlashSale   DailyFlashSale? @relation(fields: [dailyFlashSaleId], references: [id])
   campaignId       String?
 <<<<<<< Updated upstream
   saleCampaign     SaleCampaign?   @relation(fields: [campaignId], references: [id])
-
 }
 
 model Cart {
@@ -192,13 +191,13 @@ model Order {
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
-  user              User?            @relation(fields: [userId], references: [id])
-  assignedToAccount Account?         @relation("OrderAssignee", fields: [assignedToAccountId], references: [id])
-  items             OrderItem[]
-  statusLogs        OrderStatusLog[]
-  returnLog         ReturnLog?
-  returnRequest     ReturnRequest?
-  refundRequests    RefundRequest[]
+  user               User?               @relation(fields: [userId], references: [id])
+  assignedToAccount  Account?            @relation("OrderAssignee", fields: [assignedToAccountId], references: [id])
+  items              OrderItem[]
+  statusLogs         OrderStatusLog[]
+  returnLog          ReturnLog?
+  returnRequest      ReturnRequest?
+  refundRequests     RefundRequest[]
   walletTransactions WalletTransaction[]
 }
 
@@ -241,21 +240,21 @@ model ReturnLog {
 }
 
 model ReturnRequest {
-  id                   String             @id @default(cuid())
-  orderId              String             @unique
-  userId               String
-  reason               String
-  description          String?
-  mediaUrls            Json?
-  status               ReturnRequestStatus @default(pending)
-  reviewedByAccountId  String?
-  reviewedAt           DateTime?
-  reviewReason         String?
-  createdAt            DateTime           @default(now())
+  id                  String              @id @default(cuid())
+  orderId             String              @unique
+  userId              String
+  reason              String
+  description         String?
+  mediaUrls           Json?
+  status              ReturnRequestStatus @default(pending)
+  reviewedByAccountId String?
+  reviewedAt          DateTime?
+  reviewReason        String?
+  createdAt           DateTime            @default(now())
 
-  order              Order   @relation(fields: [orderId], references: [id])
-  user               User    @relation(fields: [userId], references: [id])
-  reviewedByAccount  Account? @relation("ReturnRequestReviewer", fields: [reviewedByAccountId], references: [id])
+  order             Order    @relation(fields: [orderId], references: [id])
+  user              User     @relation(fields: [userId], references: [id])
+  reviewedByAccount Account? @relation("ReturnRequestReviewer", fields: [reviewedByAccountId], references: [id])
 }
 
 model Wallet {
@@ -265,7 +264,7 @@ model Wallet {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user         User                 @relation(fields: [userId], references: [id])
+  user         User                @relation(fields: [userId], references: [id])
   transactions WalletTransaction[]
 }
 
@@ -279,7 +278,7 @@ model WalletTransaction {
   createdAt DateTime              @default(now())
 
   wallet Wallet @relation(fields: [walletId], references: [id])
-  order  Order?  @relation(fields: [orderId], references: [id])
+  order  Order? @relation(fields: [orderId], references: [id])
 }
 
 model RefundRequest {
@@ -315,7 +314,7 @@ model ForgotPassword {
   createdAt DateTime @default(now())
 }
 
-model saleCampaign {
+model SaleCampaign {
   id        String   @id @default(uuid())
   name      String // Tên sự kiện
   startTime DateTime // Thời gian bắt đầu

@@ -1,6 +1,6 @@
-# Uni Market
+# 5N Store
 
-Uni Market is a monorepo with:
+5N Store is a monorepo with:
 
 - Backend API: TypeScript + Express + Prisma + PostgreSQL (`backend/`)
 - Frontend app: React + Vite + Tailwind + Ant Design (`frontend/`)
