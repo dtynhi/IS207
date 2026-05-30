@@ -50,7 +50,6 @@ export const CouponFormPage = () => {
         value: data.value,
         startsAt: data.startsAt ? dayjs(data.startsAt) : null,
         endsAt: data.endsAt ? dayjs(data.endsAt) : null,
-        maxUses: data.maxUses,
         totalUsageLimit: (data as any).totalUsageLimit,
         maxUsagePerUser: (data as any).maxUsagePerUser,
         mode: (data as any).mode,
@@ -79,7 +78,6 @@ export const CouponFormPage = () => {
         startsAt: values.startsAt ? values.startsAt.toISOString() : undefined,
         endsAt: values.endsAt ? values.endsAt.toISOString() : undefined,
         totalUsageLimit: values.totalUsageLimit,
-        maxUses: values.maxUses,
         maxUsagePerUser: values.maxUsagePerUser,
         mode: values.mode,
         allowStacking: values.allowStacking,
@@ -212,8 +210,8 @@ export const CouponFormPage = () => {
             <Col xs={24} sm={12}>
               <Form.Item
                 label={
-                  <Tooltip title="Để trống = không giới hạn">
-                    Số lần sử dụng tối đa (toàn voucher)
+                  <Tooltip title="Để trống = không giới hạn. Đây là giới hạn tổng số lần voucher có thể được dùng toàn hệ thống, không phải giới hạn trên mỗi user hoặc trên mỗi đơn hàng.">
+                    Tổng số lần sử dụng voucher (toàn hệ thống)
                   </Tooltip>
                 }
                 name="totalUsageLimit"
@@ -258,18 +256,6 @@ export const CouponFormPage = () => {
           </Row>
 
           <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                label={
-                  <Tooltip title="Để trống = không giới hạn">
-                    Số lần sử dụng tối đa
-                  </Tooltip>
-                }
-                name="maxUses"
-              >
-                <InputNumber min={1} placeholder="Để trống = không giới hạn" className="w-full" />
-              </Form.Item>
-            </Col>
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Đơn hàng tối thiểu (đ)"

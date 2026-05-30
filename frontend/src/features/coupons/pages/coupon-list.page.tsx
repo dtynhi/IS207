@@ -96,7 +96,7 @@ export const CouponListPage = () => {
       key: "usedCount",
       width: 120,
       render: (used: number, record: Coupon) => {
-        const max = record.maxUses || "Không giới hạn";
+        const max = record.totalUsageLimit ?? "Không giới hạn";
         return `${used} / ${max}`;
       },
     },

@@ -8,7 +8,7 @@ export interface Coupon {
   value: number;
   startsAt?: string;
   endsAt?: string;
-  maxUses?: number;
+  totalUsageLimit?: number;
   usedCount: number;
   minOrderAmount: number;
   applyTo?: Record<string, unknown>;
@@ -25,7 +25,6 @@ export interface CreateCouponPayload {
   startsAt?: string;
   endsAt?: string;
   totalUsageLimit?: number;
-  maxUses?: number;
   maxUsagePerUser?: number;
   mode?: "PUBLIC" | "PRIVATE" | "LIMITED";
   allowStacking?: boolean;

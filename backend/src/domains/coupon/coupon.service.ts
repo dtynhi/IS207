@@ -11,7 +11,6 @@ export interface CreateCouponInput {
   startsAt?: Date;
   endsAt?: Date;
   totalUsageLimit?: number;
-  maxUses?: number; // legacy alias for totalUsageLimit
   maxUsagePerUser?: number;
   mode?: "PUBLIC" | "PRIVATE" | "LIMITED";
   allowStacking?: boolean;
@@ -50,7 +49,7 @@ export const validateCoupon = (input: CreateCouponInput): string[] => {
     errors.push("startsAt phải trước endsAt");
   }
 
-  const totalUsageLimit = input.totalUsageLimit ?? input.maxUses;
+  const totalUsageLimit = input.totalUsageLimit;
   if (totalUsageLimit !== undefined && totalUsageLimit !== null && totalUsageLimit < 1) {
     errors.push("totalUsageLimit phải >= 1");
   }
@@ -106,7 +105,7 @@ export const createCoupon = async (input: CreateCouponInput) => {
       value: input.value,
       startsAt: input.startsAt,
       endsAt: input.endsAt,
-      totalUsageLimit: input.totalUsageLimit ?? input.maxUses,
+      totalUsageLimit: input.totalUsageLimit,
       maxUsagePerUser: input.maxUsagePerUser,
       mode: input.mode ?? "PUBLIC",
       allowStacking: input.allowStacking ?? false,
@@ -153,7 +152,7 @@ export const updateCoupon = async (input: UpdateCouponInput) => {
     data: {
       ...data,
       code: data.code ? data.code.toUpperCase() : undefined,
-      totalUsageLimit: data.totalUsageLimit ?? data.maxUses,
+      totalUsageLimit: data.totalUsageLimit,
       mode: data.mode,
       allowStacking: data.allowStacking,
       maxVouchersPerOrder: data.maxVouchersPerOrder,
