@@ -109,6 +109,7 @@ router.post("/orders", async (req, res, next) => {
         phone: z.string().min(1),
         address: z.string().min(1),
         couponCode: z.string().trim().optional(),
+        couponCodes: z.array(z.string().trim()).optional(),
         items: z.array(z.object({ productId: z.string(), quantity: z.number().int().min(1) })).min(1),
       })
       .parse(req.body);
@@ -521,7 +522,10 @@ router.post("/checkout/order", async (req, res, next) => {
       const vnpReturnUrl = appendQuery(returnControllerUrl, "frontendReturnUrl", frontendReturnUrl);
 
       const amount = await getOrderTotalAmount(order.id);
-      if (amount <= 0) return sendError(res, 400, "INVALID_AMOUNT", "Order amount is invalid");
+      if (amount <= 0) {
+        await updateOrderPaymentStatus(order.id, "paid");
+        return sendSuccess(res, { id: order.id }, { statusCode: 201 });
+      }
 
       const now = new Date();
       const expireAt = new Date(now.getTime() + 15 * 60 * 1000);

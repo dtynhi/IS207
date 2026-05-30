@@ -21,6 +21,7 @@ export const useCheckoutPage = () => {
     originalAmount: number;
     discountAmount: number;
     finalAmount: number;
+    discountLabel?: string;
   } | null>(null);
   const lastPaymentMethodRef = useRef<string | undefined>(undefined);
 
@@ -38,14 +39,22 @@ export const useCheckoutPage = () => {
     mutationFn: createCheckoutOrderApi,
     onSuccess: (data) => {
       api.success("Đặt hàng thành công!");
+      console.log("[checkout] create VNPay order response:", data);
+
       if (lastPaymentMethodRef.current === "bank") {
         if (data.paymentUrl) {
+          console.log("[checkout] redirecting to VNPay paymentUrl:", data.paymentUrl);
           window.location.href = data.paymentUrl;
           return;
         }
-        navigate(`/checkout/sandbox/${data.id}`);
+
+        const sandboxPath = `/checkout/pay/sandbox/${data.id}`;
+        console.log("[checkout] no paymentUrl returned, navigating to sandbox page:", sandboxPath);
+        navigate(sandboxPath);
       } else {
-        navigate(`/checkout/success/${data.id}`);
+        const successPath = `/checkout/success/${data.id}`;
+        console.log("[checkout] navigating to success page:", successPath);
+        navigate(successPath);
       }
     },
     onError: (error) => {
@@ -87,12 +96,19 @@ export const useCheckoutPage = () => {
     try {
       const response = await couponAPI.validate(trimmed, selectedSubtotal, productIds);
       const discountAmount = Number(response.discount || 0);
+      const couponType = response.coupon?.type as string | undefined;
+      const couponValue = Number(response.coupon?.value ?? 0);
+      const discountLabel = couponType === "percent" ? `-${couponValue}%` : undefined;
 
       setAppliedCoupon({
         couponCode: trimmed,
         originalAmount: selectedSubtotal,
         discountAmount,
-        finalAmount: Math.max(Number(response.finalPrice || selectedSubtotal), 0),
+        finalAmount: Math.max(
+          Number(response.finalPrice != null ? response.finalPrice : selectedSubtotal),
+          0,
+        ),
+        discountLabel,
       });
       api.success("Áp dụng coupon thành công!");
     } catch (error) {

@@ -51,6 +51,12 @@ export const CouponFormPage = () => {
         startsAt: data.startsAt ? dayjs(data.startsAt) : null,
         endsAt: data.endsAt ? dayjs(data.endsAt) : null,
         maxUses: data.maxUses,
+        totalUsageLimit: (data as any).totalUsageLimit,
+        maxUsagePerUser: (data as any).maxUsagePerUser,
+        mode: (data as any).mode,
+        allowStacking: (data as any).allowStacking,
+        maxVouchersPerOrder: (data as any).maxVouchersPerOrder,
+        refundPolicy: (data as any).refundPolicy,
         minOrderAmount: data.minOrderAmount,
         status: data.status === "active",
       });
@@ -65,14 +71,20 @@ export const CouponFormPage = () => {
   const handleSubmit = async (values: any) => {
     setSubmitting(true);
     try {
-      const payload = {
+      const payload: any = {
         code: values.code.toUpperCase(),
         description: values.description,
         type: values.type,
         value: values.value,
         startsAt: values.startsAt ? values.startsAt.toISOString() : undefined,
         endsAt: values.endsAt ? values.endsAt.toISOString() : undefined,
+        totalUsageLimit: values.totalUsageLimit,
         maxUses: values.maxUses,
+        maxUsagePerUser: values.maxUsagePerUser,
+        mode: values.mode,
+        allowStacking: values.allowStacking,
+        maxVouchersPerOrder: values.maxVouchersPerOrder,
+        refundPolicy: values.refundPolicy,
         minOrderAmount: values.minOrderAmount || 0,
         status: values.status ? "active" : "inactive",
       };
@@ -87,7 +99,8 @@ export const CouponFormPage = () => {
 
       navigate("/admin/coupons");
     } catch (error: any) {
-      message.error(error.message);
+      const apiMessage = error?.response?.data?.error || error.message || "Đã có lỗi xảy ra";
+      message.error(apiMessage);
     } finally {
       setSubmitting(false);
     }
@@ -194,6 +207,55 @@ export const CouponFormPage = () => {
 
           {/* Giới hạn sử dụng */}
           <Divider>Giới hạn sử dụng</Divider>
+
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label={
+                  <Tooltip title="Để trống = không giới hạn">
+                    Số lần sử dụng tối đa (toàn voucher)
+                  </Tooltip>
+                }
+                name="totalUsageLimit"
+              >
+                <InputNumber min={1} placeholder="Để trống = không giới hạn" className="w-full" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Số lần tối đa 1 user"
+                name="maxUsagePerUser"
+              >
+                <InputNumber min={1} placeholder="Để trống = không giới hạn" className="w-full" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item label="Chế độ (mode)" name="mode">
+                <Select options={[{ label: "PUBLIC", value: "PUBLIC" }, { label: "PRIVATE", value: "PRIVATE" }, { label: "LIMITED", value: "LIMITED" }]} />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item label="Cho ghép voucher (stacking)" name="allowStacking" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item label="Max vouchers / đơn" name="maxVouchersPerOrder">
+                <InputNumber min={1} placeholder="1" className="w-full" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item label="Chính sách hoàn voucher" name="refundPolicy">
+                <Select options={[{ label: "NONE", value: "NONE" }, { label: "ON_CANCEL", value: "ON_CANCEL" }, { label: "ON_RETURN", value: "ON_RETURN" }]} />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Row gutter={16}>
             <Col xs={24} sm={12}>

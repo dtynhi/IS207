@@ -3,6 +3,7 @@ import { Table, Button, Space, Input, Select, Modal, message, Tooltip, Tag } fro
 import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { couponAPI, type Coupon } from "../api/coupon.api";
+import AssignmentModal from "../components/assignment-modal";
 
 export const CouponListPage = () => {
   const navigate = useNavigate();
@@ -15,6 +16,8 @@ export const CouponListPage = () => {
   });
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string | undefined>();
+  const [assignmentCouponId, setAssignmentCouponId] = useState<string | null>(null);
+  const [assignmentVisible, setAssignmentVisible] = useState(false);
 
   const loadCoupons = async () => {
     setLoading(true);
@@ -133,6 +136,11 @@ export const CouponListPage = () => {
               onClick={() => navigate(`/admin/coupons/edit/${record.id}`)}
             />
           </Tooltip>
+          <Tooltip title="Assignments">
+            <Button type="text" size="small" onClick={() => { setAssignmentCouponId(record.id); setAssignmentVisible(true); }}>
+              Assign
+            </Button>
+          </Tooltip>
           <Tooltip title="Xóa">
             <Button
               type="text"
@@ -184,6 +192,7 @@ export const CouponListPage = () => {
       </div>
 
       <Table
+        
         dataSource={coupons}
         columns={columns}
         loading={loading}
@@ -204,6 +213,8 @@ export const CouponListPage = () => {
         rowKey="id"
         className="bg-white rounded-lg"
       />
+
+      <AssignmentModal visible={assignmentVisible} couponId={assignmentCouponId} onClose={() => setAssignmentVisible(false)} />
     </div>
   );
 };

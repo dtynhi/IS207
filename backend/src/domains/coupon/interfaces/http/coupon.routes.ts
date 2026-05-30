@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from "express";
+import { requireAdmin } from "../../../../shared/middleware/admin-auth.middleware";
 import {
   createCoupon,
   updateCoupon,
@@ -7,7 +8,9 @@ import {
   deleteCoupon,
   validateCouponForUse,
   calculateDiscount,
-  incrementCouponUsage,
+  createVoucherAssignment,
+  listVoucherAssignments,
+  deleteVoucherAssignment,
 } from "../../coupon.service";
 import type { CreateCouponInput, UpdateCouponInput } from "../../coupon.service";
 
@@ -23,7 +26,13 @@ router.post("/", async (req: Request, res: Response) => {
       value: req.body.value,
       startsAt: req.body.startsAt ? new Date(req.body.startsAt) : undefined,
       endsAt: req.body.endsAt ? new Date(req.body.endsAt) : undefined,
+      totalUsageLimit: req.body.totalUsageLimit,
       maxUses: req.body.maxUses,
+      maxUsagePerUser: req.body.maxUsagePerUser,
+      mode: req.body.mode,
+      allowStacking: req.body.allowStacking,
+      maxVouchersPerOrder: req.body.maxVouchersPerOrder,
+      refundPolicy: req.body.refundPolicy,
       minOrderAmount: req.body.minOrderAmount,
       applyTo: req.body.applyTo,
       status: req.body.status,
@@ -42,6 +51,8 @@ router.get("/", async (req: Request, res: Response) => {
     const result = await listCoupons({
       page: req.query.page ? parseInt(req.query.page as string) : 1,
       limit: req.query.limit ? parseInt(req.query.limit as string) : 20,
+      sortBy: (req.query.sortBy as string) ?? "createdAt",
+      sortOrder: (req.query.sortOrder as "asc" | "desc") ?? "desc",
       search: req.query.search as string,
       status: req.query.status as "active" | "inactive",
     });
@@ -75,7 +86,13 @@ router.put("/:id", async (req: Request, res: Response) => {
       value: req.body.value,
       startsAt: req.body.startsAt ? new Date(req.body.startsAt) : undefined,
       endsAt: req.body.endsAt ? new Date(req.body.endsAt) : undefined,
+      totalUsageLimit: req.body.totalUsageLimit,
       maxUses: req.body.maxUses,
+      maxUsagePerUser: req.body.maxUsagePerUser,
+      mode: req.body.mode,
+      allowStacking: req.body.allowStacking,
+      maxVouchersPerOrder: req.body.maxVouchersPerOrder,
+      refundPolicy: req.body.refundPolicy,
       minOrderAmount: req.body.minOrderAmount,
       applyTo: req.body.applyTo,
       status: req.body.status,
@@ -101,8 +118,8 @@ router.delete("/:id", async (req: Request, res: Response) => {
 // Validate coupon for use
 router.post("/validate", async (req: Request, res: Response) => {
   try {
-    const { code, orderTotal, productIds } = req.body;
-    const coupon = await validateCouponForUse(code, orderTotal, productIds);
+    const { code, orderTotal, productIds, userId, voucherCount } = req.body;
+    const coupon = await validateCouponForUse(code, orderTotal, productIds, userId, voucherCount);
     const discount = calculateDiscount(coupon, orderTotal);
     const finalPrice = orderTotal - discount;
 
@@ -116,21 +133,54 @@ router.post("/validate", async (req: Request, res: Response) => {
   }
 });
 
-// Apply coupon
+// Apply coupon (preview only; actual usage increments on order confirm)
 router.post("/apply", async (req: Request, res: Response) => {
   try {
-    const { code, orderTotal, productIds } = req.body;
-    const coupon = await validateCouponForUse(code, orderTotal, productIds);
+    const { code, orderTotal, productIds, userId, voucherCount } = req.body;
+    const coupon = await validateCouponForUse(code, orderTotal, productIds, userId, voucherCount);
     const discount = calculateDiscount(coupon, orderTotal);
-
-    // Increment usage
-    await incrementCouponUsage(coupon.id);
 
     res.json({
       coupon,
       discount,
       finalPrice: orderTotal - discount,
     });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.post("/:id/assignments", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const couponId = req.params.id;
+    const { userId, allowedUses, extraUses, expiresAt, note } = req.body;
+
+    const assignment = await createVoucherAssignment(couponId, userId, undefined, {
+      allowedUses,
+      extraUses,
+      expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+      note,
+    });
+
+    res.status(201).json(assignment);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get("/:id/assignments", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const assignments = await listVoucherAssignments(req.params.id);
+    res.json(assignments);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.delete("/assignments/:assignmentId", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    await deleteVoucherAssignment(req.params.assignmentId);
+    res.status(204).send();
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }

@@ -24,7 +24,13 @@ export interface CreateCouponPayload {
   value: number;
   startsAt?: string;
   endsAt?: string;
+  totalUsageLimit?: number;
   maxUses?: number;
+  maxUsagePerUser?: number;
+  mode?: "PUBLIC" | "PRIVATE" | "LIMITED";
+  allowStacking?: boolean;
+  maxVouchersPerOrder?: number;
+  refundPolicy?: "NONE" | "ON_CANCEL" | "ON_RETURN";
   minOrderAmount?: number;
   applyTo?: Record<string, unknown>;
   status: "active" | "inactive";
@@ -96,5 +102,19 @@ export const couponAPI = {
       productIds,
     });
     return response.data;
+  },
+  // Assignments
+  createAssignment: async (couponId: string, payload: { userId: string; allowedUses?: number; extraUses?: number; expiresAt?: string; note?: string }) => {
+    const response = await apiClient.post(`/coupons/${couponId}/assignments`, payload);
+    return response.data;
+  },
+
+  listAssignments: async (couponId: string) => {
+    const response = await apiClient.get(`/coupons/${couponId}/assignments`);
+    return response.data as any[];
+  },
+
+  deleteAssignment: async (assignmentId: string) => {
+    await apiClient.delete(`/coupons/assignments/${assignmentId}`);
   },
 };

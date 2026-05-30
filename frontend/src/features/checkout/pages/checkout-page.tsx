@@ -248,7 +248,11 @@ export const CheckoutPage = () => {
               </div>
               {appliedCoupon ? (
                 <div className="rounded-xl bg-[var(--primary-soft)] px-3 py-2 text-sm text-[var(--text-secondary)]">
-                  Đã áp dụng mã <Text strong>{appliedCoupon.couponCode}</Text> · Giảm <Price value={discountAmount} />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Text strong>Mã: {appliedCoupon.couponCode}</Text>
+                    {appliedCoupon.discountLabel && <Text type="secondary">{appliedCoupon.discountLabel}</Text>}
+                  </div>
+                  <div>Giảm <Price value={discountAmount} /></div>
                 </div>
               ) : (
                 <Text type="secondary" className="text-sm">Nhập mã giảm giá để nhận ưu đãi.</Text>

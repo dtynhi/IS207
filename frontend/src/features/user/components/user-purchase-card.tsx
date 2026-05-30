@@ -28,7 +28,10 @@ export const UserPurchaseCard = ({
   const paymentStatus = order.paymentStatus
     ? purchasePaymentStatusMap[order.paymentStatus] || { color: "default", label: order.paymentStatus }
     : null;
-  const total = order.items.reduce((sum, item) => sum + item.price * item.quantity * (1 - item.discountPercentage / 100), 0);
+  const derivedTotal = order.items.reduce((sum, item) => sum + item.price * item.quantity * (1 - item.discountPercentage / 100), 0);
+  const originalTotal = order.originalAmount ?? derivedTotal;
+  const finalTotal = order.finalAmount ?? derivedTotal;
+  const discountValue = order.discountAmount ?? Math.max(originalTotal - finalTotal, 0);
   const canCancel = order.status === "pending_confirm";
   const hasReturnRequest = Boolean(order.returnRequest);
   const canRequestReturn = order.status === "delivered" && !hasReturnRequest;
@@ -98,6 +101,15 @@ export const UserPurchaseCard = ({
         </div>
       )}
 
+      {order.couponCode && order.discountAmount && order.discountAmount > 0 && (
+        <div className="px-5 py-2 flex items-center justify-between gap-4 border-b border-[var(--border-light)]">
+          <Text type="secondary">
+            Áp dụng mã <Text strong>{order.couponCode}</Text>
+          </Text>
+          <Text type="secondary">Giảm <Price value={order.discountAmount} /></Text>
+        </div>
+      )}
+
       <Flex justify="space-between" align="center" className="bg-[var(--primary-soft)] px-5 py-3">
         <Flex align="center" gap={8}>
           {canCancel && (
@@ -123,7 +135,7 @@ export const UserPurchaseCard = ({
         </Flex>
         <Flex align="center" gap={8}>
           <Text type="secondary" className="text-[13px]">Thành tiền:</Text>
-          <Price value={Math.floor(total)} size="lg" />
+          <Price value={Math.floor(finalTotal)} size="lg" />
         </Flex>
       </Flex>
 
