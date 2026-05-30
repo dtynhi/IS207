@@ -7,6 +7,8 @@ import { useProductsQuery } from "../../products/hooks/use-products-query";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCategories, createCampaignApi, getActiveCampaignApi, deactivateCampaignApi, getAllCampaignsApi } from "../../products/api/product.api"; 
 
+import { deleteCampaignApi } from "../../products/api/product.api";
+import { DeleteOutlined } from "@ant-design/icons"; 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
@@ -156,22 +158,23 @@ const handleStopCampaign = async (id: string) => {
         const isRunning = record.isActive && now >= start && now <= end;
 
         return isRunning ? (
-          // Đổi đoạn onConfirm thành onConfirm={() => handleStopCampaign(record.id)}
           <Popconfirm title="Dừng chiến dịch này?" description="Sản phẩm sẽ quay về giá gốc ngay lập tức." onConfirm={() => handleStopCampaign(record.id)} okText="Dừng" cancelText="Hủy" okButtonProps={{ danger: true }}>
             <Button danger size="small" icon={<StopOutlined />}>Dừng ngay</Button>
           </Popconfirm>
         ) : (
-          <Text type="secondary">-</Text>
+          <Popconfirm title="Xóa chiến dịch này?" description="Hành động này không thể hoàn tác." onConfirm={() => handleDeleteCampaign(record.id)} okText="Xóa" cancelText="Hủy" okButtonProps={{ danger: true }}>
+            <Button danger size="small" icon={<DeleteOutlined />}>Xóa</Button>
+          </Popconfirm>
         );
-      }
-    }  ];
+      }  
+  }
+  ];
 
   return (
     <div className="bg-[#f5f5f5] min-h-screen p-6 animate-in">
       <div className="max-w-6xl mx-auto">
         <Title level={3} className="!mb-6"><RocketOutlined className="text-[#EE6AA7] mr-2" />Trung Tâm Quản Lý Chiến Dịch</Title>
 
-        {/* 1. KHU VỰC TẠO MỚI CHIẾN DỊCH */}
         <Card className="mb-6 shadow-sm border-t-4 border-t-[#EE6AA7]">
           <Title level={4} className="!mb-4 !text-gray-700">Tạo Sự Kiện Khuyến Mãi Mới</Title>
           <Row gutter={[24, 24]}>
@@ -252,3 +255,15 @@ const handleStopCampaign = async (id: string) => {
     </div>
   );
 };
+
+const handleDeleteCampaign = async (id: string) => {
+    try {
+      message.loading({ content: 'Đang xóa chiến dịch...', key: 'delete' });
+      await deleteCampaignApi(id);
+      message.success({ content: "Đã xóa chiến dịch thành công!", key: 'delete' });
+      
+      useQueryClient().invalidateQueries({ queryKey: ["all-campaigns-admin"] });
+    } catch (error: any) {
+      message.error({ content: "Không thể xóa chiến dịch!", key: 'delete' });
+    }
+  };

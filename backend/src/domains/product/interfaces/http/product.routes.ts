@@ -16,7 +16,7 @@ import {
   deactivateActiveCampaign,
   getAllCampaigns,
   getCampaignById,
-  // ===== Flash Sale imports mới =====
+  deleteCampaign,
   getActiveFlashSale,
   getFlashSaleSessions,
   getAllFlashSaleAdmin,
@@ -108,6 +108,7 @@ router.post("/admin/products", requireAdmin, async (req, res, next) => {
   }
 });
 
+
 router.patch("/admin/products/change-status/:status/:id", requireAdmin, async (req, res, next) => {
   try {
     const status = z.enum(["active", "inactive"]).parse(req.params.status);
@@ -158,7 +159,6 @@ router.delete("/admin/products/:id", requireAdmin, async (req, res, next) => {
   }
 });
 
-// ─── CAMPAIGN routes (giữ nguyên) ─────────────────────────────────────────────
 
 router.post("/admin/campaigns/:id/deactivate", requireAdmin, async (req, res, next) => {
   try {
@@ -169,6 +169,7 @@ router.post("/admin/campaigns/:id/deactivate", requireAdmin, async (req, res, ne
     next(error);
   }
 });
+
 router.get("/admin/campaigns", requireAdmin, async (req, res, next) => {
   try {
     const campaigns = await getAllCampaigns();
@@ -199,8 +200,18 @@ router.get("/campaigns/:id", async (req, res, next) => {
 
 router.post("/admin/campaigns", requireAdmin, async (req, res, next) => {
   try {
-    const newCampaign = await createCampaign(req.body);
-    return sendSuccess(res, newCampaign, { statusCode: 201 });
+    const result = await createCampaign(req.body); 
+    return sendSuccess(res, result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete("/admin/campaigns/:id", requireAdmin, async (req, res, next) => {
+  try {
+    const id = req.params.id; 
+    await deleteCampaign(id); 
+    return sendSuccess(res, { message: "Xóa thành công" });
   } catch (error) {
     next(error);
   }

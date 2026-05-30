@@ -38,6 +38,11 @@ export const createCampaignApi = async (payload: any) => {
   return response.data;
 };
 
+export const deleteCampaignApi = async (id: string) => {
+  const response = await apiClient.delete(`/admin/campaigns/${id}`);
+  return response.data;
+};
+
 export const getActiveCampaignApi = async () => {
   const response = await apiClient.get("/campaigns/active");
   return response.data?.data || null;
@@ -93,3 +98,4 @@ export const deleteFlashSaleSessionApi = async (id: string) => {
   const response = await apiClient.delete(`/admin/flash-sale/${id}`);
   return response.data;
 };
+
