@@ -71,3 +71,17 @@ export const getUserWalletApi = async (userId: string) => {
   const response = await apiClient.get<ApiSuccessResponse<UserWallet>>(`/user/${userId}/wallet`);
   return response.data.data;
 };
+
+export type UserSearchHit = {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+};
+
+export const searchUsersForAdminApi = async (query: string) => {
+  const response = await apiClient.get<ApiSuccessResponse<UserSearchHit[]>>("/admin/users/search", {
+    params: { q: query },
+  });
+  return response.data.data;
+};

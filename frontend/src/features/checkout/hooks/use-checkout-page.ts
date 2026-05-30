@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { message } from "antd";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getUserId } from "../../../shared/session/storage";
@@ -34,6 +34,10 @@ export const useCheckoutPage = () => {
   const selectedItemIds = searchParams.get("items")?.split(",") || [];
   const selectedItems = (cartQuery.data?.items || []).filter((item) => selectedItemIds.includes(item.id));
   const selectedSubtotal = selectedItems.reduce((sum, item) => sum + Number(item.totalPrice), 0);
+
+  useEffect(() => {
+    setAppliedCoupon(null);
+  }, [selectedItemIds.join(","), selectedSubtotal]);
 
   const orderMutation = useMutation({
     mutationFn: createCheckoutOrderApi,
@@ -94,7 +98,12 @@ export const useCheckoutPage = () => {
 
     setCouponApplying(true);
     try {
-      const response = await couponAPI.validate(trimmed, selectedSubtotal, productIds);
+      const response = await couponAPI.validate(
+        trimmed,
+        selectedSubtotal,
+        productIds,
+        userId || undefined,
+      );
       const discountAmount = Number(response.discount || 0);
       const couponType = response.coupon?.type as string | undefined;
       const couponValue = Number(response.coupon?.value ?? 0);
