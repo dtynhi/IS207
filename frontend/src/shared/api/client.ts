@@ -16,3 +16,13 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Interceptor to normalize API errors so UI can show backend messages
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const backendMessage = error?.response?.data?.error;
+    const message = typeof backendMessage === "string" ? backendMessage : error.message;
+    return Promise.reject(new Error(message));
+  },
+);
+

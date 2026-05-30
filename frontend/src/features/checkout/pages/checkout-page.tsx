@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { EnvironmentOutlined } from "@ant-design/icons";
 import { Button, Card, Empty, Form, Input, Row, Col, Space, Typography, Select, Radio } from "antd";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Breadcrumb } from "../../../shared/components/breadcrumb";
 import { Price } from "../../../shared/components/price";
 import { CheckoutProductList } from "../components/checkout-product-list";
@@ -27,7 +27,18 @@ export const CheckoutPage = () => {
   const [searchParams] = useSearchParams();
   const userId = getUserId();
   const [form] = Form.useForm<CheckoutFormValues>();
-  const { cartQuery, orderMutation, submitOrder, contextHolder } = useCheckoutPage();
+  const [couponInput, setCouponInput] = useState("");
+  const {
+    cartQuery,
+    orderMutation,
+    submitOrder,
+    contextHolder,
+    applyCoupon,
+    couponApplying,
+    appliedCoupon,
+    selectedSubtotal,
+    finalTotal,
+  } = useCheckoutPage();
 
   // ---> 3. THÊM NGUYÊN ĐOẠN CODE LỌC SẢN PHẨM NÀY VÀO <---
   // Lấy các ID sản phẩm được chọn từ đường dẫn (URL)
@@ -36,8 +47,7 @@ export const CheckoutPage = () => {
   const allItems = cartQuery.data?.items || [];
   const items = allItems.filter(item => selectedItemIds.includes(item.id));
   
-  // Tính lại tổng tiền của các sản phẩm được chọn
-  const total = items.reduce((sum, item) => sum + Number(item.totalPrice), 0);
+  const discountAmount = appliedCoupon ? Number(appliedCoupon.discountAmount) : 0;
   // --------------------------------------------------------
 
   const selectedProvinceName = Form.useWatch("province", form);
@@ -218,12 +228,56 @@ export const CheckoutPage = () => {
             </Form>
           </Card>
 
+          <Card className="mb-4 border border-dashed border-[var(--primary)] bg-[var(--surface)]" styles={{ body: { padding: "16px 18px" } }}>
+            <div className="flex flex-col gap-3">
+              <Text strong>Mã giảm giá</Text>
+              <div className="flex gap-2 max-md:flex-col">
+                <Input
+                  placeholder="Nhập mã coupon"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value)}
+                  maxLength={50}
+                />
+                <Button
+                  type="primary"
+                  loading={couponApplying}
+                  onClick={() => applyCoupon(couponInput)}
+                >
+                  Áp dụng
+                </Button>
+              </div>
+              {appliedCoupon ? (
+                <div className="rounded-xl bg-[var(--primary-soft)] px-3 py-2 text-sm text-[var(--text-secondary)]">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Text strong>Mã: {appliedCoupon.couponCode}</Text>
+                    {appliedCoupon.discountLabel && <Text type="secondary">{appliedCoupon.discountLabel}</Text>}
+                  </div>
+                  <div>Giảm <Price value={discountAmount} /></div>
+                </div>
+              ) : (
+                <Text type="secondary" className="text-sm">Nhập mã giảm giá để nhận ưu đãi.</Text>
+              )}
+            </div>
+          </Card>
+
           <CheckoutProductList items={items} />
 
           <Card className="border border-[var(--primary-light)] bg-[var(--primary-soft)]" styles={{ body: { padding: "16px 20px" } }}>
-            <div className="flex items-center justify-end gap-4 max-md:flex-wrap max-md:justify-start">
-              <Text>Tổng ({items.length} sản phẩm):</Text>
-              <Price value={total} size="xl" />
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-4 max-md:flex-wrap">
+                <Text>Tạm tính:</Text>
+                <Price value={selectedSubtotal} />
+              </div>
+              <div className="flex items-center justify-between gap-4 max-md:flex-wrap">
+                <Text>Giảm giá:</Text>
+                <Price value={discountAmount} />
+              </div>
+              <div className="flex items-center justify-between gap-4 border-t border-[var(--primary-light)] pt-3 max-md:flex-wrap">
+                <Text strong className="text-base">Tổng thanh toán:</Text>
+                <Price value={finalTotal} size="xl" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-end gap-4 max-md:flex-wrap max-md:justify-start">
               <Button type="primary" htmlType="submit" form="checkout-form" loading={orderMutation.isPending} size="large" className="h-12 rounded-xl px-10 font-semibold">Đặt hàng</Button>
             </div>
           </Card>

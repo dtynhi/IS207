@@ -5,6 +5,7 @@ export type CheckoutFormValues = {
   ward: string; // ward / commune name
   addressLine: string; // Tên đường, Tòa nhà, Số nhà (combined)
   paymentMethod: "cod" | "bank";
+  couponCode?: string;
 };
 
 export type CreateCheckoutOrderPayload = {
@@ -13,6 +14,7 @@ export type CreateCheckoutOrderPayload = {
   phone: string;
   address: string; // formatted address string
   paymentMethod?: "cod" | "bank";
+  couponCode?: string;
   returnUrl?: string;
   items: Array<{ productId: string; quantity: number }>;
 };
