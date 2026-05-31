@@ -82,6 +82,36 @@ export const getUserProfile = async (id: string) => {
   return sanitizeUser(user);
 };
 
+export const searchUsersForAdmin = async (query: string, limit = 15) => {
+  const q = query.trim();
+  if (q.length < 2) {
+    return [];
+  }
+
+  const users = await prisma.user.findMany({
+    where: {
+      deleted: false,
+      status: "active",
+      OR: [
+        { email: { contains: q, mode: "insensitive" } },
+        { fullName: { contains: q, mode: "insensitive" } },
+        { phone: { contains: q, mode: "insensitive" } },
+        ...(q.length >= 8 ? [{ id: q }] : []),
+      ],
+    },
+    take: limit,
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      phone: true,
+    },
+  });
+
+  return users;
+};
+
 export const updateUserProfile = async (
   id: string,
   payload: {

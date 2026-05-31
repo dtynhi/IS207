@@ -16,8 +16,13 @@ export const CartPage = () => {
 
   // 1. STATE: Lưu danh sách ID các sản phẩm được tích chọn
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const items = useMemo(() => {
+    const rawItems = cart.data?.items || [];
+    
+    // Sắp xếp đảo ngược ID: Lấy ID của B (món sau) so sánh với ID của A (món trước)
+    return [...rawItems].sort((a, b) => b.id.localeCompare(a.id));
+  }, [cart.data?.items]);
 
-  const items = cart.data?.items || [];
 
   // 2. TÍNH TOÁN: Chỉ cộng tiền những món được chọn
   const selectedTotal = useMemo(() => {

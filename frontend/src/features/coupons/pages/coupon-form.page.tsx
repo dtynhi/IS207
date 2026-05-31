@@ -18,19 +18,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import { couponAPI, type Coupon } from "../api/coupon.api";
 
-const layout = {
-  labelCol: { span: 8 },
-  wrapperCol: { span: 16 },
-};
-
 export const CouponFormPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(!!id);
   const [submitting, setSubmitting] = useState(false);
-  const [coupon, setCoupon] = useState<Coupon | null>(null);
-
   const isEdit = !!id;
 
   useEffect(() => {
@@ -42,7 +35,6 @@ export const CouponFormPage = () => {
   const loadCoupon = async () => {
     try {
       const data = await couponAPI.getById(id!);
-      setCoupon(data);
       form.setFieldsValue({
         code: data.code,
         description: data.description,
@@ -114,6 +106,8 @@ export const CouponFormPage = () => {
           autoComplete="off"
           initialValues={{
             type: "percent",
+            mode: "PUBLIC",
+            refundPolicy: "NONE",
             status: true,
             minOrderAmount: 0,
           }}
@@ -227,13 +221,38 @@ export const CouponFormPage = () => {
 
           <Row gutter={16}>
             <Col xs={24} sm={12}>
-              <Form.Item label="Chế độ (mode)" name="mode">
-                <Select options={[{ label: "PUBLIC", value: "PUBLIC" }, { label: "PRIVATE", value: "PRIVATE" }, { label: "LIMITED", value: "LIMITED" }]} />
+              <Form.Item
+                label={
+                  <Tooltip title="PUBLIC: ai cũng dùng. LIMITED: phải đăng nhập. PRIVATE: chỉ user đã gán (nút Gán user trên danh sách).">
+                    Chế độ phát hành
+                  </Tooltip>
+                }
+                name="mode"
+              >
+                <Select
+                  options={[
+                    { label: "PUBLIC — mọi người", value: "PUBLIC" },
+                    { label: "LIMITED — cần đăng nhập", value: "LIMITED" },
+                    { label: "PRIVATE — whitelist user", value: "PRIVATE" },
+                  ]}
+                />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
-              <Form.Item label="Chính sách hoàn voucher" name="refundPolicy">
-                <Select options={[{ label: "NONE", value: "NONE" }, { label: "ON_CANCEL", value: "ON_CANCEL" }, { label: "ON_RETURN", value: "ON_RETURN" }]} />
+              <Form.Item
+                label={
+                  <Tooltip title="ON_CANCEL: hoàn lượt dùng khi đơn bị hủy. ON_RETURN chưa có luồng xử lý riêng.">
+                    Hoàn lượt khi hủy đơn
+                  </Tooltip>
+                }
+                name="refundPolicy"
+              >
+                <Select
+                  options={[
+                    { label: "Không hoàn", value: "NONE" },
+                    { label: "Hoàn khi hủy đơn", value: "ON_CANCEL" },
+                  ]}
+                />
               </Form.Item>
             </Col>
           </Row>

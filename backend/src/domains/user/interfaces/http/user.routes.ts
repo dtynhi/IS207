@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { baseQueryParamsSchema } from "../../../../shared/query/base-query.params";
 import { sendError, sendSuccess } from "../../../../shared/response/response";
+import { requireAdmin } from "../../../../shared/middleware/admin-auth.middleware";
 import {
   createUserAddress,
   deleteUserAddress,
@@ -9,6 +10,7 @@ import {
   getUserWallet,
   listUserAddresses,
   listUserPurchases,
+  searchUsersForAdmin,
   updateUserAddress,
   updateUserProfile,
 } from "../../user.service";
@@ -148,6 +150,16 @@ router.get("/user/:id/wallet", async (req, res, next) => {
     const wallet = await getUserWallet(userId);
     if (!wallet) return sendError(res, 404, "USER_NOT_FOUND", "User not found");
     return sendSuccess(res, wallet);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/admin/users/search", requireAdmin, async (req, res, next) => {
+  try {
+    const q = z.string().min(2).parse(req.query.q);
+    const users = await searchUsersForAdmin(q);
+    return sendSuccess(res, users);
   } catch (error) {
     next(error);
   }

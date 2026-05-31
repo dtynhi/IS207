@@ -6,8 +6,6 @@ import {
   getCouponById,
   listCoupons,
   deleteCoupon,
-  validateCouponForUse,
-  calculateDiscount,
   createVoucherAssignment,
   listVoucherAssignments,
   deleteVoucherAssignment,
@@ -17,7 +15,7 @@ import type { CreateCouponInput, UpdateCouponInput } from "../../coupon.service"
 const router = Router();
 
 // Create coupon
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", requireAdmin, async (req: Request, res: Response) => {
   try {
     const input: CreateCouponInput = {
       code: req.body.code,
@@ -78,7 +76,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 });
 
 // Update coupon
-router.put("/:id", async (req: Request, res: Response) => {
+router.put("/:id", requireAdmin, async (req: Request, res: Response) => {
   try {
     const input: UpdateCouponInput = {
       id: req.params.id,
@@ -105,51 +103,10 @@ router.put("/:id", async (req: Request, res: Response) => {
 });
 
 // Delete coupon
-router.delete("/:id", async (req: Request, res: Response) => {
+router.delete("/:id", requireAdmin, async (req: Request, res: Response) => {
   try {
     await deleteCoupon(req.params.id);
     res.status(204).send();
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-// Validate coupon for use
-router.post("/validate", async (req: Request, res: Response) => {
-  try {
-    const { code, orderTotal, productIds, userId, voucherCount } = req.body;
-    if (voucherCount != null && Number(voucherCount) > 1) {
-      return res.status(400).json({ error: "Mỗi đơn hàng chỉ được áp dụng tối đa 1 voucher" });
-    }
-    const coupon = await validateCouponForUse(code, orderTotal, productIds, userId, voucherCount);
-    const discount = calculateDiscount(coupon, orderTotal);
-    const finalPrice = orderTotal - discount;
-
-    res.json({
-      coupon,
-      discount,
-      finalPrice,
-    });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-// Apply coupon (preview only; actual usage increments on order confirm)
-router.post("/apply", async (req: Request, res: Response) => {
-  try {
-    const { code, orderTotal, productIds, userId, voucherCount } = req.body;
-    if (voucherCount != null && Number(voucherCount) > 1) {
-      return res.status(400).json({ error: "Mỗi đơn hàng chỉ được áp dụng tối đa 1 voucher" });
-    }
-    const coupon = await validateCouponForUse(code, orderTotal, productIds, userId, voucherCount);
-    const discount = calculateDiscount(coupon, orderTotal);
-
-    res.json({
-      coupon,
-      discount,
-      finalPrice: orderTotal - discount,
-    });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }

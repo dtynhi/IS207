@@ -1,5 +1,6 @@
 
 import {
+  DollarOutlined,
   DashboardOutlined,
   FolderOpenOutlined,
   HomeOutlined,
@@ -36,6 +37,7 @@ export const AdminLayout = () => {
 
   const menuItems = [
     { key: "/admin/dashboard", label: <Link to="/admin/dashboard">Dashboard</Link>, icon: <DashboardOutlined /> },
+     { key: "/admin/revenue", label: <Link to="/admin/revenue">Doanh thu</Link>, icon: <DollarOutlined /> },
     { key: "/admin/products", label: <Link to="/admin/products">Sản phẩm</Link>, icon: <ShopOutlined /> },
     { key: "/admin/categories", label: <Link to="/admin/categories">Danh mục</Link>, icon: <FolderOpenOutlined /> },
     { key: "/admin/orders", label: <Link to="/admin/orders">Đơn hàng</Link>, icon: <ShoppingCartOutlined /> },
