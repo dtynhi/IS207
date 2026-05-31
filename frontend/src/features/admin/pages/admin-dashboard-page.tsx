@@ -1,6 +1,6 @@
 import { Card, Col, Row, Statistic, Typography } from "antd";
 import { useAdminDashboard } from "../hooks/use-admin-dashboard";
-
+import { RevenueWidget } from "../components/revenue-widget";
 const { Title } = Typography;
 
 export const AdminDashboardPage = () => {
@@ -10,6 +10,7 @@ export const AdminDashboardPage = () => {
   return (
     <div className="space-y-4">
       <Title level={3}>Dashboard</Title>
+      <RevenueWidget />
       <Row gutter={[16, 16]}>
         {Object.entries(stats).map(([key, value]) => (
           <Col key={key} xs={24} md={12} lg={6}>

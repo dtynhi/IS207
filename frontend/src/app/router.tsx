@@ -32,6 +32,7 @@ import { AdminFlashSalePage } from "../features/admin/pages/admin-flash-sale-pag
 import { AdminCampaignsPage } from "../features/admin/pages/admin-campaigns-page";
 import { CouponListPage } from "../features/coupons/pages/coupon-list.page";
 import { CouponFormPage } from "../features/coupons/pages/coupon-form.page";
+import { AdminRevenuePage } from "../features/admin/pages/admin-revenue-page"; // Hãy tạo file này nhé
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -78,6 +79,7 @@ export const router = createBrowserRouter([
       { path: "settings", element: <AdminSettingsPage /> },
       { path: "flash-sale", element: <AdminFlashSalePage /> },
       { path: "campaigns", element: <AdminCampaignsPage /> },
+      { path: "revenue", element: <AdminRevenuePage /> },
     ],
   },
 ]);

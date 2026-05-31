@@ -208,6 +208,9 @@ export const createOrder = async (payload: {
           price: true,
           discountPercentage: true,
           stock: true,
+          saleCampaign: { 
+              select: { discount: true } 
+            }
         },
       });
 
@@ -224,12 +227,25 @@ export const createOrder = async (payload: {
         }
       }
 
-      const originalAmount = products.reduce((sum, product) => {
-        const itemQuantity = quantityByProduct.get(product.id) ?? 0;
-        const discountedPrice = product.price * (1 - product.discountPercentage / 100);
-        return sum + Math.round(discountedPrice * itemQuantity);
-      }, 0);
+// 1. TÍNH TỔNG TIỀN CÁC SẢN PHẨM (Gộp logic Giảm giá trực tiếp & Chiến dịch Sale)
+      let originalAmount = 0;
 
+      for (const product of products) {
+        const itemQuantity = quantityByProduct.get(product.id) ?? 0;
+
+        // Lấy % giảm giá trực tiếp HOẶC % từ chiến dịch Sale (cái nào to hơn thì ưu tiên cho khách)
+        const productDiscount = product.discountPercentage || 0;
+        const campaignDiscount = (product as any).saleCampaign?.discount || 0; 
+        const finalDiscountPercent = Math.max(productDiscount, campaignDiscount);
+
+        // Tính giá tiền sau khi giảm của từng sản phẩm
+        const discountedPrice = product.price * (1 - finalDiscountPercent / 100);
+        originalAmount += Math.round(discountedPrice * itemQuantity);
+      }
+
+      if (originalAmount < 0) originalAmount = 0;
+
+      // 2. XỬ LÝ COUPON (Mã giảm giá toàn đơn)
       let discountAmount = 0;
       let finalAmount = originalAmount;
       let appliedCoupon = null;
@@ -262,6 +278,8 @@ export const createOrder = async (payload: {
         }
       }
 
+      // Giữ lại biến totalPrice bằng đúng số tiền cuối cùng để không bị lỗi các hàm phía sau
+      const totalPrice = finalAmount;
       const order = await tx.order.create({
         data: {
           userId: payload.userId,

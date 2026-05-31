@@ -2,6 +2,7 @@ import { DeleteOutlined, InboxOutlined } from "@ant-design/icons";
 import { Button, Card,Checkbox, Image, InputNumber, Popconfirm, Typography } from "antd";
 import { Price } from "../../../shared/components/price";
 import type { CartItem } from "../types/cart.types";
+import { useState, useEffect } from "react";
 
 const { Text } = Typography;
 
@@ -14,6 +15,21 @@ type CartItemRowProps = {
 };
 
 export const CartItemRow = ({ item, isSelected, onToggleSelect, onUpdateQty, onRemove }: CartItemRowProps) => {
+  const [localQty, setLocalQty] = useState(item.quantity);
+
+  useEffect(() => {
+    if (localQty === item.quantity) return; // Không đổi thì không gọi API
+    
+    const timer = setTimeout(() => {
+      onUpdateQty(item.id, localQty); // Đợi 300ms (0.3 giây) mới gọi API
+    }, 300);
+    
+    return () => clearTimeout(timer); // Xóa bộ đếm nếu khách bấm tiếp
+  }, [localQty, item.quantity, item.id, onUpdateQty]);
+
+  useEffect(() => {
+    setLocalQty(item.quantity); // Đồng bộ lại số lượng khi Server trả về
+  }, [item.quantity]);
   return (
     <Card className="mb-2" styles={{ body: { padding: "14px 20px" } }}>
       {/* Cập nhật grid: Thêm cột 40px ở đầu tiên cho Checkbox */}
@@ -32,7 +48,12 @@ export const CartItemRow = ({ item, isSelected, onToggleSelect, onUpdateQty, onR
         </div>
 
         <div className="text-center">{item.product?.priceNew ? <Price value={item.product.priceNew} size="sm" /> : "-"}</div>
-        <div className="text-center"><InputNumber min={1} value={item.quantity} size="small" className="w-[70px]" onChange={(value) => onUpdateQty(item.id, Number(value || 1))} /></div>
+        <div className="text-center"><InputNumber 
+   value={localQty} 
+   onChange={(val) => {
+      if (val !== null) setLocalQty(val);
+   }} 
+/></div>
         <div className="text-center"><Price value={Number(item.totalPrice)} size="md" /></div>
 
         <div className="text-center">
