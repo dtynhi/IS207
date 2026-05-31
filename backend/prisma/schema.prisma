@@ -174,8 +174,8 @@ model Product {
 
   dailyFlashSaleId String?
   dailyFlashSale   DailyFlashSale? @relation(fields: [dailyFlashSaleId], references: [id])
+  
   campaignId       String?
-<<<<<<< Updated upstream
   saleCampaign     SaleCampaign?   @relation(fields: [campaignId], references: [id])
 }
 
