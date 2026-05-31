@@ -12,6 +12,7 @@ import dashboardRoutes from "./dashboard/interfaces/http/dashboard.routes";
 import couponRoutes from "./coupon/interfaces/http/coupon.routes";
 import couponPublicRoutes from "./coupon/interfaces/http/coupon-public.routes";
 import { requireAdmin } from "../shared/middleware/admin-auth.middleware";
+import statisticRouter from "./statistic/statistic.route";
 const domainRouter = Router();
 // Public routes (no authentication required)
 domainRouter.use(authRoutes);
@@ -27,5 +28,5 @@ domainRouter.use(accountRoutes);
 domainRouter.use(roleRoutes);
 domainRouter.use(settingRoutes);
 domainRouter.use(dashboardRoutes);
-
+domainRouter.use("/statistics", statisticRouter);
 export default domainRouter;

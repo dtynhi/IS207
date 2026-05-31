@@ -58,6 +58,11 @@ export const useAdminOrders = (filters: Record<string, unknown>) => {
     mutationFn: ({ id, payload }: { id: string; payload: { status: OrderStatus; reason?: string; lockVersion: number } }) =>
       updateAdminOrderStatusApi(id, payload),
     onSuccess: () => {
+      // 2. Kích hoạt báo thức cho Danh sách đơn hàng
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      
+      // 3. THÊM DÒNG NÀY: Ép tab Doanh thu phải đi hỏi lại Backend lấy số tiền mới!
+      queryClient.invalidateQueries({ queryKey: ["admin-revenue-stats"] });
       api.success("Status updated");
       refresh();
     },
