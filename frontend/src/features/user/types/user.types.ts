@@ -24,6 +24,10 @@ export type UserPurchase = {
   address: string;
   status: string;
   paymentStatus?: "unpaid" | "paid";
+  couponCode?: string;
+  originalAmount?: number;
+  discountAmount?: number;
+  finalAmount?: number;
   cancellationReason?: string;
   returnRequest?: { id: string; status: "pending" | "approved" | "rejected" };
   createdAt: string;

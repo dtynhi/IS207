@@ -108,6 +108,8 @@ router.post("/orders", async (req, res, next) => {
         fullName: z.string().min(1),
         phone: z.string().min(1),
         address: z.string().min(1),
+        couponCode: z.string().trim().optional(),
+        couponCodes: z.array(z.string().trim()).max(1).optional(),
         items: z.array(z.object({ productId: z.string(), quantity: z.number().int().min(1) })).min(1),
       })
       .parse(req.body);
@@ -119,6 +121,9 @@ router.post("/orders", async (req, res, next) => {
       }
       if (result.reason === "OUT_OF_STOCK") {
         return sendError(res, 400, "OUT_OF_STOCK", "Quantity exceeds stock", { productId: result.productId });
+      }
+      if (result.reason === "INVALID_COUPON") {
+        return sendError(res, 400, "INVALID_COUPON", result.message || "Coupon is invalid");
       }
       return sendError(res, 400, "ORDER_INVALID", "Order is invalid");
     }
@@ -470,6 +475,7 @@ router.post("/checkout/order", async (req, res, next) => {
         fullName: z.string().min(1),
         phone: z.string().min(1),
         address: z.string().min(1),
+        couponCode: z.string().trim().optional(),
         paymentMethod: z.enum(["cod", "bank"]).optional(),
         returnUrl: z.string().optional(),
         items: z.array(z.object({ productId: z.string(), quantity: z.number().int().min(1) })).min(1),
@@ -487,6 +493,9 @@ router.post("/checkout/order", async (req, res, next) => {
       }
       if (result.reason === "OUT_OF_STOCK") {
         return sendError(res, 400, "OUT_OF_STOCK", "Quantity exceeds stock", { productId: result.productId });
+      }
+      if (result.reason === "INVALID_COUPON") {
+        return sendError(res, 400, "INVALID_COUPON", result.message || "Coupon is invalid");
       }
       return sendError(res, 400, "ORDER_INVALID", "Order is invalid");
     }
@@ -513,7 +522,10 @@ router.post("/checkout/order", async (req, res, next) => {
       const vnpReturnUrl = appendQuery(returnControllerUrl, "frontendReturnUrl", frontendReturnUrl);
 
       const amount = await getOrderTotalAmount(order.id);
-      if (amount <= 0) return sendError(res, 400, "INVALID_AMOUNT", "Order amount is invalid");
+      if (amount <= 0) {
+        await updateOrderPaymentStatus(order.id, "paid");
+        return sendSuccess(res, { id: order.id }, { statusCode: 201 });
+      }
 
       const now = new Date();
       const expireAt = new Date(now.getTime() + 15 * 60 * 1000);

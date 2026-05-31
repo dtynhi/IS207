@@ -25,7 +25,7 @@ type CategoryView = {
   id: string;
   title: string;
   slug: string;
-  icon: ReactNode;
+  icon?: ReactNode;
   source: "admin" | "suggestion";
   facetId?: string;
   searchKeyword?: string;
@@ -185,9 +185,7 @@ export const ProductsPage = () => {
 
   return (
     <ProductsHomeView
-      countdown={countdown}
       displayCats={displayCats}
-      flashSaleProducts={flashSaleProducts}
       bestSellers={bestSellers}
       productsPending={productsQuery.isPending}
       products={allProducts}
