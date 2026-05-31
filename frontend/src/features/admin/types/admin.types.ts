@@ -147,6 +147,11 @@ export type AdminOrderRow = {
   status: "pending_confirm" | "ready_to_pick" | "ready_to_ship" | "delivered" | "awaiting_return" | "returned" | "cancelled" | "completed";
   paymentStatus: "unpaid" | "paid";
   lockVersion: number;
+  couponCode?: string;
+  couponId?: string;
+  originalAmount?: number;
+  discountAmount?: number;
+  finalAmount?: number;
   assignedAt?: string;
   createdAt: string;
   updatedAt: string;
