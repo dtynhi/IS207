@@ -23,6 +23,7 @@ import {
   createFlashSaleSession,
   updateFlashSaleStatus,
   deleteFlashSaleSession,
+  removeProductFromFlashSale
 } from "../../product.service";
 import { productQuerySchema } from "../../product.query";
 
@@ -278,6 +279,16 @@ router.delete("/admin/flash-sale/:id", requireAdmin, async (req, res, next) => {
     const id = z.string().parse(req.params.id);
     await deleteFlashSaleSession(id);
     return sendSuccess(res, { deleted: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete("/admin/flash-sale/:sessionId/products/:productId", requireAdmin, async (req, res, next) => {
+  try {
+    const { sessionId, productId } = req.params;
+    await removeProductFromFlashSale(sessionId, productId);
+    return res.status(200).json({ success: true, message: "Đã gỡ sản phẩm khỏi ca Flash Sale" });
   } catch (error) {
     next(error);
   }

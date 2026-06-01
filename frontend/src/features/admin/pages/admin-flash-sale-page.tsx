@@ -5,7 +5,7 @@ import {
 } from "antd";
 import {
   FireOutlined, PlusOutlined, DeleteOutlined,
-  ClockCircleOutlined, ThunderboltOutlined, AppstoreOutlined, RetweetOutlined
+  ClockCircleOutlined, ThunderboltOutlined, AppstoreOutlined
 } from "@ant-design/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -14,7 +14,8 @@ import {
   createFlashSaleSessionApi,
   deleteFlashSaleSessionApi,
   updateFlashSaleStatusApi,
-  getCategories, 
+  getCategories,
+  removeProductFromFlashSaleApi, 
 } from "../../products/api/product.api";
 import { useProductsQuery } from "../../products/hooks/use-products-query";
 import type { FlashSaleSession } from "../../products/types/product.types";
@@ -87,6 +88,17 @@ export const AdminFlashSalePage = () => {
       queryClient.invalidateQueries({ queryKey: ["flash-sale-active"] });
     },
     onError: () => message.error("Cập nhật thất bại."),
+  });
+
+  const removeProductMutation = useMutation({
+    mutationFn: ({ sessionId, productId }: { sessionId: string; productId: string }) =>
+      removeProductFromFlashSaleApi({ sessionId, productId }),
+    onSuccess: () => {
+      message.success("Đã gỡ sản phẩm khỏi ca Flash Sale!");
+      queryClient.invalidateQueries({ queryKey: ["admin-flash-sale-sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["flash-sale-active"] });
+    },
+    onError: () => message.error("Có lỗi xảy ra khi gỡ sản phẩm!"),
   });
 
   const resetModalState = () => {
@@ -212,7 +224,21 @@ export const AdminFlashSalePage = () => {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 py-2">
         {session.products.map((p) => (
-          <div key={p.id} className="bg-white border border-gray-100 rounded-lg p-2 flex flex-col items-center gap-1 shadow-sm">
+          <div key={p.id} className="relative group bg-white border border-gray-100 rounded-lg p-2 flex flex-col items-center gap-1 shadow-sm hover:border-red-200 transition-all">
+            
+            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+              <Popconfirm
+                title="Gỡ sản phẩm này?"
+                description="Sản phẩm sẽ bị loại khỏi ca Flash Sale."
+                onConfirm={() => removeProductMutation.mutate({ sessionId: session.id, productId: p.id })}
+                okText="Gỡ luôn"
+                cancelText="Hủy"
+                okButtonProps={{ danger: true, loading: removeProductMutation.isPending }}
+              >
+                <Button danger type="primary" shape="circle" icon={<DeleteOutlined />} size="small" />
+              </Popconfirm>
+            </div>
+
             <img
               src={p.thumbnail ?? "https://placehold.co/80x80/e2e8f0/64748b?text=?"}
               alt={p.title}
@@ -391,7 +417,7 @@ export const AdminFlashSalePage = () => {
           />
 
           <div className="mt-4 bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-700">
-            <strong>Lưu ý:</strong> Hệ thống sẽ <strong>tự động chọn ngẫu nhiên mức giảm giá từ 10% đến 20%</strong> cho từng sản phẩm tham gia ca Flash Sale này!
+            <strong>Lưu ý:</strong> Hệ thống sẽ <strong>tự động chọn ngẫu nhiên mức giảm giá từ 5% đến 10%</strong> cho từng sản phẩm tham gia ca Flash Sale này!
           </div>
         </Form>
       </Modal>

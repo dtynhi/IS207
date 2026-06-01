@@ -99,3 +99,7 @@ export const deleteFlashSaleSessionApi = async (id: string) => {
   return response.data;
 };
 
+export const removeProductFromFlashSaleApi = async (data: { sessionId: string, productId: string }) => {
+  const response = await apiClient.delete(`/admin/flash-sale/${data.sessionId}/products/${data.productId}`);
+  return response.data;
+};
