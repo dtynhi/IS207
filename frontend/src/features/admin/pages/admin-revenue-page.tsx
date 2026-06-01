@@ -16,6 +16,7 @@ import { useRevenueStatistic } from "../hooks/use-admin-statistic";
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
+// Bảng màu kẹo ngọt cho biểu đồ
 const COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#fbbf24'];
 
 export const AdminRevenuePage = () => {
@@ -72,40 +73,41 @@ export const AdminRevenuePage = () => {
     XLSX.writeFile(workbook, `BaoCaoDoanhThu_${dayjs().format('DD-MM-YYYY')}.xlsx`);
   };
 
-  // Component Thẻ thống kê đọc dữ liệu TREND thật
- const SparklineCard = ({ title, value, suffix, icon: Icon, colorClass, bgIconClass, valueColor, percent, isUp, sparkData, sparkColor, reverseColor = false, hideTrend = false }: any) => {
+  // Component Thẻ thống kê nâng cấp với nền Pastel nguyên khối
+  const SparklineCard = ({ title, value, suffix, icon: Icon, colorClass, valueColor, percent, isUp, sparkData, sparkColor, reverseColor = false, hideTrend = false, cardBgClass }: any) => {
     const isGood = reverseColor ? !isUp : isUp;
     
     return (
-      <Card bordered={false} className="shadow-sm rounded-2xl h-full border border-gray-100">
+      <Card bordered={false} className={`shadow-sm rounded-3xl h-full border-0 ${cardBgClass} transition-transform hover:-translate-y-1 hover:shadow-md`}>
         <div className="flex justify-between items-start h-full">
-          <div className="flex flex-col h-full justify-between gap-3">
+          <div className="flex flex-col h-full justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${bgIconClass}`}>
-                <Icon className={`text-lg ${colorClass}`} />
+              {/* Icon nổi bật với nền trắng tinh */}
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-white shadow-sm`}>
+                <Icon className={`text-xl ${colorClass}`} />
               </div>
-              <Text type="secondary" className="text-sm font-medium">{title}</Text>
+              <Text className="text-sm font-bold text-gray-600 tracking-wide uppercase">{title}</Text>
             </div>
             <div>
-              <div className={`text-[26px] font-bold ${valueColor} mb-1 leading-none tracking-tight`}>
-                {value} <span className="text-base font-normal">{suffix}</span>
+              <div className={`text-[28px] font-black ${valueColor} mb-2 leading-none tracking-tight drop-shadow-sm`}>
+                {value} <span className="text-base font-semibold text-gray-500">{suffix}</span>
               </div>
-              
-              {/* CHỈ HIỂN THỊ % KHI KHÔNG PHẢI LÀ 'TẤT CẢ THỜI GIAN' */}
               {!hideTrend ? (
-                <div className={`flex items-center gap-1 text-xs font-medium ${isGood ? 'text-emerald-500' : 'text-rose-500'}`}>
-                  {isUp ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
-                  <span>{percent}% <span className="text-gray-400 font-normal">so với kỳ trước</span></span>
+                <div className={`flex items-center gap-1.5 text-sm font-bold ${isGood ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  <div className={`flex items-center justify-center w-5 h-5 rounded-full ${isGood ? 'bg-emerald-100' : 'bg-rose-100'}`}>
+                    {isUp ? <ArrowUpOutlined className="text-[10px]" /> : <ArrowDownOutlined className="text-[10px]" />}
+                  </div>
+                  <span>{percent}% <span className="text-gray-500 font-medium">kỳ trước</span></span>
                 </div>
               ) : (
-                <div className="h-5"></div> /* Giữ khoảng trống để thẻ không bị lùn đi */
+                <div className="h-6"></div> 
               )}
             </div>
           </div>
-          <div className="w-24 h-12 self-end mb-2">
+          <div className="w-28 h-16 self-end mb-2">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={sparkData}>
-                <Line type="monotone" dataKey="val" stroke={sparkColor} strokeWidth={2} dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="val" stroke={sparkColor} strokeWidth={3} dot={false} isAnimationActive={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -114,66 +116,67 @@ export const AdminRevenuePage = () => {
     );
   };
 
-  // Dữ liệu fallback nếu BE chưa kịp load
   const fallbackSpark = [{val:0},{val:0}];
 
   return (
-    <div className="space-y-6 bg-[#f8fafc] min-h-screen p-4 sm:p-6">
+    <div className="space-y-6 bg-white min-h-screen p-4 sm:p-6 rounded-2xl">
       
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-[#f8fafc]">
+      {/* HEADER SECTION */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white pb-2">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center text-xl">
+          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-2xl shadow-sm">
             <LineChartOutlined />
           </div>
           <div>
-            <Title level={3} style={{ margin: 0, fontSize: '22px', color: '#1e293b' }}>Tổng quan doanh thu</Title>
-            <Text type="secondary" className="text-sm">Phân tích chuyên sâu hiệu suất bán hàng</Text>
+            <Title level={3} style={{ margin: 0, fontWeight: 800, color: '#1e293b' }}>Tổng quan doanh thu</Title>
+            <Text className="text-gray-500 font-medium">Phân tích chuyên sâu hiệu suất bán hàng</Text>
           </div>
         </div>
         
-        <div className="flex items-center gap-3 bg-white p-2 rounded-xl shadow-sm border border-gray-100">
-          <CalendarOutlined className="text-gray-400 ml-2" />
-          <Select value={filterType} onChange={handleFilterChange} style={{ width: 150 }} bordered={false}>
+        <div className="flex items-center gap-3 bg-gray-50 p-1.5 rounded-2xl border border-gray-100 shadow-inner">
+          <CalendarOutlined className="text-gray-400 ml-3 text-lg" />
+          <Select value={filterType} onChange={handleFilterChange} style={{ width: 160 }} bordered={false} className="font-semibold text-gray-700">
             <Select.Option value="all">Tất cả thời gian</Select.Option>
             <Select.Option value="today">Hôm nay</Select.Option>
             <Select.Option value="7days">7 ngày qua</Select.Option>
             <Select.Option value="30days">30 ngày qua</Select.Option>
             <Select.Option value="thisMonth">Tháng này</Select.Option>
           </Select>
-          <div className="w-[1px] h-6 bg-gray-200"></div>
-          <RangePicker onChange={handleRangeChange} bordered={false} className="hover:bg-gray-50" />
-          <Button type="primary" icon={<DownloadOutlined />} onClick={handleExportExcel} className="bg-indigo-500 hover:bg-indigo-600 border-0 rounded-lg h-9 px-4 font-medium ml-2 shadow-sm">
+          <div className="w-[2px] h-6 bg-gray-200 rounded-full"></div>
+          <RangePicker onChange={handleRangeChange} bordered={false} className="hover:bg-white rounded-xl font-medium" />
+          <Button type="primary" icon={<DownloadOutlined />} onClick={handleExportExcel} className="bg-indigo-600 hover:bg-indigo-700 border-0 rounded-xl h-10 px-5 font-bold shadow-md ml-1">
             Xuất Excel
           </Button>
         </div>
       </div>
 
+      {/* 5 THẺ THỐNG KÊ (Đã phủ màu Pastel) */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={8}>
           <SparklineCard 
             title="Tổng doanh thu" value={stats.totalRevenue?.toLocaleString() || 0} suffix="VNĐ" 
-            icon={DollarCircleOutlined} bgIconClass="bg-blue-50" colorClass="text-blue-600" valueColor="text-blue-600"
+            icon={DollarCircleOutlined} colorClass="text-blue-500" valueColor="text-blue-700"
             percent={trends.revenue?.percent || 0} isUp={trends.revenue?.isUp ?? true} 
             sparkData={sparklines.revenue || fallbackSpark} sparkColor="#3b82f6" 
-            hideTrend={filterType === 'all'} // <--- THÊM DÒNG NÀY
+            hideTrend={filterType === 'all'} cardBgClass="bg-[#eff6ff]" /* Pastel Blue */
           />
         </Col>
         <Col xs={24} lg={8}>
           <SparklineCard 
             title="Số đơn hoàn thành" value={stats.totalCompletedOrders?.toLocaleString() || 0} suffix="đơn" 
-            icon={ShoppingCartOutlined} bgIconClass="bg-emerald-50" colorClass="text-emerald-500" valueColor="text-gray-800"
+            icon={ShoppingCartOutlined} colorClass="text-emerald-500" valueColor="text-emerald-700"
             percent={trends.orders?.percent || 0} isUp={trends.orders?.isUp ?? true} 
             sparkData={sparklines.orders || fallbackSpark} sparkColor="#10b981" 
-            hideTrend={filterType === 'all'} // <--- THÊM DÒNG NÀY
+            hideTrend={filterType === 'all'} cardBgClass="bg-[#ecfdf5]" /* Pastel Emerald */
           />
         </Col>
         <Col xs={24} lg={8}>
           <SparklineCard 
-            title="Giá trị trung bình (AOV)" value={stats.aov?.toLocaleString() || 0} suffix="VNĐ" 
-            icon={LineChartOutlined} bgIconClass="bg-purple-50" colorClass="text-purple-600" valueColor="text-purple-600"
+            title="Giá trị trung bình" value={stats.aov?.toLocaleString() || 0} suffix="VNĐ" 
+            icon={LineChartOutlined} colorClass="text-purple-500" valueColor="text-purple-700"
             percent={trends.aov?.percent || 0} isUp={trends.aov?.isUp ?? true} 
             sparkData={sparklines.aov || fallbackSpark} sparkColor="#8b5cf6" 
-            hideTrend={filterType === 'all'} // <--- THÊM DÒNG NÀY
+            hideTrend={filterType === 'all'} cardBgClass="bg-[#faf5ff]" /* Pastel Purple */
           />
         </Col>
       </Row>
@@ -182,42 +185,43 @@ export const AdminRevenuePage = () => {
         <Col xs={24} lg={12}>
           <SparklineCard 
             title="Sản phẩm bán ra" value={stats.totalItemsSold?.toLocaleString() || 0} suffix="SP" 
-            icon={AppstoreOutlined} bgIconClass="bg-amber-50" colorClass="text-amber-500" valueColor="text-gray-800"
+            icon={AppstoreOutlined} colorClass="text-amber-500" valueColor="text-amber-700"
             percent={trends.items?.percent || 0} isUp={trends.items?.isUp ?? true} 
             sparkData={sparklines.items || fallbackSpark} sparkColor="#f59e0b" 
-            hideTrend={filterType === 'all'} // <--- THÊM DÒNG NÀY
+            hideTrend={filterType === 'all'} cardBgClass="bg-[#fffbeb]" /* Pastel Amber */
           />
         </Col>
         <Col xs={24} lg={12}>
           <SparklineCard 
             title="Tỷ lệ hoàn trả" value={stats.returnRate || 0} suffix="%" 
-            icon={RetweetOutlined} bgIconClass="bg-rose-50" colorClass="text-rose-500" valueColor="text-gray-800"
+            icon={RetweetOutlined} colorClass="text-rose-500" valueColor="text-rose-700"
             percent={trends.returnRate?.percent || 0} isUp={trends.returnRate?.isUp ?? false} 
             sparkData={sparklines.returnRate || fallbackSpark} sparkColor="#ef4444" reverseColor={true}
-            hideTrend={filterType === 'all'} // <--- THÊM DÒNG NÀY
+            hideTrend={filterType === 'all'} cardBgClass="bg-[#fff1f2]" /* Pastel Rose */
           />
         </Col>
       </Row>
 
+      {/* HAI BIỂU ĐỒ (Nền Pastel nhạt) */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={15}>
-          <Card bordered={false} className="shadow-sm rounded-2xl border border-gray-100" bodyStyle={{ padding: '24px' }}>
+          <Card bordered={false} className="shadow-sm rounded-3xl border-0 bg-[#f0f9ff]" bodyStyle={{ padding: '24px' }}>
             <div className="flex justify-between items-center mb-6">
-              <Text className="font-bold text-base text-gray-800">Biểu đồ doanh thu theo thời gian</Text>
-              <Segmented options={['Ngày', 'Tuần', 'Tháng', 'Năm']} value={chartPeriod} onChange={(val) => setChartPeriod(val as string)} className="bg-indigo-50/50 text-indigo-600 font-medium" />
+              <Text className="font-bold text-lg text-gray-800">Biểu đồ doanh thu theo thời gian</Text>
+              <Segmented options={['Ngày', 'Tuần', 'Tháng', 'Năm']} value={chartPeriod} onChange={(val) => setChartPeriod(val as string)} className="bg-white text-indigo-600 font-bold shadow-sm" />
             </div>
             {chartData.length > 0 ? (
               <div style={{ width: "100%", height: 320 }}>
                 <ResponsiveContainer>
                   <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/><stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/></linearGradient>
+                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4}/><stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/></linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
-                    <YAxis tickFormatter={(val: number) => `${val / 1000}k`} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dx={-10} />
-                    <RechartsTooltip formatter={(val: any) => [`${Number(val || 0).toLocaleString()} đ`, "Doanh thu"]} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />  
-                    <Area type="monotone" dataKey="revenue" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" activeDot={{ r: 6, strokeWidth: 0, fill: '#8b5cf6' }} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }} dy={10} />
+                    <YAxis tickFormatter={(val) => `${val / 1000}k`} axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }} dx={-10} />
+                    <RechartsTooltip formatter={(val: any) => [`${Number(val || 0).toLocaleString()} đ`, "Doanh thu"]} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />  
+                    <Area type="monotone" dataKey="revenue" stroke="#8b5cf6" strokeWidth={4} fillOpacity={1} fill="url(#colorRevenue)" activeDot={{ r: 7, strokeWidth: 0, fill: '#8b5cf6' }} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -226,21 +230,24 @@ export const AdminRevenuePage = () => {
         </Col>
 
         <Col xs={24} lg={9}>
-          <Card bordered={false} className="shadow-sm rounded-2xl border border-gray-100" bodyStyle={{ padding: '24px' }}>
-            <Text className="font-bold text-base text-gray-800 mb-6 block">Doanh thu theo danh mục</Text>
+          <Card bordered={false} className="shadow-sm rounded-3xl border-0 bg-[#faf5ff]" bodyStyle={{ padding: '24px' }}>
+            <Text className="font-bold text-lg text-gray-800 mb-6 block">Doanh thu theo danh mục</Text>
             {categoryData.length > 0 ? (
                <div className="relative w-full h-[320px]">
                  <ResponsiveContainer>
                    <PieChart>
-                     <Pie data={categoryData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={2} dataKey="value" stroke="none">
+                     <Pie data={categoryData} cx="50%" cy="45%" innerRadius={75} outerRadius={105} paddingAngle={3} dataKey="value" stroke="none">
                        {categoryData.map((entry: any, index: number) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                      </Pie>
-                     <RechartsTooltip formatter={(val: any) => [`${Number(val || 0).toLocaleString()} đ`, "Doanh thu"]} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                     <Legend iconType="circle" layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: '13px', color: '#475569' }} />
+                     <RechartsTooltip formatter={(val: any) => [`${Number(val || 0).toLocaleString()} đ`, "Doanh thu"]} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                     {/* Đưa Legend nằm ngang dưới đáy cho cân bằng */}
+                     <Legend iconType="circle" layout="horizontal" verticalAlign="bottom" align="center" wrapperStyle={{ fontSize: '13px', color: '#475569', fontWeight: 500, paddingTop: '10px' }} />
                    </PieChart>
                  </ResponsiveContainer>
-                 <div className="absolute top-1/2 left-[50%] -translate-x-[50%] -translate-y-1/2 text-center pointer-events-none pr-[110px]">
+                 {/* Khối chữ TỔNG đã được căn giữa hoàn hảo */}
+                 <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
                     
+                   
                  </div>
                </div>
             ) : <div className="flex h-[320px] items-center justify-center text-gray-400">Không có dữ liệu</div>}
@@ -248,47 +255,50 @@ export const AdminRevenuePage = () => {
         </Col>
       </Row>
 
-      {/* --- HAI BẢNG DANH SÁCH (THIẾT KẾ DỌC) --- */}
+      {/* HAI BẢNG DỮ LIỆU (Card Pastel bọc Table Trắng) */}
       <Row gutter={[16, 16]}>
-        <Col span={24}>
-          <Card bordered={false} className="shadow-sm rounded-2xl border border-gray-100" title={<div className="flex items-center gap-2 pt-2"><div className="w-6 h-6 bg-indigo-50 text-indigo-600 rounded flex items-center justify-center text-xs"><AppstoreOutlined /></div><span className="text-gray-800 font-bold text-base">Danh sách đơn hàng gần nhất</span></div>}>
-            <Table
-              loading={isLoading}
-              dataSource={orderList}
-              rowKey="id"
-              pagination={{ pageSize: 5 }}
-              scroll={{ x: 'max-content' }}
-              columns={[
-                { title: "Mã đơn", dataIndex: "id", key: "id", render: (t) => <Text className="text-gray-500 font-mono text-xs">{t}</Text> },
-                { title: "Khách hàng", dataIndex: "fullName", key: "name", render: (t) => <Text className="text-gray-800 font-medium">{t}</Text> },
-                { title: "Ngày hoàn thành", dataIndex: "completedAt", key: "date", render: (d) => <Text className="text-gray-600">{dayjs(d).format("DD/MM/YYYY HH:mm")}</Text> },
-                { title: "Thanh toán", dataIndex: "paymentMethod", key: "method", render: (m) => (
-                    <Tag className={`rounded-md border-0 px-2 py-0.5 ${m === 'COD' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                      {m === 'COD' ? 'COD' : 'Chuyển khoản'}
-                    </Tag>
-                )},
-                { title: "Tổng tiền", dataIndex: "totalPrice", key: "price", render: (v) => <Text className="text-rose-500 font-bold">{v?.toLocaleString()} đ</Text> },
-                { title: "Trạng thái", key: "status", render: () => <Tag className="rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600 px-3">Đã hoàn thành</Tag> }
-                // ĐÃ XÓA CỘT XEM CHI TIẾT THEO YÊU CẦU
-              ]}
-            />
+      <Col span={24}>
+          <Card bordered={false} className="shadow-sm rounded-3xl border-0 bg-[#f0fdf4]" title={<div className="flex items-center gap-3 pt-2"><div className="w-8 h-8 bg-white text-emerald-600 rounded-xl flex items-center justify-center text-lg shadow-sm"><AppstoreOutlined /></div><span className="text-gray-800 font-black text-lg">Danh sách tất cả đơn hàng hoàn thành</span></div>}>
+            <div className="bg-white rounded-2xl p-1.5 shadow-sm border border-emerald-50">
+              <Table
+                loading={isLoading}
+                dataSource={orderList}
+                rowKey="id"
+                pagination={false} /* 👈 Tắt phân trang để hiển thị TẤT CẢ */
+                scroll={{ x: 'max-content', y: 400 }} /* 👈 Thêm thanh cuộn dọc (cao tối đa 400px) */
+                className="custom-revenue-table"
+                columns={[
+                  { title: "Mã đơn", dataIndex: "id", key: "id", render: (t) => <Text className="text-black font-mono text-xs">{t}</Text> },
+                  { title: "Khách hàng", dataIndex: "fullName", key: "name", render: (t) => <Text className="text-gray-800">{t}</Text> },
+                  { title: "Ngày hoàn thành", dataIndex: "completedAt", key: "date", render: (d) => <Text className="text-black font-medium">{dayjs(d).format("DD/MM/YYYY HH:mm")}</Text> },
+                  { title: "Thanh toán", dataIndex: "paymentMethod", key: "method", render: (m) => (
+                      <Tag className={`rounded-lg border-0 px-3 py-1 font-bold ${m === 'COD' ? 'bg-sky-50 text-sky-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                        {m === 'COD' ? 'COD' : 'Chuyển khoản'}
+                      </Tag>
+                  )},
+                  { title: "Tổng tiền", dataIndex: "totalPrice", key: "price", render: (v) => <Text className="text-rose-500 font-black text-base">{v?.toLocaleString()} ₫</Text> }
+                ]}
+              />
+            </div>
           </Card>
         </Col>
 
         <Col span={24}>
-          <Card bordered={false} className="shadow-sm rounded-2xl border border-gray-100" title={<div className="flex items-center gap-2 pt-2"><div className="w-6 h-6 bg-orange-50 text-orange-500 rounded flex items-center justify-center text-xs"><ShoppingCartOutlined /></div><span className="text-gray-800 font-bold text-base">🏆 Top sản phẩm bán chạy nhất</span></div>}>
-            <Table
-              loading={isLoading}
-              dataSource={topProducts}
-              rowKey="name"
-              pagination={false}
-              scroll={{ x: 'max-content' }}
-              columns={[
-                { title: "Tên sản phẩm", dataIndex: "name", key: "name", render: (t) => <Text strong className="text-gray-700">{t}</Text> },
-                { title: "Số lượng đã bán", dataIndex: "quantity", key: "qty", align: "center", render: (v) => <Tag color="orange" className="rounded-md text-sm px-2 py-1">{v} SP</Tag> },
-                { title: "Doanh thu", dataIndex: "revenue", key: "rev", render: (v) => <Text className="text-emerald-600 font-bold text-base">{v?.toLocaleString()} ₫</Text> },
-              ]}
-            />
+          <Card bordered={false} className="shadow-sm rounded-3xl border-0 bg-[#fffbeb]" title={<div className="flex items-center gap-3 pt-2"><div className="w-8 h-8 bg-white text-amber-500 rounded-xl flex items-center justify-center text-lg shadow-sm"><ShoppingCartOutlined /></div><span className="text-gray-800 font-black text-lg">🏆 Top sản phẩm bán chạy nhất</span></div>}>
+            <div className="bg-white rounded-2xl p-1.5 shadow-sm border border-amber-50">
+              <Table
+                loading={isLoading}
+                dataSource={topProducts}
+                rowKey="name"
+                pagination={false}
+                scroll={{ x: 'max-content' }}
+                columns={[
+                  { title: "Tên sản phẩm", dataIndex: "name", key: "name", render: (t) => <Text className="text-gray-800">{t}</Text> },
+                  { title: "Số lượng đã bán", dataIndex: "quantity", key: "qty", align: "center", render: (v) => <Tag color="orange" className="rounded-lg border-0 font-bold text-sm px-3 py-1 bg-amber-50 text-amber-600">{v} SP</Tag> },
+                  { title: "Doanh thu", dataIndex: "revenue", key: "rev", render: (v) => <Text className="text-emerald-600 font-black text-base">{v?.toLocaleString()} ₫</Text> },
+                ]}
+              />
+            </div>
           </Card>
         </Col>
       </Row>
