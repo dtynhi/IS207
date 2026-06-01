@@ -1,12 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-
-// ⚠️ CHÚ Ý Ở ĐÂY: Trỏ đường dẫn này về file API tổng hợp của bạn
 import { getRevenueStatsApi } from "../api/admin.api"; 
 
-export const useRevenueStatistic = () => {
+export const useRevenueStatistic = (filters?: { startDate?: string; endDate?: string }) => {
   return useQuery({
-    
-    queryKey: ["admin-revenue-stats"],
-    queryFn: getRevenueStatsApi,
+    queryKey: ["admin-revenue-stats", filters], // Thêm filters vào key để gọi lại API khi đổi ngày
+    queryFn: () => getRevenueStatsApi(filters),
   });
 };
