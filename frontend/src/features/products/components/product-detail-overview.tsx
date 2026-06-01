@@ -77,7 +77,7 @@ export const ProductDetailOverview = ({
               <div className="flex flex-col">
                 <Text className="text-blue-800 font-bold text-[15px]">Sắp diễn ra Flash Sale!</Text>
                 <Text className="text-blue-600 text-sm">
-                  Sẽ sốc sẽ mở lúc <span className="font-extrabold text-red-500 bg-white px-1.5 py-0.5 rounded shadow-sm border border-red-100">{new Date(upcomingFlashSale.startTime).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}</span>
+                  Giá sốc sẽ mở lúc <span className="font-extrabold text-red-500 bg-white px-1.5 py-0.5 rounded shadow-sm border border-red-100">{new Date(upcomingFlashSale.startTime).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}</span>
                 </Text>
               </div>
             </div>
@@ -89,7 +89,7 @@ export const ProductDetailOverview = ({
               <div className="flex flex-col">
                 <Text className="text-purple-800 font-bold text-[15px]">Sắp có Sự Kiện Khuyến Mãi Lớn!</Text>
                 <Text className="text-purple-600 text-sm">
-                  Giá sốc sẽ mở lúc <span className="font-extrabold text-red-500 bg-white px-1.5 py-0.5 rounded shadow-sm border border-red-100">{new Date(data.campaignStartTime).toLocaleString("vi-VN")}</span>. Bạn có thể chốt đơn ngay bây giờ hoặc chờ săn deal!
+                  Săn deal lúc <span className="font-extrabold text-red-500 bg-white px-1.5 py-0.5 rounded shadow-sm border border-red-100">{new Date(data.campaignStartTime).toLocaleString("vi-VN")}</span>.
                 </Text>
               </div>
             </div>

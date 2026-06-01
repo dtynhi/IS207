@@ -76,27 +76,29 @@ export const listProducts = async (
 export const getProductDetail = async (slug: string) => {
   const product = await prisma.product.findFirst({
     where: { slug, deleted: false, status: "active" },
-    // Móc thêm thông tin Flash Sale ra để kiểm tra
     include: { productCategory: true, saleCampaign: true, dailyFlashSale: true }, 
   });
 
   const now = new Date();
   if (product) {
     let isUpcomingCampaign = false;
-    let effectiveDiscount = product.discountPercentage;
+    let effectiveDiscount = 0; 
+
+    const isFlashSaleOngoing = product.dailyFlashSale && product.dailyFlashSale.status === "ONGOING";
 
     if (product.saleCampaign && product.saleCampaign.isActive) {
-      const isStarted = now >= new Date(product.saleCampaign.startTime);
-      if (isStarted) {
+      const isCampaignStarted = now >= new Date(product.saleCampaign.startTime);
+      if (isCampaignStarted) {
         effectiveDiscount = product.saleCampaign.discount;
       } else {
         isUpcomingCampaign = true;
-        
-        if (product.dailyFlashSale && product.dailyFlashSale.status === "ONGOING") {
-          effectiveDiscount = product.discountPercentage; 
-        } else {
-          effectiveDiscount = 0; 
+        if (isFlashSaleOngoing) {
+          effectiveDiscount = product.discountPercentage > 10 ? (product.price % 4) + 6 : product.discountPercentage;
         }
+      }
+    } else {
+      if (isFlashSaleOngoing) {
+        effectiveDiscount = product.discountPercentage > 10 ? (product.price % 4) + 6 : product.discountPercentage;
       }
     }
 
@@ -328,7 +330,7 @@ export const getActiveFlashSale = async () => {
     include: {
       products: { 
         where: { status: "active", deleted: false },
-        include: { saleCampaign: true } 
+        include: { saleCampaign: true }
       },
     },
     orderBy: { startTime: "asc" },
@@ -337,17 +339,27 @@ export const getActiveFlashSale = async () => {
   if (!activeFlashSale) return null;
 
   const productsWithPriority = activeFlashSale.products.map((product: any) => {
+    let finalDiscount = product.discountPercentage;
+
     if (product.saleCampaign && product.saleCampaign.isActive) {
       const isCampaignStarted = now >= new Date(product.saleCampaign.startTime);
-      
       if (isCampaignStarted) {
-        return {
-          ...product,
-          discountPercentage: product.saleCampaign.discount
-        };
+        finalDiscount = product.saleCampaign.discount;
+      } else {
+        if (finalDiscount > 10) {
+          finalDiscount = (product.price % 4) + 6;
+        }
+      }
+    } else {
+      if (finalDiscount > 10 || finalDiscount < 5) {
+        finalDiscount = (product.price % 4) + 6;
       }
     }
-    return product;
+
+    return {
+      ...product,
+      discountPercentage: finalDiscount
+    };
   });
 
   return {
@@ -367,22 +379,45 @@ export const getFlashSaleSessions = async () => {
     include: {
       products: { 
         where: { status: "active", deleted: false },
-        include: { saleCampaign: true } 
+        include: { saleCampaign: true }
       },
     },
     orderBy: { startTime: "asc" },
   });
 
   const now = new Date();
+  
   return sessions.map(session => ({
     ...session,
     products: session.products.map((product: any) => {
+      let finalDiscount = product.discountPercentage;
+      let hasUpcoming = false;
+
       if (product.saleCampaign && product.saleCampaign.isActive) {
-        if (now >= new Date(product.saleCampaign.startTime)) {
-          return { ...product, discountPercentage: product.saleCampaign.discount };
+        const isCampaignStarted = now >= new Date(product.saleCampaign.startTime);
+        if (isCampaignStarted) {
+          // 1. Chiến dịch ĐÃ CHẠY -> Lấy % của Chiến dịch (20%)
+          finalDiscount = product.saleCampaign.discount;
+        } else {
+          // 2. Chiến dịch CHƯA CHẠY -> Bật cờ thông báo
+          hasUpcoming = true;
+          // Nếu % trong DB bị ghi đè thành % chiến dịch (> 10%), ép nó về mức 5-10% của Flash Sale
+          if (finalDiscount > 10) {
+            finalDiscount = (product.price % 4) + 6; // Tạo mức giảm 6%, 7%, 8%, 9% cố định theo giá sản phẩm
+          }
+        }
+      } else {
+        // Trường hợp không có chiến dịch nhưng % lỡ nằm ngoài khoảng 5-10%
+        if (finalDiscount > 10 || finalDiscount < 5) {
+          finalDiscount = (product.price % 4) + 6;
         }
       }
-      return product;
+
+      return { 
+        ...product, 
+        discountPercentage: finalDiscount,
+        hasUpcomingCampaign: hasUpcoming
+      };
     })
   }));
 };
