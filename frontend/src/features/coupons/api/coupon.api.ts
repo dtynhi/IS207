@@ -186,11 +186,6 @@ export const couponAPI = {
 
 
 
-  delete: async (id: string) => {
-
-    await apiClient.delete(`/coupons/${id}`);
-
-  },
 
 
 

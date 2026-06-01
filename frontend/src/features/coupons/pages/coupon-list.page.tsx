@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Space, Input, Select, Modal, message, Tooltip, Tag } from "antd";
-import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
+import { Table, Button, Space, Input, Select, message, Tooltip, Tag } from "antd";
+import { EditOutlined, PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { couponAPI, type Coupon, type VoucherComputedStatus, type VoucherMode } from "../api/coupon.api";
 
@@ -55,24 +55,6 @@ export const CouponListPage = () => {
     loadCoupons();
   }, [pagination.current, pagination.pageSize, search, computedStatusFilter]);
 
-  const handleDelete = (id: string) => {
-    Modal.confirm({
-      title: "Xác nhận xóa",
-      content: "Bạn chắc chắn muốn xóa coupon này?",
-      okText: "Xóa",
-      cancelText: "Hủy",
-      okButtonProps: { danger: true },
-      onOk: async () => {
-        try {
-          await couponAPI.delete(id);
-          message.success("Xóa coupon thành công");
-          loadCoupons();
-        } catch (error: any) {
-          message.error(error.message);
-        }
-      },
-    });
-  };
 
   const columns = [
     {
@@ -173,15 +155,6 @@ export const CouponListPage = () => {
               size="small"
               icon={<EditOutlined />}
               onClick={() => navigate(`/admin/coupons/edit/${record.id}`)}
-            />
-          </Tooltip>
-          <Tooltip title="Xóa">
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record.id)}
             />
           </Tooltip>
         </Space>
