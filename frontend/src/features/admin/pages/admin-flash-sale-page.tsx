@@ -222,37 +222,66 @@ export const AdminFlashSalePage = () => {
       return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có sản phẩm nào." />;
     }
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 py-2">
-        {session.products.map((p) => (
-          <div key={p.id} className="relative group bg-white border border-gray-100 rounded-lg p-2 flex flex-col items-center gap-1 shadow-sm hover:border-red-200 transition-all">
-            
-            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-              <Popconfirm
-                title="Gỡ sản phẩm này?"
-                description="Sản phẩm sẽ bị loại khỏi ca Flash Sale."
-                onConfirm={() => removeProductMutation.mutate({ sessionId: session.id, productId: p.id })}
-                okText="Gỡ luôn"
-                cancelText="Hủy"
-                okButtonProps={{ danger: true, loading: removeProductMutation.isPending }}
-              >
-                <Button danger type="primary" shape="circle" icon={<DeleteOutlined />} size="small" />
-              </Popconfirm>
-            </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 py-3 px-1">
+        {session.products.map((p) => {
+          // Tính toán giá sau khi giảm để hiển thị cho Admin xem
+          const finalPrice = Math.floor(p.price * (1 - p.discountPercentage / 100));
 
-            <img
-              src={p.thumbnail ?? "https://placehold.co/80x80/e2e8f0/64748b?text=?"}
-              alt={p.title}
-              className="w-14 h-14 object-contain rounded"
-              onError={(e) => { e.currentTarget.src = "https://placehold.co/80x80/e2e8f0/64748b?text=?"; }}
-            />
-            <span className="text-xs font-medium text-center line-clamp-2">{p.title}</span>
-            <Tag color="red" className="text-[11px] font-bold">-{p.discountPercentage}%</Tag>
-          </div>
-        ))}
+          return (
+            // Thêm className "relative group" để bắt sự kiện rê chuột
+            <div key={p.id} className="relative group bg-white border border-gray-200 rounded-xl p-3 flex flex-col items-center gap-2 shadow-sm hover:border-red-300 hover:shadow-md transition-all">
+              
+              {/* Nút Xóa lơ lửng góc phải (Chỉ hiện khi rê chuột) */}
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                <Popconfirm
+                  title="Gỡ sản phẩm này?"
+                  description="Sản phẩm sẽ bị loại khỏi ca Flash Sale."
+                  onConfirm={() => removeProductMutation.mutate({ sessionId: session.id, productId: p.id })}
+                  okText="Gỡ luôn"
+                  cancelText="Hủy"
+                  okButtonProps={{ danger: true, loading: removeProductMutation.isPending }}
+                >
+                  <Button danger type="primary" shape="circle" icon={<DeleteOutlined />} size="small" />
+                </Popconfirm>
+              </div>
+
+              {/* Ảnh sản phẩm */}
+              <img
+                src={p.thumbnail ?? "https://placehold.co/80x80/e2e8f0/64748b?text=?"}
+                alt={p.title}
+                className="w-16 h-16 object-contain rounded-md"
+                onError={(e) => { e.currentTarget.src = "https://placehold.co/80x80/e2e8f0/64748b?text=?"; }}
+              />
+              
+              {/* Tên sản phẩm */}
+              <span className="text-xs font-medium text-center line-clamp-2 w-full text-gray-700" title={p.title}>
+                {p.title}
+              </span>
+
+              {/* KHU VỰC HIỂN THỊ GIÁ TIỀN & % GIẢM */}
+              <div className="w-full mt-auto pt-2 border-t border-gray-100 flex flex-col items-center bg-gray-50/50 rounded-lg pb-1">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="text-red-600 font-bold text-[15px]">
+                    {finalPrice.toLocaleString('vi-VN')}đ
+                  </span>
+                  <Tag color="red" className="m-0 text-[10px] font-bold px-1.5 border-none leading-tight py-0.5 shadow-sm">
+                    -{p.discountPercentage}%
+                  </Tag>
+                </div>
+                {p.discountPercentage > 0 && (
+                  <span className="text-[11px] text-gray-400 line-through">
+                    {p.price.toLocaleString('vi-VN')}đ
+                  </span>
+                )}
+              </div>
+
+            </div>
+          );
+        })}
       </div>
     );
   };
-
+  
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm animate-in">
       {/* Header */}

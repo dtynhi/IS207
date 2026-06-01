@@ -1,12 +1,11 @@
 import { Link } from "react-router-dom";
-import { Progress, message } from "antd"; // Gộp import antd
-import { FireOutlined, LockOutlined } from "@ant-design/icons"; // Thêm icon ổ khóa
+import { Progress, message } from "antd"; 
+import { FireOutlined, LockOutlined, GiftOutlined } from "@ant-design/icons"; 
 import { Price } from "../../../shared/components/price";
 import type { Product } from "../../products/types/product.types";
 import { useProductDetailActions } from "../../products/hooks/use-product-detail-actions";
 import { getUserId } from "../../../shared/session/storage";
 
-// Tụi mình thêm props "status" để Card biết mình đang ở ca Sale nào
 export const FlashSaleCard = ({ product, status = "ONGOING" }: { product: Product, status?: string }) => {
   const finalPrice = Math.floor(product.price * (1 - product.discountPercentage / 100));
   const userId = getUserId();
@@ -31,22 +30,22 @@ export const FlashSaleCard = ({ product, status = "ONGOING" }: { product: Produc
     product.stock <= 5 ? `Còn ${product.stock} sản phẩm` :
     soldPercent >= 70 ? "Đang bán chạy!" : "Đang có hàng";
 
-  // LOGIC KIỂM TRA SẮP DIỄN RA
-  const isUpcoming = status === "UPCOMING";
+  const campaign = (product as any).saleCampaign;
+  const isCampaignOngoing = campaign?.isActive && new Date(campaign.startTime).getTime() <= Date.now();
+
+  const isUpcoming = status === "UPCOMING" && !isCampaignOngoing;
 
   return (
     <div className={`bg-white rounded-md p-2 flex flex-col h-full relative border border-gray-200 hover:shadow-md transition-all overflow-hidden ${isUpcoming ? 'opacity-80' : ''}`}>
       {contextHolder}
 
-      {/* Badge giảm giá */}
       {product.discountPercentage > 0 && (
-        <div className="absolute top-0 left-0 bg-red-600 text-white text-[11px] font-bold px-1.5 py-0.5 rounded-br-md z-10 flex items-center gap-0.5 shadow-sm">
-          <FireOutlined className="text-yellow-300 text-[10px]" />
+        <div className={`absolute top-0 left-0 text-white text-[11px] font-bold px-1.5 py-0.5 rounded-br-md z-10 flex items-center gap-0.5 shadow-sm ${isCampaignOngoing ? "bg-purple-600" : "bg-red-600"}`}>
+          {isCampaignOngoing ? <GiftOutlined className="text-yellow-300 text-[10px]" /> : <FireOutlined className="text-yellow-300 text-[10px]" />}
           -{product.discountPercentage}%
         </div>
       )}
 
-      {/* Badge báo hiệu Sắp diễn ra */}
       {isUpcoming && (
         <div className="absolute top-0 right-0 bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-bl-md z-10">
           SẮP MỞ BÁN
@@ -71,7 +70,6 @@ export const FlashSaleCard = ({ product, status = "ONGOING" }: { product: Produc
           </div>
         )}
         
-        {/* Lớp phủ màn mờ mờ ảo ảo nếu chưa mở bán */}
         {isUpcoming && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/40">
             <div className="bg-black/60 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1">
@@ -89,27 +87,23 @@ export const FlashSaleCard = ({ product, status = "ONGOING" }: { product: Produc
       </Link>
 
       <div className="mt-auto">
-        {/* Giá - Logic che giá kinh điển ở đây */}
+        {/* Giá */}
         <div className="flex flex-col mb-1.5 min-h-[40px] justify-end">
           {isUpcoming ? (
-            // Nếu sắp diễn ra: Hiện giá ảo tung chảo
             <div className="text-red-600 font-black text-lg tracking-widest flex items-center gap-1">
               <span className="text-sm">₫</span>?.?00
             </div>
           ) : (
-            // Nếu đang diễn ra: Hiện giá thật
             <Price value={finalPrice} size="md" className="text-red-600 font-bold" />
           )}
           
-          {/* Giá gốc gạch ngang */}
-          {product.discountPercentage > 0 && (
+          {product.discountPercentage > 0 && !isUpcoming && (
             <span className="text-xs text-gray-400 line-through">
               {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(product.price)}
             </span>
           )}
         </div>
 
-        {/* Progress bar đã bán - Dấu đi nếu chưa bán */}
         {totalStock > 0 && !isUpcoming && (
           <div className="mb-2">
             <Progress
@@ -131,7 +125,7 @@ export const FlashSaleCard = ({ product, status = "ONGOING" }: { product: Produc
           </div>
         )}
 
-        {/* Nút thêm giỏ hàng - Khóa lại nếu chưa tới giờ */}
+        {/* Nút thêm giỏ hàng */}
         <button
           className={`w-full text-white font-bold py-1.5 rounded-full text-sm transition-all shadow-sm
             ${isUpcoming 
