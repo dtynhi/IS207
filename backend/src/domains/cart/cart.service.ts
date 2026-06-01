@@ -8,13 +8,35 @@ export const getCartByUser = async (userId: string) => {
   const items = await prisma.cart.findMany({
     where: { userId },
     include: {
-      product: true,
+      product: {
+        include: { saleCampaign: true, dailyFlashSale: true }
+      },
     },
   });
 
+  const now = new Date();
   let totalPrice = 0;
+
   const enrichedItems = items.map((item) => {
-    const priceNew = toPriceNew(item.product.price, item.product.discountPercentage);
+    let effectiveDiscount = 0; 
+    const isFlashSaleOngoing = item.product.dailyFlashSale && item.product.dailyFlashSale.status === "ONGOING";
+
+    if (item.product.saleCampaign && item.product.saleCampaign.isActive) {
+      const isCampaignStarted = now >= new Date(item.product.saleCampaign.startTime);
+      if (isCampaignStarted) {
+        effectiveDiscount = item.product.saleCampaign.discount;
+      } else {
+        if (isFlashSaleOngoing) {
+          effectiveDiscount = item.product.discountPercentage > 10 ? (item.product.price % 4) + 6 : item.product.discountPercentage;
+        }
+      }
+    } else {
+      if (isFlashSaleOngoing) {
+        effectiveDiscount = item.product.discountPercentage > 10 ? (item.product.price % 4) + 6 : item.product.discountPercentage;
+      }
+    }
+
+    const priceNew = toPriceNew(item.product.price, effectiveDiscount);
     const itemTotal = priceNew * item.quantity;
     totalPrice += itemTotal;
 
@@ -25,6 +47,7 @@ export const getCartByUser = async (userId: string) => {
       quantity: item.quantity,
       product: {
         ...item.product,
+        discountPercentage: effectiveDiscount, 
         priceNew,
       },
       totalPrice: itemTotal,
@@ -33,10 +56,7 @@ export const getCartByUser = async (userId: string) => {
     };
   });
 
-  return {
-    items: enrichedItems,
-    totalPrice,
-  };
+  return { items: enrichedItems, totalPrice };
 };
 
 export const addCartItem = async (userId: string, productId: string, quantity: number) => {

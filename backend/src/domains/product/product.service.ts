@@ -51,28 +51,99 @@ export const listProducts = async (
       skip,
       take,
       orderBy: toSort(params.sortBy, params.sortOrder),
+      include: { saleCampaign: true }, // Móc nối đúng tên trong Schema
     }),
     prisma.product.count({ where }),
   ]);
 
+  // Áp dụng luật ưu tiên: Ép % Chiến dịch đè % Flash Sale
+  const formattedItems = items.map((item: any) => {
+    if (item.saleCampaign && item.saleCampaign.isActive) {
+      return {
+        ...item,
+        discountPercentage: item.saleCampaign.discount,
+      };
+    }
+    return item;
+  });
+
   return {
-    items,
+    items: formattedItems,
     meta: toPaginationMeta(params, totalItems),
   };
 };
 
 export const getProductDetail = async (slug: string) => {
-  return prisma.product.findFirst({
+  const product = await prisma.product.findFirst({
     where: { slug, deleted: false, status: "active" },
-    include: { productCategory: true },
+    include: { productCategory: true, saleCampaign: true, dailyFlashSale: true }, 
   });
+
+  const now = new Date();
+  if (product) {
+    let isUpcomingCampaign = false;
+    let effectiveDiscount = 0; 
+
+    const isFlashSaleOngoing = product.dailyFlashSale && product.dailyFlashSale.status === "ONGOING";
+
+    if (product.saleCampaign && product.saleCampaign.isActive) {
+      const isCampaignStarted = now >= new Date(product.saleCampaign.startTime);
+      if (isCampaignStarted) {
+        effectiveDiscount = product.saleCampaign.discount;
+      } else {
+        isUpcomingCampaign = true;
+        if (isFlashSaleOngoing) {
+          effectiveDiscount = product.discountPercentage > 10 ? (product.price % 4) + 6 : product.discountPercentage;
+        }
+      }
+    } else {
+      if (isFlashSaleOngoing) {
+        effectiveDiscount = product.discountPercentage > 10 ? (product.price % 4) + 6 : product.discountPercentage;
+      }
+    }
+
+    return {
+      ...product,
+      discountPercentage: effectiveDiscount,
+      isUpcomingCampaign: isUpcomingCampaign,
+      campaignStartTime: product.saleCampaign?.startTime
+    };
+  }
+  return product;
 };
 
 export const getAdminProductDetail = async (id: string) => {
-  return prisma.product.findFirst({
+  const product = await prisma.product.findFirst({
     where: { id, deleted: false },
-    include: { productCategory: true },
+    include: { productCategory: true, saleCampaign: true, dailyFlashSale: true }, 
   });
+
+  const now = new Date();
+  if (product) {
+    let isUpcomingCampaign = false;
+    let effectiveDiscount = product.discountPercentage;
+
+    if (product.saleCampaign && product.saleCampaign.isActive) {
+      const isStarted = now >= new Date(product.saleCampaign.startTime);
+      if (isStarted) {
+        effectiveDiscount = product.saleCampaign.discount;
+      } else {
+        isUpcomingCampaign = true;
+        if (product.dailyFlashSale && product.dailyFlashSale.status === "ONGOING") {
+          effectiveDiscount = 15; 
+        } else {
+          effectiveDiscount = 0; 
+        }
+      }
+    }
+    return {
+      ...product,
+      discountPercentage: effectiveDiscount,
+      isUpcomingCampaign: isUpcomingCampaign,
+      campaignStartTime: product.saleCampaign?.startTime
+    };
+  }
+  return product;
 };
 
 export const createProduct = async (payload: {
@@ -190,15 +261,29 @@ export const createCampaign = async (data: any) => {
   return campaign;
 };
 export const getActiveCampaign = async () => {
- const now = new Date();
-return prisma.saleCampaign.findMany({ 
+  const now = new Date();
+  
+  const campaigns = await prisma.saleCampaign.findMany({ 
     where: { 
       isActive: true, 
-            startTime: { lte: now }, 
-            endTime: { gt: now }
+      endTime: { gt: now } 
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { startTime: 'asc' },
     include: { products: true } 
+  });
+
+  return campaigns.map(campaign => {
+    const isStarted = now >= new Date(campaign.startTime); 
+
+    return {
+      ...campaign,
+      isUpcoming: !isStarted, 
+      
+      products: campaign.products.map(product => ({
+        ...product,
+        discountPercentage: isStarted ? campaign.discount : 0 
+      }))
+    };
   });
 };
 
@@ -237,32 +322,104 @@ export const getCampaignById = async (id: string) => {
 export const getActiveFlashSale = async () => {
   const now = new Date(); 
 
-  return prisma.dailyFlashSale.findFirst({
+  const activeFlashSale = await prisma.dailyFlashSale.findFirst({
     where: { 
       status: "ONGOING",
       endTime: { gt: now } 
     },
     include: {
-      products: { where: { status: "active", deleted: false } },
+      products: { 
+        where: { status: "active", deleted: false },
+        include: { saleCampaign: true }
+      },
     },
     orderBy: { startTime: "asc" },
   });
+
+  if (!activeFlashSale) return null;
+
+  const productsWithPriority = activeFlashSale.products.map((product: any) => {
+    let finalDiscount = product.discountPercentage;
+
+    if (product.saleCampaign && product.saleCampaign.isActive) {
+      const isCampaignStarted = now >= new Date(product.saleCampaign.startTime);
+      if (isCampaignStarted) {
+        finalDiscount = product.saleCampaign.discount;
+      } else {
+        if (finalDiscount > 10) {
+          finalDiscount = (product.price % 4) + 6;
+        }
+      }
+    } else {
+      if (finalDiscount > 10 || finalDiscount < 5) {
+        finalDiscount = (product.price % 4) + 6;
+      }
+    }
+
+    return {
+      ...product,
+      discountPercentage: finalDiscount
+    };
+  });
+
+  return {
+    ...activeFlashSale,
+    products: productsWithPriority
+  };
 };
+
 export const getFlashSaleSessions = async () => {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
   const endOfDay = new Date();
   endOfDay.setHours(23, 59, 59, 999);
 
-  return prisma.dailyFlashSale.findMany({
-    where: {
-      startTime: { gte: startOfDay, lte: endOfDay },
-    },
+  const sessions = await prisma.dailyFlashSale.findMany({
+    where: { startTime: { gte: startOfDay, lte: endOfDay } },
     include: {
-      products: { where: { status: "active", deleted: false } },
+      products: { 
+        where: { status: "active", deleted: false },
+        include: { saleCampaign: true }
+      },
     },
     orderBy: { startTime: "asc" },
   });
+
+  const now = new Date();
+  
+  return sessions.map(session => ({
+    ...session,
+    products: session.products.map((product: any) => {
+      let finalDiscount = product.discountPercentage;
+      let hasUpcoming = false;
+
+      if (product.saleCampaign && product.saleCampaign.isActive) {
+        const isCampaignStarted = now >= new Date(product.saleCampaign.startTime);
+        if (isCampaignStarted) {
+          // 1. Chiến dịch ĐÃ CHẠY -> Lấy % của Chiến dịch (20%)
+          finalDiscount = product.saleCampaign.discount;
+        } else {
+          // 2. Chiến dịch CHƯA CHẠY -> Bật cờ thông báo
+          hasUpcoming = true;
+          // Nếu % trong DB bị ghi đè thành % chiến dịch (> 10%), ép nó về mức 5-10% của Flash Sale
+          if (finalDiscount > 10) {
+            finalDiscount = (product.price % 4) + 6; // Tạo mức giảm 6%, 7%, 8%, 9% cố định theo giá sản phẩm
+          }
+        }
+      } else {
+        // Trường hợp không có chiến dịch nhưng % lỡ nằm ngoài khoảng 5-10%
+        if (finalDiscount > 10 || finalDiscount < 5) {
+          finalDiscount = (product.price % 4) + 6;
+        }
+      }
+
+      return { 
+        ...product, 
+        discountPercentage: finalDiscount,
+        hasUpcomingCampaign: hasUpcoming
+      };
+    })
+  }));
 };
 
 export const getAllFlashSaleAdmin = async () => {
@@ -287,9 +444,7 @@ export const createFlashSaleSession = async (data: {
 
   if (data.productIds && data.productIds.length > 0) {
     for (const productId of data.productIds) {
-      // Công thức tạo số ngẫu nhiên từ 10 đến 20
-      const randomDiscount = Math.floor(Math.random() * 11) + 10; 
-      
+      const randomDiscount = Math.floor(Math.random() * 6) + 5;      
       await prisma.product.update({
         where: { id: productId },
         data: { 
@@ -368,6 +523,30 @@ export const syncFlashSaleStatuses = async () => {
   } catch (error) {
     console.error("[FlashSale] Lỗi khi đồng bộ trạng thái:", error);
   }
+};
+
+export const removeProductFromFlashSale = async (sessionId: string, productId: string) => {
+  const product = await prisma.product.findUnique({
+    where: { id: productId }
+  });
+
+  if (!product) throw new Error("Không tìm thấy sản phẩm");
+
+  let revertDiscount = 0;
+  if (product.campaignId) {
+    const campaign = await prisma.saleCampaign.findUnique({ where: { id: product.campaignId } });
+    if (campaign && campaign.isActive) {
+      revertDiscount = campaign.discount;
+    }
+  }
+
+  return prisma.product.update({
+    where: { id: productId },
+    data: {
+      dailyFlashSaleId: null, 
+      discountPercentage: revertDiscount 
+    }
+  });
 };
 
 export const deleteCampaign = async (id: string) => {

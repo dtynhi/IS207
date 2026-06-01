@@ -1,5 +1,5 @@
 import { AppstoreOutlined, BulbOutlined, ClockCircleOutlined, FireOutlined, StarOutlined, ThunderboltOutlined } from "@ant-design/icons";
-import { Card, Empty, Pagination, Space, Typography, Modal, Tag } from "antd";
+import { Card, Empty, Pagination, Space, Typography, Modal, Tag, Button } from "antd";
 import { useState, useEffect, type ReactNode } from "react";
 import type { SetURLSearchParams } from "react-router-dom";
 import { ProductCard } from "./product-card";
@@ -37,12 +37,9 @@ function useCountdown(targetIso: string | null) {
   const [timeLeft, setTimeLeft] = useState({ h: "00", m: "00", s: "00" });
   const [mounted, setMounted] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     setMounted(true);
-  });
-
-  if (mounted && targetIso) {
-  }
+  }, []);
 
   if (!targetIso) return { h: "00", m: "00", s: "00" };
 
@@ -89,6 +86,9 @@ export const ProductsHomeView = ({
   }, []);
 
   const isFlashSaleAlive = activeFlashSale && new Date(activeFlashSale.endTime).getTime() > currentTime;
+  
+  const isSelectedCampaignUpcoming = selectedCampaign ? new Date(selectedCampaign.startTime).getTime() > currentTime : false;
+
   return (
     <div className="animate-in pt-5 pb-6">
 
@@ -127,7 +127,6 @@ export const ProductsHomeView = ({
                 <ThunderboltOutlined className="text-yellow-400 !text-xl" />
                 <Text strong className="um-flash-title !text-xl text-red-600">FLASH SALE</Text>
               </Space>
-              {/* Countdown thật từ endTime của session */}
               <div className="um-countdown flex items-center gap-1">
                 {[countdown.h, countdown.m, countdown.s].map((val, i) => (
                   <span key={i} className="flex items-center gap-1">
@@ -162,32 +161,42 @@ export const ProductsHomeView = ({
       {/* CHIẾN DỊCH  */}
       {activeCampaign && activeCampaign.length > 0 && (
         <div className="flex flex-col gap-6 mb-8">
-          {activeCampaign
-            .filter((campaign: any) => new Date(campaign.startTime) <= new Date())
-            .map((campaign: any) => (
-            <div
-              key={campaign.id}
-              className="bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer hover:shadow-xl transition-all border border-pink-100"
-              onClick={() => setSelectedCampaign(campaign)}
-            >
-              <div className="relative w-full h-auto aspect-[3/1] bg-pink-50 flex items-center justify-center overflow-hidden group">
-                <span className="absolute text-pink-500 text-2xl md:text-4xl font-bold uppercase tracking-widest text-center px-4 z-0">
-                  {campaign.name || "SỰ KIỆN 5N"}
-                </span>
-                <img
-                  src={campaign.bannerUrl}
-                  alt={campaign.name}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 z-10"
-                  onError={(e) => { e.currentTarget.style.display = "none"; }}
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 flex items-center justify-center transition-all z-20">
-                  <span className="bg-white text-red-600 font-bold px-6 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md">
-                    XEM CHI TIẾT SỰ KIỆN
+          {activeCampaign.map((campaign: any) => {
+            const isUpcoming = new Date(campaign.startTime).getTime() > currentTime;
+
+            return (
+              <div
+                key={campaign.id}
+                className="bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer hover:shadow-xl transition-all border border-pink-100 relative"
+                onClick={() => setSelectedCampaign(campaign)}
+              >
+                {isUpcoming && (
+                  <div className="absolute top-4 left-4 z-30">
+                    <Tag color="orange" className="text-sm md:text-base font-bold shadow-lg py-1 px-3 border-none">
+                      Sắp mở chiến dịch: {new Date(campaign.startTime).toLocaleString("vi-VN")}
+                    </Tag>
+                  </div>
+                )}
+
+                <div className="relative w-full h-auto aspect-[3/1] bg-pink-50 flex items-center justify-center overflow-hidden group">
+                  <span className="absolute text-pink-500 text-2xl md:text-4xl font-bold uppercase tracking-widest text-center px-4 z-0">
+                    {campaign.name || "SỰ KIỆN 5N"}
                   </span>
+                  <img
+                    src={campaign.bannerUrl}
+                    alt={campaign.name}
+                    className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 z-10 ${isUpcoming ? 'opacity-90' : 'group-hover:scale-105'}`}
+                    onError={(e) => { e.currentTarget.style.display = "none"; }}
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 flex items-center justify-center transition-all z-20">
+                    <span className="bg-white text-red-600 font-bold px-6 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md">
+                      XEM CHI TIẾT SỰ KIỆN
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           <Modal
             title={
@@ -199,9 +208,15 @@ export const ProductsHomeView = ({
                   <Tag color="red" className="font-bold border-red-200">
                     Đồng giá giảm {selectedCampaign?.discount}%
                   </Tag>
-                  <Tag color="orange">
-                    Kết thúc: {selectedCampaign ? new Date(selectedCampaign.endTime).toLocaleString("vi-VN") : ""}
-                  </Tag>
+                  {isSelectedCampaignUpcoming ? (
+                    <Tag color="orange" className="font-bold border-none shadow-sm">
+                      Bắt đầu: {new Date(selectedCampaign?.startTime).toLocaleString("vi-VN")}
+                    </Tag>
+                  ) : (
+                    <Tag color="default">
+                      Kết thúc: {new Date(selectedCampaign?.endTime).toLocaleString("vi-VN")}
+                    </Tag>
+                  )}
                 </Space>
               </div>
             }
@@ -214,7 +229,30 @@ export const ProductsHomeView = ({
             <div className="bg-red-50/50 p-4 rounded-xl mt-2 max-h-[70vh] overflow-y-auto custom-scrollbar">
               <div className="um-product-grid grid grid-cols-2 md:grid-cols-4 gap-4">
                 {selectedCampaign?.products?.map((product: Product) => (
-                  <ProductCard key={product.id} product={product} />
+                  // LOGIC CHE GIÁ
+                  isSelectedCampaignUpcoming ? (
+                    <div key={product.id} className="bg-white border border-gray-200 rounded-xl p-3 flex flex-col shadow-sm relative group">
+                      <div className="absolute top-2 left-2 z-10">
+                        <Tag color="blue" className="font-bold border-none shadow-sm">CHỜ MỞ BÁN</Tag>
+                      </div>
+                      <img src={product.thumbnail ?? ""} alt={product.title} className="w-full aspect-square object-cover rounded-lg group-hover:opacity-90 transition-opacity" />
+                      
+                      <div className="mt-3 text-sm font-medium line-clamp-2">{product.title}</div>
+                      
+                      <div className="mt-auto pt-3">
+                        <div className="text-red-500 font-black text-2xl tracking-widest">đ ?.?00</div>
+                        <div className="text-gray-400 line-through text-xs mt-1">Giá gốc: {product.price.toLocaleString('vi-VN')}đ</div>
+                        
+                        <Link to={`/products/${product.slug}`}>
+                          <Button type="primary" danger ghost className="w-full mt-3 font-semibold">
+                            Xem chi tiết
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  ) : (
+                    <ProductCard key={product.id} product={product} />
+                  )
                 ))}
               </div>
             </div>

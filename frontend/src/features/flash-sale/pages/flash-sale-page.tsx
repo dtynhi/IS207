@@ -9,7 +9,6 @@ import type { FlashSaleSession } from "../../products/types/product.types";
 const { Title, Text } = Typography;
 const { Sider, Content } = Layout;
 
-// ─── Countdown hook ────────────────────────────────────────────────────────────
 function useCountdown(targetIso: string | null) {
   const [timeLeft, setTimeLeft] = useState({ h: "00", m: "00", s: "00" });
 
@@ -30,7 +29,6 @@ function useCountdown(targetIso: string | null) {
   return timeLeft;
 }
 
-// ─── Status helpers ────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
   ONGOING:  { label: "Đang diễn ra", color: "red",    icon: <FireOutlined /> },
   UPCOMING: { label: "Sắp bắt đầu",  color: "orange", icon: <ClockCircleOutlined /> },
@@ -42,23 +40,19 @@ function formatHour(iso: string) {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────────────
 export const FlashSalePage = () => {
-  // 1. SỬA CHỖ NÀY: Đổi tên data thành 'rawSessions'
   const { data: rawSessions = [], isPending: isSessionsPending } = useQuery<FlashSaleSession[]>({
     queryKey: ["flash-sale-sessions"],
     queryFn: getFlashSaleSessionsApi,
     refetchInterval: 30_000, 
   });
 
-  // 2. Đồng hồ đếm nhịp
   const [currentTime, setCurrentTime] = useState(Date.now());
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // 3. Xử lý logic trạng thái thời gian thực
   const sessions = useMemo(() => {
     // Thêm chữ ': FlashSaleSession' để TypeScript hết báo lỗi 'any'
     return rawSessions.map((session: FlashSaleSession) => {
@@ -79,7 +73,6 @@ export const FlashSalePage = () => {
     queryFn: getCategories,
   });
 
-  // Chọn ca ONGOING đầu tiên mặc định, nếu không có thì ca đầu tiên
   const defaultSession = useMemo(
     () => sessions.find((s) => s.status === "ONGOING") ?? sessions[0] ?? null,
     [sessions]
@@ -127,7 +120,6 @@ export const FlashSalePage = () => {
     }),
   ];
 
-  // ─── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 bg-[#f8fafc] animate-in">
       <Breadcrumb
