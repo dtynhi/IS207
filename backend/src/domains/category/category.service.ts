@@ -56,12 +56,24 @@ export const createCategory = async (payload: {
   thumbnail?: string;
   status?: "active" | "inactive";
 }) => {
+  const position = payload.position;
+  const nextPosition =
+    position ??
+    (((await prisma.productCategory.aggregate({
+      _max: {
+        position: true,
+      },
+      where: {
+        deleted: false,
+      },
+    }))?._max?.position ?? 0) + 1);
+
   return prisma.productCategory.create({
     data: {
       title: payload.title,
       slug: payload.slug,
       parentId: payload.parentId,
-      position: payload.position ?? 0,
+      position: nextPosition,
       description: payload.description,
       thumbnail: payload.thumbnail,
       status: payload.status ?? "active",
@@ -71,7 +83,38 @@ export const createCategory = async (payload: {
 };
 
 export const updateCategory = async (id: string, payload: Record<string, unknown>) => {
-  return prisma.productCategory.update({ where: { id }, data: payload });
+  const updatePosition = typeof payload.position === "number" ? payload.position : undefined;
+  if (updatePosition === undefined) {
+    return prisma.productCategory.update({ where: { id }, data: payload });
+  }
+
+  const current = await prisma.productCategory.findUnique({ where: { id } });
+  if (!current) {
+    throw new Error("Category not found");
+  }
+
+  if (current.position === updatePosition) {
+    return prisma.productCategory.update({ where: { id }, data: payload });
+  }
+
+  const swapTarget = await prisma.productCategory.findFirst({
+    where: {
+      position: updatePosition,
+      deleted: false,
+      id: { not: id },
+    },
+  });
+
+  if (!swapTarget) {
+    return prisma.productCategory.update({ where: { id }, data: payload });
+  }
+
+  const [, updatedCategory] = await prisma.$transaction([
+    prisma.productCategory.update({ where: { id: swapTarget.id }, data: { position: current.position } }),
+    prisma.productCategory.update({ where: { id }, data: payload }),
+  ]);
+
+  return updatedCategory;
 };
 
 export const updateCategoryStatus = async (id: string, status: "active" | "inactive") => {
@@ -84,5 +127,16 @@ export const updateCategoryStatus = async (id: string, status: "active" | "inact
 };
 
 export const deleteCategory = async (id: string) => {
-  return prisma.productCategory.update({ where: { id }, data: { deleted: true } });
+  const current = await prisma.productCategory.findUnique({ where: { id } });
+  if (!current) {
+    throw new Error("Category not found");
+  }
+
+  return prisma.productCategory.update({
+    where: { id },
+    data: {
+      deleted: true,
+      slug: `${current.slug}-${current.id}`,
+    },
+  });
 };

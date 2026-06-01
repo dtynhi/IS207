@@ -1,5 +1,4 @@
 import {
-  Alert,
   Button,
   Card,
   Form,
@@ -18,16 +17,6 @@ import type { AdminCategoryFormValues, AdminCategoryRow } from "../types/admin.t
 
 const { Title } = Typography;
 
-const STARTER_CATEGORIES = [
-  "Sách vở",
-  "Phụ kiện",
-  "Đồ ăn",
-  "Mỹ phẩm",
-  "Gia dụng",
-  "Thể thao",
-  "Xe cộ",
-];
-
 const toSlug = (value: string) =>
   value
     .toLowerCase()
@@ -42,7 +31,6 @@ export const AdminCategoriesPage = () => {
   const [createForm] = Form.useForm<AdminCategoryFormValues>();
   const [editForm] = Form.useForm<AdminCategoryFormValues>();
   const [editingCategory, setEditingCategory] = useState<AdminCategoryRow | null>(null);
-  const [isSeeding, setIsSeeding] = useState(false);
 
   const openEditModal = (record: AdminCategoryRow) => {
     setEditingCategory(record);
@@ -56,42 +44,23 @@ export const AdminCategoriesPage = () => {
     setEditingCategory(null);
   };
 
-  const seedStarterCategories = async () => {
-    const existing = new Set(((query.data?.items || []) as AdminCategoryRow[]).map((item) => item.title.trim().toLowerCase()));
-    const toCreate = STARTER_CATEGORIES.filter((title) => !existing.has(title.toLowerCase()));
-    if (toCreate.length === 0) return;
-
-    setIsSeeding(true);
-    try {
-      for (let index = 0; index < toCreate.length; index += 1) {
-        const title = toCreate[index];
-        await createMutation.mutateAsync({
-          title,
-          slug: toSlug(title),
-          position: index + 1,
-          status: "active",
-        });
-      }
-    } finally {
-      setIsSeeding(false);
-    }
+  const getNextPosition = () => {
+    const items = (query.data?.items || []) as AdminCategoryRow[];
+    if (items.length === 0) return 1;
+    return Math.max(...items.map((item) => item.position ?? 0)) + 1;
   };
 
   return (
     <Card>
       {contextHolder}
       <Title level={3}>Categories Management</Title>
-      <Alert
-        type="info"
-        showIcon
-        className="mb-4"
-        message="Danh mục ở trang client lấy trực tiếp từ đây. Bạn có thể tạo mới hoặc bấm 'Add Starter Categories' để thêm bộ danh mục mẫu."
-      />
       <Form
         form={createForm}
         layout="inline"
         className="mb-4"
-        onFinish={(values: AdminCategoryFormValues) => createMutation.mutate({ ...values, status: "active" })}
+        onFinish={(values: AdminCategoryFormValues) =>
+          createMutation.mutate({ ...values, position: getNextPosition(), status: "active" })
+        }
       >
         <Form.Item
           name="title"
@@ -106,9 +75,7 @@ export const AdminCategoriesPage = () => {
           />
         </Form.Item>
         <Form.Item name="slug" rules={[{ required: true }]}><Input placeholder="Slug" /></Form.Item>
-        <Form.Item name="position" initialValue={0}><InputNumber placeholder="Position" /></Form.Item>
         <Button type="primary" htmlType="submit" loading={createMutation.isPending}>Create</Button>
-        <Button onClick={seedStarterCategories} loading={isSeeding}>Add Starter Categories</Button>
       </Form>
 
       <Table<AdminCategoryRow>

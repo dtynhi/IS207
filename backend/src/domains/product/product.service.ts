@@ -215,11 +215,19 @@ export const changeMultiProducts = async (payload: {
   }
 
   if (payload.type === "delete-all") {
-    const result = await prisma.product.updateMany({
-      where: { id: { in: payload.ids } },
-      data: { deleted: true },
-    });
-    return { affected: result.count };
+    let affected = 0;
+    for (const id of payload.ids) {
+      const current = await prisma.product.findUnique({ where: { id } });
+      if (!current) continue;
+
+      const updatedSlug = current.slug.includes(current.id) ? current.slug : `${current.slug}-${current.id}`;
+      await prisma.product.update({
+        where: { id },
+        data: { deleted: true, deletedById: undefined, slug: updatedSlug },
+      });
+      affected += 1;
+    }
+    return { affected };
   }
 
   let affected = 0;
@@ -234,7 +242,16 @@ export const changeMultiProducts = async (payload: {
 };
 
 export const deleteProduct = async (id: string, deletedById?: string) => {
-  return prisma.product.update({ where: { id }, data: { deleted: true, deletedById } });
+  const current = await prisma.product.findUnique({ where: { id } });
+  if (!current) {
+    throw new Error("Product not found");
+  }
+
+  const updatedSlug = current.slug.includes(current.id) ? current.slug : `${current.slug}-${current.id}`;
+  return prisma.product.update({
+    where: { id },
+    data: { deleted: true, deletedById, slug: updatedSlug },
+  });
 };
 
 
