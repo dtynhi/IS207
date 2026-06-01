@@ -6,6 +6,7 @@ import morgan from "morgan";
 import path from "path";
 import multer from "multer";
 import apiRouter from "./interfaces/http/routes";
+import { HttpError } from "./shared/http-error";
 import {
   errorHandler,
   notFoundHandler,
@@ -40,14 +41,28 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage: storage });
+const MAX_UPLOAD_SIZE_MB = 50;
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: MAX_UPLOAD_SIZE_MB * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const isImage = file.mimetype.startsWith("image/");
+    const isVideo = file.mimetype.startsWith("video/");
+    if (isImage || isVideo) {
+      cb(null, true);
+      return;
+    }
+    cb(new HttpError(400, "Chỉ hỗ trợ ảnh hoặc video."));
+  },
+});
 
 app.post("/api/upload", upload.single("image"), (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ success: false, message: "Không tìm thấy file ảnh" });
+    return res.status(400).json({ success: false, message: "Không tìm thấy file ảnh/video" });
   }
-  const imageUrl = `http://localhost:4000/uploads/${req.file.filename}`;
-  res.json({ success: true, url: imageUrl });
+  const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
+  res.json({ success: true, url: fileUrl });
 });
 
 app.use("/uploads", express.static(path.join(__dirname, "../public/uploads")));

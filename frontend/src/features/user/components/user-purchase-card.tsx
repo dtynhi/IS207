@@ -1,6 +1,7 @@
 import { InboxOutlined } from "@ant-design/icons";
 import { Button, Card, Flex, Form, Image, Input, List, Modal, Popconfirm, Tag, Typography } from "antd";
 import { useState } from "react";
+import { ImageUpload } from "../../../shared/components/image-upload";
 import { Price } from "../../../shared/components/price";
 import { purchasePaymentStatusMap, purchaseProcessStatusMap } from "../constants/purchase-status";
 import type { UserPurchase } from "../types/user.types";
@@ -23,7 +24,8 @@ export const UserPurchaseCard = ({
   isRequestingReturn,
 }: UserPurchaseCardProps) => {
   const [returnOpen, setReturnOpen] = useState(false);
-  const [returnForm] = Form.useForm<{ reason: string; description?: string; mediaUrls?: string }>();
+  const [isUploading, setIsUploading] = useState(false);
+  const [returnForm] = Form.useForm<{ reason: string; description?: string; mediaUrls?: string[] }>();
   const processStatus = purchaseProcessStatusMap[order.status] || { color: "default", label: order.status };
   const paymentStatus = order.paymentStatus
     ? purchasePaymentStatusMap[order.paymentStatus] || { color: "default", label: order.paymentStatus }
@@ -38,13 +40,10 @@ export const UserPurchaseCard = ({
 
   const submitReturn = async () => {
     if (!onRequestReturn) return;
+    if (isUploading) return;
     const values = await returnForm.validateFields();
-    const mediaUrls = values.mediaUrls
-      ? values.mediaUrls
-          .split(/\r?\n|,/)
-          .map((item) => item.trim())
-          .filter(Boolean)
-      : undefined;
+    const mediaUrls =
+      Array.isArray(values.mediaUrls) && values.mediaUrls.length > 0 ? values.mediaUrls : undefined;
     onRequestReturn({ reason: values.reason, description: values.description, mediaUrls });
     returnForm.resetFields();
     setReturnOpen(false);
@@ -146,16 +145,22 @@ export const UserPurchaseCard = ({
         onOk={submitReturn}
         okText="Gửi yêu cầu"
         confirmLoading={isRequestingReturn}
+        okButtonProps={{ disabled: isUploading || isRequestingReturn }}
       >
-        <Form form={returnForm} layout="vertical">
+        <Form form={returnForm} layout="vertical" initialValues={{ mediaUrls: [] }}>
           <Form.Item name="reason" label="Lý do" rules={[{ required: true, message: "Vui lòng nhập lý do" }]}>
             <Input />
           </Form.Item>
           <Form.Item name="description" label="Mô tả chi tiết">
             <Input.TextArea rows={3} />
           </Form.Item>
-          <Form.Item name="mediaUrls" label="Link hình/video (mỗi dòng một link)">
-            <Input.TextArea rows={3} placeholder="https://..." />
+          <Form.Item name="mediaUrls" label="Ảnh/Video minh chứng">
+            <ImageUpload
+              maxFiles={5}
+              accept="image/*,video/*"
+              maxVideoSizeMB={50}
+              onUploadingChange={setIsUploading}
+            />
           </Form.Item>
         </Form>
       </Modal>

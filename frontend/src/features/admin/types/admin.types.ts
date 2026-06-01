@@ -167,7 +167,7 @@ export type AdminOrderRow = {
     status: "pending" | "approved" | "rejected";
     reason: string;
     description?: string;
-    mediaUrls?: string[];
+    mediaUrls?: string[] | null;
     reviewReason?: string;
     reviewedAt?: string;
   };
