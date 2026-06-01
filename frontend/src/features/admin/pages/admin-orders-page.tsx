@@ -71,6 +71,13 @@ const calcItemTotal = (item: AdminOrderItemRow) => {
   return Math.round(discountedPrice * item.quantity);
 };
 
+const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".m4v", ".mkv"];
+
+const isVideoUrl = (url: string) => {
+  const normalized = url.split("?")[0]?.split("#")[0]?.toLowerCase() ?? "";
+  return VIDEO_EXTENSIONS.some((ext) => normalized.endsWith(ext));
+};
+
 export const AdminOrdersPage = () => {
   const adminId = getAdminId();
   const [filters, setFilters] = useState({
@@ -192,6 +199,8 @@ export const AdminOrdersPage = () => {
   const itemsTotal = detail?.items?.reduce((sum, item) => sum + calcItemTotal(item), 0) || 0;
   const orderTotal = detail?.finalAmount && detail.finalAmount > 0 ? detail.finalAmount : itemsTotal;
   const hasCoupon = !!(detail?.couponCode && detail?.discountAmount && detail.discountAmount > 0);
+  const returnMediaUrls =
+    detail?.returnRequest && Array.isArray(detail.returnRequest.mediaUrls) ? detail.returnRequest.mediaUrls : [];
 
   return (
     <Card>
@@ -375,9 +384,34 @@ export const AdminOrdersPage = () => {
                 <Space direction="vertical" className="w-full" size="small">
                   <Text><strong>Lý do:</strong> {detail.returnRequest.reason}</Text>
                   {detail.returnRequest.description && <Text><strong>Mô tả:</strong> {detail.returnRequest.description}</Text>}
-                  {Array.isArray(detail.returnRequest.mediaUrls) && detail.returnRequest.mediaUrls.length ? (
-                    <Text><strong>Minh chứng:</strong> {detail.returnRequest.mediaUrls.join(", ")}</Text>
-                  ) : null}
+                  {returnMediaUrls.length > 0 && (
+                    <div>
+                      <Text><strong>Ảnh/Video đính kèm:</strong></Text>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {returnMediaUrls.map((url, index) => (
+                          <div key={`${url}-${index}`} className="h-20 w-20 overflow-hidden rounded border">
+                            {isVideoUrl(url) ? (
+                              <video
+                                src={url}
+                                className="h-full w-full object-cover"
+                                controls
+                                preload="metadata"
+                                playsInline
+                              />
+                            ) : (
+                              <a href={url} target="_blank" rel="noopener noreferrer">
+                                <img
+                                  src={url}
+                                  alt={`Ảnh ${index + 1}`}
+                                  className="h-20 w-20 object-cover hover:opacity-80"
+                                />
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {detail.returnRequest.reviewReason && (
                     <Text><strong>Ghi chú duyệt:</strong> {detail.returnRequest.reviewReason}</Text>
                   )}
