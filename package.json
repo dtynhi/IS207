@@ -27,5 +27,9 @@
     "packages/*"
   ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "dayjs": "^1.11.21",
+    "recharts": "^3.8.1"
+  }
 }
