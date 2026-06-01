@@ -23,3 +23,12 @@ export const toSort = (sortBy: string, sortOrder: "asc" | "desc") => {
 export const getSearchValue = (query: BaseQueryParams) => {
   return query.search ?? query.keyword;
 };
+
+export const removeDiacritics = (str: string): string => {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D");
+};
+

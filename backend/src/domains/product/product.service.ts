@@ -1,5 +1,5 @@
 import { prisma } from "../../infrastructure/db/prisma.client";
-import { getSearchValue, toPaginationMeta, toSkipTake, toSort } from "../../shared/query/query-utils";
+import { getSearchValue, toPaginationMeta, toSkipTake, toSort, removeDiacritics } from "../../shared/query/query-utils";
 import type { ProductQueryParams } from "./product.query";
 
 export const listProducts = async (
@@ -17,13 +17,6 @@ export const listProducts = async (
     where.status = params.status ?? "active";
   } else if (params.status) {
     where.status = params.status;
-  }
-
-  if (search) {
-    where.OR = [
-      { title: { contains: search, mode: "insensitive" } },
-      { school: { contains: search, mode: "insensitive" } },
-    ];
   }
 
   if (params.school && params.school.length > 0) {
@@ -45,16 +38,39 @@ export const listProducts = async (
     where.discountPercentage = { gt: 0 };
   }
 
-  const [items, totalItems] = await Promise.all([
-    prisma.product.findMany({
+  let items: any[] = [];
+  let totalItems = 0;
+
+  if (search) {
+    const allItems = await prisma.product.findMany({
       where,
-      skip,
-      take,
       orderBy: toSort(params.sortBy, params.sortOrder),
-      include: { saleCampaign: true }, // Móc nối đúng tên trong Schema
-    }),
-    prisma.product.count({ where }),
-  ]);
+      include: { saleCampaign: true },
+    });
+
+    const searchLower = removeDiacritics(search).toLowerCase();
+    const filteredItems = allItems.filter((item: any) => {
+      const titleNoAccent = removeDiacritics(item.title).toLowerCase();
+      const schoolNoAccent = item.school ? removeDiacritics(item.school).toLowerCase() : "";
+      return titleNoAccent.includes(searchLower) || schoolNoAccent.includes(searchLower);
+    });
+
+    totalItems = filteredItems.length;
+    items = filteredItems.slice(skip, skip + take);
+  } else {
+    const [dbItems, dbTotal] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        skip,
+        take,
+        orderBy: toSort(params.sortBy, params.sortOrder),
+        include: { saleCampaign: true },
+      }),
+      prisma.product.count({ where }),
+    ]);
+    items = dbItems;
+    totalItems = dbTotal;
+  }
 
   // Áp dụng luật ưu tiên: Ép % Chiến dịch đè % Flash Sale
   const formattedItems = items.map((item: any) => {
