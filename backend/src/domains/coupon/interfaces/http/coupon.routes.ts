@@ -6,9 +6,6 @@ import {
   getCouponById,
   listCoupons,
   deleteCoupon,
-  createVoucherAssignment,
-  listVoucherAssignments,
-  deleteVoucherAssignment,
 } from "../../coupon.service";
 import type { CreateCouponInput, UpdateCouponInput } from "../../coupon.service";
 
@@ -24,13 +21,14 @@ router.post("/", requireAdmin, async (req: Request, res: Response) => {
       value: req.body.value,
       startsAt: req.body.startsAt ? new Date(req.body.startsAt) : undefined,
       endsAt: req.body.endsAt ? new Date(req.body.endsAt) : undefined,
-      totalUsageLimit: req.body.totalUsageLimit ?? req.body.maxUses,
+      totalUsageLimit: req.body.totalUsageLimit,
       maxUsagePerUser: req.body.maxUsagePerUser,
       mode: req.body.mode,
       refundPolicy: req.body.refundPolicy,
       minOrderAmount: req.body.minOrderAmount,
       applyTo: req.body.applyTo,
       status: req.body.status,
+      assignedUserIds: req.body.assignedUserIds,
     };
 
     const coupon = await createCoupon(input);
@@ -86,13 +84,14 @@ router.put("/:id", requireAdmin, async (req: Request, res: Response) => {
       value: req.body.value,
       startsAt: req.body.startsAt ? new Date(req.body.startsAt) : undefined,
       endsAt: req.body.endsAt ? new Date(req.body.endsAt) : undefined,
-      totalUsageLimit: req.body.totalUsageLimit ?? req.body.maxUses,
+      totalUsageLimit: req.body.totalUsageLimit,
       maxUsagePerUser: req.body.maxUsagePerUser,
       mode: req.body.mode,
       refundPolicy: req.body.refundPolicy,
       minOrderAmount: req.body.minOrderAmount,
       applyTo: req.body.applyTo,
       status: req.body.status,
+      assignedUserIds: req.body.assignedUserIds,
     };
 
     const coupon = await updateCoupon(input);
@@ -112,40 +111,5 @@ router.delete("/:id", requireAdmin, async (req: Request, res: Response) => {
   }
 });
 
-router.post("/:id/assignments", requireAdmin, async (req: Request, res: Response) => {
-  try {
-    const couponId = req.params.id;
-    const { userId, allowedUses, extraUses, expiresAt, note } = req.body;
-
-    const assignment = await createVoucherAssignment(couponId, userId, undefined, {
-      allowedUses,
-      extraUses,
-      expiresAt: expiresAt ? new Date(expiresAt) : undefined,
-      note,
-    });
-
-    res.status(201).json(assignment);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-router.get("/:id/assignments", requireAdmin, async (req: Request, res: Response) => {
-  try {
-    const assignments = await listVoucherAssignments(req.params.id);
-    res.json(assignments);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-router.delete("/assignments/:assignmentId", requireAdmin, async (req: Request, res: Response) => {
-  try {
-    await deleteVoucherAssignment(req.params.assignmentId);
-    res.status(204).send();
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
 
 export default router;

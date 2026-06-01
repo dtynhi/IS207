@@ -4,7 +4,7 @@ import { apiClient } from "../../../shared/api/client";
 
 export type VoucherComputedStatus = "ACTIVE" | "EXPIRED" | "DISABLED" | "OUT_OF_USAGE";
 
-export type VoucherMode = "PUBLIC" | "PRIVATE" | "LIMITED";
+export type VoucherMode = "PUBLIC" | "PRIVATE";
 
 
 
@@ -24,9 +24,9 @@ export interface Coupon {
 
   endsAt?: string;
 
-  totalUsageLimit?: number;
+  totalUsageLimit: number;
 
-  maxUsagePerUser?: number;
+  maxUsagePerUser: number;
 
   mode?: VoucherMode;
 
@@ -64,9 +64,9 @@ export interface CreateCouponPayload {
 
   endsAt?: string;
 
-  totalUsageLimit?: number;
+  totalUsageLimit: number;
 
-  maxUsagePerUser?: number;
+  maxUsagePerUser: number;
 
   mode?: VoucherMode;
 
@@ -77,6 +77,8 @@ export interface CreateCouponPayload {
   applyTo?: Record<string, unknown>;
 
   status: "active" | "inactive";
+
+  assignedUserIds?: string[];
 
 }
 
@@ -97,38 +99,6 @@ export interface CouponValidateResult {
 }
 
 
-
-export interface VoucherAssignmentRow {
-
-  id: string;
-
-  voucherId: string;
-
-  userId: string;
-
-  allowedUses?: number | null;
-
-  extraUses?: number | null;
-
-  expiresAt?: string | null;
-
-  note?: string | null;
-
-  grantedAt: string;
-
-  user?: {
-
-    id: string;
-
-    email: string;
-
-    fullName?: string | null;
-
-    phone?: string | null;
-
-  };
-
-}
 
 
 
@@ -253,50 +223,6 @@ export const couponAPI = {
   },
 
 
-
-  createAssignment: async (
-
-    couponId: string,
-
-    payload: {
-
-      userId: string;
-
-      allowedUses?: number;
-
-      extraUses?: number;
-
-      expiresAt?: string;
-
-      note?: string;
-
-    },
-
-  ) => {
-
-    const response = await apiClient.post(`/coupons/${couponId}/assignments`, payload);
-
-    return response.data as VoucherAssignmentRow;
-
-  },
-
-
-
-  listAssignments: async (couponId: string) => {
-
-    const response = await apiClient.get(`/coupons/${couponId}/assignments`);
-
-    return response.data as VoucherAssignmentRow[];
-
-  },
-
-
-
-  deleteAssignment: async (assignmentId: string) => {
-
-    await apiClient.delete(`/coupons/assignments/${assignmentId}`);
-
-  },
 
 };
 

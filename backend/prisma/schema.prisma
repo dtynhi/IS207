@@ -63,7 +63,6 @@ enum CouponType {
 enum VoucherMode {
   PUBLIC
   PRIVATE
-  LIMITED
 }
 
 enum VoucherRefundPolicy {

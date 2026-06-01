@@ -13,10 +13,12 @@ import {
   Row,
   Col,
   Tooltip,
+  Spin,
 } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import { couponAPI, type Coupon } from "../api/coupon.api";
+import { searchUsersForAdminApi, type UserSearchHit } from "../../user/api/user.api";
 
 export const CouponFormPage = () => {
   const navigate = useNavigate();
@@ -25,6 +27,9 @@ export const CouponFormPage = () => {
   const [loading, setLoading] = useState(!!id);
   const [submitting, setSubmitting] = useState(false);
   const isEdit = !!id;
+  const [mode, setMode] = useState<"PUBLIC" | "PRIVATE">("PUBLIC");
+  const [userOptions, setUserOptions] = useState<UserSearchHit[]>([]);
+  const [userSearching, setUserSearching] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -35,6 +40,7 @@ export const CouponFormPage = () => {
   const loadCoupon = async () => {
     try {
       const data = await couponAPI.getById(id!);
+      setMode(data.mode || "PUBLIC");
       form.setFieldsValue({
         code: data.code,
         description: data.description,
@@ -42,12 +48,13 @@ export const CouponFormPage = () => {
         value: data.value,
         startsAt: data.startsAt ? dayjs(data.startsAt) : null,
         endsAt: data.endsAt ? dayjs(data.endsAt) : null,
-        totalUsageLimit: (data as any).totalUsageLimit,
-        maxUsagePerUser: (data as any).maxUsagePerUser,
-        mode: (data as any).mode,
-        refundPolicy: (data as any).refundPolicy,
+        totalUsageLimit: data.totalUsageLimit,
+        maxUsagePerUser: data.maxUsagePerUser,
+        mode: data.mode || "PUBLIC",
+        refundPolicy: data.refundPolicy,
         minOrderAmount: data.minOrderAmount,
         status: data.status === "active",
+        assignedUserIds: (data as any).assignedUserIds || [],
       });
     } catch (error: any) {
       message.error(error.message);
@@ -55,6 +62,28 @@ export const CouponFormPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUserSearch = async (value: string) => {
+    const q = value.trim();
+    if (q.length < 2) {
+      setUserOptions([]);
+      return;
+    }
+    setUserSearching(true);
+    try {
+      const users = await searchUsersForAdminApi(q);
+      setUserOptions(users);
+    } catch {
+      setUserOptions([]);
+    } finally {
+      setUserSearching(false);
+    }
+  };
+
+  const formatUserOption = (user: UserSearchHit) => {
+    const phone = user.phone ? ` · ${user.phone}` : "";
+    return `${user.fullName} (${user.email})${phone}`;
   };
 
   const handleSubmit = async (values: any) => {
@@ -73,6 +102,7 @@ export const CouponFormPage = () => {
         refundPolicy: values.refundPolicy,
         minOrderAmount: values.minOrderAmount || 0,
         status: values.status ? "active" : "inactive",
+        assignedUserIds: values.assignedUserIds,
       };
 
       if (isEdit) {
@@ -95,7 +125,7 @@ export const CouponFormPage = () => {
   return (
     <div className="max-w-3xl">
       <h1 className="text-2xl font-bold mb-6">
-        {isEdit ? "Chỉnh sửa Coupon" : "Tạo Coupon mới"}
+        {isEdit ? "Chỉnh sửa mã giảm giá" : "Tạo mã giảm giá mới"}
       </h1>
 
       <div className="bg-white p-8 rounded-lg">
@@ -118,13 +148,13 @@ export const CouponFormPage = () => {
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
-                label="Mã Coupon"
+                label="Mã giảm giá"
                 name="code"
                 rules={[
-                  { required: true, message: "Vui lòng nhập mã coupon" },
+                  { required: true, message: "Vui lòng nhập mã giảm giá" },
                   {
                     pattern: /^[A-Z0-9_]+$/,
-                    message: "Chỉ chứa chữ cái, số và dấu gạch dưới",
+                    message: "Chỉ chứa chữ cái in hoa, số và dấu gạch dưới",
                   },
                 ]}
               >
@@ -153,8 +183,8 @@ export const CouponFormPage = () => {
               >
                 <Select
                   options={[
-                    { label: "Phần trăm (%)", value: "percent" },
-                    { label: "Tiền cố định (đ)", value: "amount" },
+                    { label: "Giảm theo phần trăm", value: "percent" },
+                    { label: "Giảm số tiền cố định", value: "amount" },
                   ]}
                 />
               </Form.Item>
@@ -182,12 +212,20 @@ export const CouponFormPage = () => {
 
           <Row gutter={16}>
             <Col xs={24} sm={12}>
-              <Form.Item label="Ngày bắt đầu" name="startsAt">
+              <Form.Item
+                label="Ngày bắt đầu"
+                name="startsAt"
+                rules={[{ required: true, message: "Vui lòng chọn ngày bắt đầu" }]}
+              >
                 <DatePicker showTime className="w-full" />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
-              <Form.Item label="Ngày kết thúc" name="endsAt">
+              <Form.Item
+                label="Ngày kết thúc"
+                name="endsAt"
+                rules={[{ required: true, message: "Vui lòng chọn ngày kết thúc" }]}
+              >
                 <DatePicker showTime className="w-full" />
               </Form.Item>
             </Col>
@@ -199,22 +237,26 @@ export const CouponFormPage = () => {
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
-                label={
-                  <Tooltip title="Để trống = không giới hạn. Đây là giới hạn tổng số lần voucher có thể được dùng toàn hệ thống, không phải giới hạn trên mỗi user hoặc trên mỗi đơn hàng.">
-                    Tổng số lần sử dụng voucher (toàn hệ thống)
-                  </Tooltip>
-                }
+                label="Tổng số lượt sử dụng toàn hệ thống"
                 name="totalUsageLimit"
+                rules={[
+                  { required: true, message: "Vui lòng nhập tổng số lượt sử dụng" },
+                  { type: "number", min: 1, message: "Phải >= 1" },
+                ]}
               >
-                <InputNumber min={1} placeholder="Để trống = không giới hạn" className="w-full" />
+                <InputNumber min={1} className="w-full" />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
-                label="Số lần tối đa 1 user"
+                label="Giới hạn sử dụng mỗi khách hàng"
                 name="maxUsagePerUser"
+                rules={[
+                  { required: true, message: "Vui lòng nhập giới hạn sử dụng mỗi khách hàng" },
+                  { type: "number", min: 1, message: "Phải >= 1" },
+                ]}
               >
-                <InputNumber min={1} placeholder="Để trống = không giới hạn" className="w-full" />
+                <InputNumber min={1} className="w-full" />
               </Form.Item>
             </Col>
           </Row>
@@ -222,29 +264,21 @@ export const CouponFormPage = () => {
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
-                label={
-                  <Tooltip title="PUBLIC: ai cũng dùng. LIMITED: phải đăng nhập. PRIVATE: chỉ user đã gán (nút Gán user trên danh sách).">
-                    Chế độ phát hành
-                  </Tooltip>
-                }
+                label="Chế độ phát hành"
                 name="mode"
               >
                 <Select
+                  onChange={(value) => setMode(value)}
                   options={[
-                    { label: "PUBLIC — mọi người", value: "PUBLIC" },
-                    { label: "LIMITED — cần đăng nhập", value: "LIMITED" },
-                    { label: "PRIVATE — whitelist user", value: "PRIVATE" },
+                    { label: "Công khai", value: "PUBLIC" },
+                    { label: "Riêng tư", value: "PRIVATE" },
                   ]}
                 />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
-                label={
-                  <Tooltip title="ON_CANCEL: hoàn lượt dùng khi đơn bị hủy. ON_RETURN chưa có luồng xử lý riêng.">
-                    Hoàn lượt khi hủy đơn
-                  </Tooltip>
-                }
+                label="Hoàn lượt khi hủy đơn"
                 name="refundPolicy"
               >
                 <Select
@@ -256,6 +290,33 @@ export const CouponFormPage = () => {
               </Form.Item>
             </Col>
           </Row>
+
+          {mode === "PRIVATE" && (
+            <Row gutter={16}>
+              <Col xs={24}>
+                <Form.Item
+                  label="Khách hàng được áp dụng"
+                  name="assignedUserIds"
+                  rules={[
+                    { required: true, message: "Chế độ Riêng tư phải có ít nhất 1 khách hàng" },
+                  ]}
+                >
+                  <Select
+                    mode="multiple"
+                    showSearch
+                    filterOption={false}
+                    placeholder="Tìm kiếm khách hàng theo tên, email hoặc số điện thoại"
+                    onSearch={handleUserSearch}
+                    notFoundContent={userSearching ? <Spin size="small" /> : "Không tìm thấy"}
+                    options={userOptions.map((user) => ({
+                      value: user.id,
+                      label: formatUserOption(user),
+                    }))}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          )}
 
           <Row gutter={16}>
             <Col xs={24} sm={12}>
