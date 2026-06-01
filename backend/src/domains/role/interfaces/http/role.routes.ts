@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { baseQueryParamsSchema } from "../../../../shared/query/base-query.params";
+import { requireAdmin, checkPermission } from "../../../../shared/middleware/admin-auth.middleware";
 import { sendError, sendSuccess } from "../../../../shared/response/response";
 import {
   createRole,
@@ -13,7 +14,7 @@ import {
 
 const router = Router();
 
-router.get("/admin/roles", async (req, res, next) => {
+router.get("/admin/roles", requireAdmin, checkPermission("roles", "read"), async (req, res, next) => {
   try {
     const params = baseQueryParamsSchema.parse(req.query);
     const result = await listRoles(params);
@@ -23,7 +24,7 @@ router.get("/admin/roles", async (req, res, next) => {
   }
 });
 
-router.get("/admin/roles/permissions/list", async (req, res, next) => {
+router.get("/admin/roles/permissions/list", requireAdmin, checkPermission("roles", "read"), async (req, res, next) => {
   try {
     const params = baseQueryParamsSchema.parse(req.query);
     const result = await listRoles(params);
@@ -33,7 +34,7 @@ router.get("/admin/roles/permissions/list", async (req, res, next) => {
   }
 });
 
-router.post("/admin/roles", async (req, res, next) => {
+router.post("/admin/roles", requireAdmin, checkPermission("roles", "create"), async (req, res, next) => {
   try {
     const payload = z
       .object({
@@ -50,7 +51,7 @@ router.post("/admin/roles", async (req, res, next) => {
   }
 });
 
-router.patch("/admin/roles/permissions", async (req, res, next) => {
+router.patch("/admin/roles/permissions", requireAdmin, checkPermission("roles", "update"), async (req, res, next) => {
   try {
     const payload = z
       .object({
@@ -70,7 +71,7 @@ router.patch("/admin/roles/permissions", async (req, res, next) => {
   }
 });
 
-router.patch("/admin/roles/:id", async (req, res, next) => {
+router.patch("/admin/roles/:id", requireAdmin, checkPermission("roles", "update"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const item = await updateRole(id, req.body as Record<string, unknown>);
@@ -80,7 +81,7 @@ router.patch("/admin/roles/:id", async (req, res, next) => {
   }
 });
 
-router.get("/admin/roles/:id", async (req, res, next) => {
+router.get("/admin/roles/:id", requireAdmin, checkPermission("roles", "read"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const role = await getRoleDetail(id);
@@ -95,7 +96,7 @@ router.get("/admin/roles/:id", async (req, res, next) => {
   }
 });
 
-router.delete("/admin/roles/:id", async (req, res, next) => {
+router.delete("/admin/roles/:id", requireAdmin, checkPermission("roles", "delete"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     await deleteRole(id);

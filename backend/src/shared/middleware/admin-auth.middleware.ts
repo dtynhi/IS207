@@ -81,3 +81,37 @@ export const requireAdmin = async (req: AdminRequest, res: Response, next: NextF
     return sendError(res, 500, "INTERNAL_ERROR", "Authentication check failed");
   }
 };
+
+/**
+ * Middleware to check if the authenticated admin has the required permission
+ */
+export const checkPermission = (resource: string, action: string) => {
+  return (req: AdminRequest, res: Response, next: NextFunction) => {
+    try {
+      const admin = req.admin;
+      if (!admin) {
+        return sendError(res, 401, "ADMIN_NOT_FOUND", "Admin authentication required");
+      }
+
+      // Quản trị hệ thống (Super Admin) bypasses all permission checks
+      if (admin.role?.title === "Quản trị hệ thống") {
+        return next();
+      }
+
+      const permissions = admin.role?.permissions as any;
+      if (!permissions || typeof permissions !== "object") {
+        return sendError(res, 403, "ADMIN_FORBIDDEN", "No permissions defined for this role");
+      }
+
+      const resourcePermissions = permissions[resource];
+      if (!Array.isArray(resourcePermissions) || !resourcePermissions.includes(action)) {
+        return sendError(res, 403, "ADMIN_FORBIDDEN", `You do not have permission to ${action} ${resource}`);
+      }
+
+      next();
+    } catch (error) {
+      return sendError(res, 500, "INTERNAL_ERROR", "Permission check failed");
+    }
+  };
+};
+

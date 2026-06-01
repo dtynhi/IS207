@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { sendError, sendSuccess } from "../../../../shared/response/response";
-import { requireAdmin } from "../../../../shared/middleware/admin-auth.middleware";
+import { requireAdmin, checkPermission } from "../../../../shared/middleware/admin-auth.middleware";
 import {
   changeMultiProducts,
   createProduct,
@@ -62,7 +62,7 @@ router.get("/products/detail/:slug", async (req, res, next) => {
   }
 });
 
-router.get("/admin/products", requireAdmin, async (req, res, next) => {
+router.get("/admin/products", requireAdmin, checkPermission("products", "read"), async (req, res, next) => {
   try {
     const params = productQuerySchema.parse(req.query);
     const result = await listProducts(params, "admin");
@@ -72,7 +72,7 @@ router.get("/admin/products", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.get("/admin/products/:id", requireAdmin, async (req, res, next) => {
+router.get("/admin/products/:id", requireAdmin, checkPermission("products", "read"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const item = await getAdminProductDetail(id);
@@ -83,7 +83,7 @@ router.get("/admin/products/:id", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.post("/admin/products", requireAdmin, async (req, res, next) => {
+router.post("/admin/products", requireAdmin, checkPermission("products", "create"), async (req, res, next) => {
   try {
     const payload = z.object({
       title: z.string().min(1),
@@ -110,7 +110,7 @@ router.post("/admin/products", requireAdmin, async (req, res, next) => {
 });
 
 
-router.patch("/admin/products/change-status/:status/:id", requireAdmin, async (req, res, next) => {
+router.patch("/admin/products/change-status/:status/:id", requireAdmin, checkPermission("products", "update"), async (req, res, next) => {
   try {
     const status = z.enum(["active", "inactive"]).parse(req.params.status);
     const id = z.string().parse(req.params.id);
@@ -121,7 +121,7 @@ router.patch("/admin/products/change-status/:status/:id", requireAdmin, async (r
   }
 });
 
-router.patch("/admin/products/change-multi", requireAdmin, async (req, res, next) => {
+router.patch("/admin/products/change-multi", requireAdmin, checkPermission("products", "update"), async (req, res, next) => {
   try {
     const payload = z.object({
       type: z.enum(["active", "inactive", "delete-all", "change-position"]),
@@ -139,7 +139,7 @@ router.patch("/admin/products/change-multi", requireAdmin, async (req, res, next
   }
 });
 
-router.patch("/admin/products/:id", requireAdmin, async (req, res, next) => {
+router.patch("/admin/products/:id", requireAdmin, checkPermission("products", "update"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const item = await updateProduct(id, req.body as Record<string, unknown>);
@@ -149,7 +149,7 @@ router.patch("/admin/products/:id", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.delete("/admin/products/:id", requireAdmin, async (req, res, next) => {
+router.delete("/admin/products/:id", requireAdmin, checkPermission("products", "delete"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const deletedById = z.string().optional().parse(req.headers["x-account-id"] || req.query.deletedById);
@@ -161,7 +161,7 @@ router.delete("/admin/products/:id", requireAdmin, async (req, res, next) => {
 });
 
 
-router.post("/admin/campaigns/:id/deactivate", requireAdmin, async (req, res, next) => {
+router.post("/admin/campaigns/:id/deactivate", requireAdmin, checkPermission("products", "update"), async (req, res, next) => {
   try {
     const id = req.params.id; // Bắt lấy cái ID từ Frontend gửi lên
     const result = await deactivateActiveCampaign(id); // Truyền ID vào hàm
@@ -171,7 +171,7 @@ router.post("/admin/campaigns/:id/deactivate", requireAdmin, async (req, res, ne
   }
 });
 
-router.get("/admin/campaigns", requireAdmin, async (req, res, next) => {
+router.get("/admin/campaigns", requireAdmin, checkPermission("products", "read"), async (req, res, next) => {
   try {
     const campaigns = await getAllCampaigns();
     return sendSuccess(res, campaigns);
@@ -199,7 +199,7 @@ router.get("/campaigns/:id", async (req, res, next) => {
   }
 });
 
-router.post("/admin/campaigns", requireAdmin, async (req, res, next) => {
+router.post("/admin/campaigns", requireAdmin, checkPermission("products", "create"), async (req, res, next) => {
   try {
     const result = await createCampaign(req.body); 
     return sendSuccess(res, result);
@@ -208,7 +208,7 @@ router.post("/admin/campaigns", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.delete("/admin/campaigns/:id", requireAdmin, async (req, res, next) => {
+router.delete("/admin/campaigns/:id", requireAdmin, checkPermission("products", "delete"), async (req, res, next) => {
   try {
     const id = req.params.id; 
     await deleteCampaign(id); 
@@ -236,7 +236,7 @@ router.get("/flash-sale/sessions", async (req, res, next) => {
   }
 });
 
-router.get("/admin/flash-sale", requireAdmin, async (req, res, next) => {
+router.get("/admin/flash-sale", requireAdmin, checkPermission("products", "read"), async (req, res, next) => {
   try {
     const sessions = await getAllFlashSaleAdmin();
     return sendSuccess(res, sessions);
@@ -245,7 +245,7 @@ router.get("/admin/flash-sale", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.post("/admin/flash-sale", requireAdmin, async (req, res, next) => {
+router.post("/admin/flash-sale", requireAdmin, checkPermission("products", "create"), async (req, res, next) => {
   try {
     const payload = z.object({
       startTime: z.string().min(1),
@@ -260,7 +260,7 @@ router.post("/admin/flash-sale", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.patch("/admin/flash-sale/:id/status", requireAdmin, async (req, res, next) => {
+router.patch("/admin/flash-sale/:id/status", requireAdmin, checkPermission("products", "update"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const { status } = z.object({
@@ -274,7 +274,7 @@ router.patch("/admin/flash-sale/:id/status", requireAdmin, async (req, res, next
   }
 });
 
-router.delete("/admin/flash-sale/:id", requireAdmin, async (req, res, next) => {
+router.delete("/admin/flash-sale/:id", requireAdmin, checkPermission("products", "delete"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     await deleteFlashSaleSession(id);
@@ -284,7 +284,7 @@ router.delete("/admin/flash-sale/:id", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.delete("/admin/flash-sale/:sessionId/products/:productId", requireAdmin, async (req, res, next) => {
+router.delete("/admin/flash-sale/:sessionId/products/:productId", requireAdmin, checkPermission("products", "delete"), async (req, res, next) => {
   try {
     const { sessionId, productId } = req.params;
     await removeProductFromFlashSale(sessionId, productId);

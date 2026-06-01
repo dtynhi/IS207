@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { baseQueryParamsSchema } from "../../../../shared/query/base-query.params";
 import { sendError, sendSuccess } from "../../../../shared/response/response";
-import { requireAdmin } from "../../../../shared/middleware/admin-auth.middleware";
+import { requireAdmin, checkPermission } from "../../../../shared/middleware/admin-auth.middleware";
 import {
   createCategory,
   deleteCategory,
@@ -24,7 +24,7 @@ router.get("/categories", async (_req, res, next) => {
   }
 });
 
-router.get("/admin/categories", requireAdmin, async (req, res, next) => {
+router.get("/admin/categories", requireAdmin, checkPermission("categories", "read"), async (req, res, next) => {
   try {
     const params = baseQueryParamsSchema.parse(req.query);
     const result = await listAdminCategories(params);
@@ -34,7 +34,7 @@ router.get("/admin/categories", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.get("/admin/categories/:id", requireAdmin, async (req, res, next) => {
+router.get("/admin/categories/:id", requireAdmin, checkPermission("categories", "read"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const item = await getCategoryDetail(id);
@@ -48,7 +48,7 @@ router.get("/admin/categories/:id", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.post("/admin/categories", requireAdmin, async (req, res, next) => {
+router.post("/admin/categories", requireAdmin, checkPermission("categories", "create"), async (req, res, next) => {
   try {
     const payload = z
       .object({
@@ -69,7 +69,7 @@ router.post("/admin/categories", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.patch("/admin/categories/:id", requireAdmin, async (req, res, next) => {
+router.patch("/admin/categories/:id", requireAdmin, checkPermission("categories", "update"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const item = await updateCategory(id, req.body as Record<string, unknown>);
@@ -79,7 +79,7 @@ router.patch("/admin/categories/:id", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.patch("/admin/categories/change-status/:status/:id", requireAdmin, async (req, res, next) => {
+router.patch("/admin/categories/change-status/:status/:id", requireAdmin, checkPermission("categories", "update"), async (req, res, next) => {
   try {
     const status = z.enum(["active", "inactive"]).parse(req.params.status);
     const id = z.string().parse(req.params.id);
@@ -90,7 +90,7 @@ router.patch("/admin/categories/change-status/:status/:id", requireAdmin, async 
   }
 });
 
-router.delete("/admin/categories/:id", requireAdmin, async (req, res, next) => {
+router.delete("/admin/categories/:id", requireAdmin, checkPermission("categories", "delete"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     await deleteCategory(id);
