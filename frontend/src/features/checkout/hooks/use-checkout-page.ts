@@ -159,7 +159,7 @@ export const useCheckoutPage = () => {
       address: addressParts.join(", "),
       couponCode: appliedCoupon?.couponCode,
       paymentMethod: values.paymentMethod,
-      returnUrl: `${window.location.origin}/checkout/sandbox-return`,
+      returnUrl: `${window.location.origin}/checkout/success/{orderId}`,
       items,
     };
 

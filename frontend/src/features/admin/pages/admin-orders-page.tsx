@@ -189,7 +189,9 @@ export const AdminOrdersPage = () => {
   };
 
   const isAssignedToMe = detail?.assignedToAccount?.id && detail.assignedToAccount.id === adminId;
-  const orderTotal = detail?.items?.reduce((sum, item) => sum + calcItemTotal(item), 0) || 0;
+  const itemsTotal = detail?.items?.reduce((sum, item) => sum + calcItemTotal(item), 0) || 0;
+  const orderTotal = detail?.finalAmount && detail.finalAmount > 0 ? detail.finalAmount : itemsTotal;
+  const hasCoupon = !!(detail?.couponCode && detail?.discountAmount && detail.discountAmount > 0);
 
   return (
     <Card>
@@ -354,7 +356,15 @@ export const AdminOrdersPage = () => {
               ]}
             />
             <div className="mt-2 text-right">
-              <Text strong>Tổng cộng: {orderTotal}</Text>
+              {hasCoupon ? (
+                <Space direction="vertical" size={2} className="w-full items-end">
+                  <Text>Tổng sản phẩm: {(detail.originalAmount ?? itemsTotal).toLocaleString()}đ</Text>
+                  <Text>Mã giảm giá <strong>{detail.couponCode}</strong>: -{detail.discountAmount!.toLocaleString()}đ</Text>
+                  <Text strong>Thực thu: {orderTotal.toLocaleString()}đ</Text>
+                </Space>
+              ) : (
+                <Text strong>Tổng cộng: {orderTotal.toLocaleString()}đ</Text>
+              )}
             </div>
 
             <Divider />

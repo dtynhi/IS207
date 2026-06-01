@@ -6,7 +6,20 @@ export const getRevenueStatisticsService = async () => {
     // 1. Lấy đơn hàng hoàn thành (Không cần include bảng user nữa)
     const completedOrders = await prisma.order.findMany({
       where: {
-        status: "delivered", // Sửa thành chữ thường "completed" nếu db lưu chữ thường
+        // 1. Đơn hàng phải ở trạng thái đã giao hoặc đã đóng hồ sơ
+        status: {
+          in: ["delivered", "completed"],
+        },
+        
+        // 2. Chắc chắn đã thu tiền
+        paymentStatus: "paid",
+
+        // 3. KHÔNG CÓ yêu cầu trả hàng nào được Admin chấp nhận (Dùng số ít và isNot)
+        returnRequest: {
+          isNot: {
+            status: "approved"
+          }
+        }
       },
       orderBy: {
         updatedAt: "desc", 
