@@ -26,7 +26,7 @@ export const AdminCampaignsPage = () => {
   const queryClient = useQueryClient();
   
   const { data: categoriesData } = useQuery({ queryKey: ["admin-categories"], queryFn: getCategories });
-  const categories: any[] = (categoriesData as any[]) || [];
+  const categories: any[] = Array.isArray(categoriesData) ? categoriesData : [];
 
   const { data: activeCampaign } = useQuery({
     queryKey: ["active-campaign-admin"],
@@ -228,7 +228,7 @@ const handleStopCampaign = async (id: string) => {
 
         <Card title={<Space><UnorderedListOutlined /> <Text strong>Danh sách Chiến dịch</Text></Space>} className="shadow-sm mb-6">
           <Table 
-            dataSource={allCampaigns || []} 
+            dataSource={Array.isArray(allCampaigns) ? allCampaigns : []} 
             rowKey="id" 
             loading={isCampaignsPending}
             pagination={{ pageSize: 5 }}
