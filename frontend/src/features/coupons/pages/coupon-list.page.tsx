@@ -1,18 +1,17 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Space, Input, Select, Modal, message, Tooltip, Tag } from "antd";
-import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
+import { Table, Button, Space, Input, Select, message, Tooltip, Tag } from "antd";
+import { EditOutlined, PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { couponAPI, type Coupon, type VoucherComputedStatus, type VoucherMode } from "../api/coupon.api";
-import AssignmentModal from "../components/assignment-modal";
 
 const VOUCHER_STATUS_DISPLAY: Record<
   VoucherComputedStatus,
   { color: string; label: string }
 > = {
-  ACTIVE: { color: "green", label: "Active" },
-  EXPIRED: { color: "orange", label: "Expired" },
-  DISABLED: { color: "red", label: "Disabled" },
-  OUT_OF_USAGE: { color: "default", label: "Hết lượt" },
+  ACTIVE: { color: "green", label: "Đang hoạt động" },
+  EXPIRED: { color: "orange", label: "Hết hạn" },
+  DISABLED: { color: "red", label: "Đã vô hiệu hóa" },
+  OUT_OF_USAGE: { color: "default", label: "Hết lượt sử dụng" },
 };
 
 export const CouponListPage = () => {
@@ -28,13 +27,10 @@ export const CouponListPage = () => {
   const [computedStatusFilter, setComputedStatusFilter] = useState<
     VoucherComputedStatus | undefined
   >();
-  const [assignmentCouponId, setAssignmentCouponId] = useState<string | null>(null);
-  const [assignmentVisible, setAssignmentVisible] = useState(false);
 
   const MODE_LABELS: Record<VoucherMode, string> = {
     PUBLIC: "Công khai",
-    LIMITED: "Cần đăng nhập",
-    PRIVATE: "Riêng tư (whitelist)",
+    PRIVATE: "Riêng tư",
   };
 
   const loadCoupons = async () => {
@@ -59,24 +55,6 @@ export const CouponListPage = () => {
     loadCoupons();
   }, [pagination.current, pagination.pageSize, search, computedStatusFilter]);
 
-  const handleDelete = (id: string) => {
-    Modal.confirm({
-      title: "Xác nhận xóa",
-      content: "Bạn chắc chắn muốn xóa coupon này?",
-      okText: "Xóa",
-      cancelText: "Hủy",
-      okButtonProps: { danger: true },
-      onOk: async () => {
-        try {
-          await couponAPI.delete(id);
-          message.success("Xóa coupon thành công");
-          loadCoupons();
-        } catch (error: any) {
-          message.error(error.message);
-        }
-      },
-    });
-  };
 
   const columns = [
     {
@@ -100,7 +78,7 @@ export const CouponListPage = () => {
       width: 100,
       render: (type: string) => (
         <Tag color={type === "percent" ? "blue" : "green"}>
-          {type === "percent" ? "Phần trăm %" : "Tiền cứng"}
+          {type === "percent" ? "Giảm theo phần trăm" : "Giảm số tiền cố định"}
         </Tag>
       ),
     },
@@ -114,7 +92,7 @@ export const CouponListPage = () => {
       },
     },
     {
-      title: "Dùng / Tối đa",
+      title: "Lượt dùng / Giới hạn",
       dataIndex: "usedCount",
       key: "usedCount",
       width: 120,
@@ -124,11 +102,24 @@ export const CouponListPage = () => {
       },
     },
     {
-      title: "Mode",
+      title: "Chế độ",
       dataIndex: "mode",
       key: "mode",
       width: 130,
       render: (mode: VoucherMode | undefined) => MODE_LABELS[mode ?? "PUBLIC"] ?? mode,
+    },
+    {
+      title: "Đối tượng áp dụng",
+      key: "targetAudience",
+      width: 150,
+      render: (_: unknown, record: Coupon) => {
+        if (record.mode === "PUBLIC") {
+          return <span>Tất cả khách hàng</span>;
+        }
+        // For PRIVATE mode, we would need to load assignments count
+        // For now, just show the mode label
+        return <span>Khách hàng được chỉ định</span>;
+      },
     },
     {
       title: "Hết hạn",
@@ -138,7 +129,7 @@ export const CouponListPage = () => {
       render: (date: string) => {
         if (!date) return "-";
         const d = new Date(date);
-        return d.toLocaleDateString("vi-VN");
+        return d.toLocaleString("vi-VN");
       },
     },
     {
@@ -166,29 +157,6 @@ export const CouponListPage = () => {
               onClick={() => navigate(`/admin/coupons/edit/${record.id}`)}
             />
           </Tooltip>
-          {record.mode === "PRIVATE" && (
-            <Tooltip title="Gán user được dùng (PRIVATE)">
-              <Button
-                type="text"
-                size="small"
-                onClick={() => {
-                  setAssignmentCouponId(record.id);
-                  setAssignmentVisible(true);
-                }}
-              >
-                Gán user
-              </Button>
-            </Tooltip>
-          )}
-          <Tooltip title="Xóa">
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record.id)}
-            />
-          </Tooltip>
         </Space>
       ),
     },
@@ -197,13 +165,13 @@ export const CouponListPage = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Quản lý Coupon</h1>
+        <h1 className="text-2xl font-bold">Quản lý mã giảm giá</h1>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={() => navigate("/admin/coupons/create")}
         >
-          Tạo Coupon
+          Tạo mã giảm giá
         </Button>
       </div>
 
@@ -226,10 +194,10 @@ export const CouponListPage = () => {
             setPagination((prev) => ({ ...prev, current: 1 }));
           }}
           options={[
-            { label: "Active", value: "ACTIVE" },
-            { label: "Expired", value: "EXPIRED" },
-            { label: "Disabled", value: "DISABLED" },
-            { label: "Hết lượt", value: "OUT_OF_USAGE" },
+            { label: "Đang hoạt động", value: "ACTIVE" },
+            { label: "Hết hạn", value: "EXPIRED" },
+            { label: "Đã vô hiệu hóa", value: "DISABLED" },
+            { label: "Hết lượt sử dụng", value: "OUT_OF_USAGE" },
           ]}
           style={{ width: 200 }}
         />
@@ -245,7 +213,7 @@ export const CouponListPage = () => {
           pageSize: pagination.pageSize,
           total: pagination.total,
           showSizeChanger: true,
-          showTotal: (total) => `Tổng ${total} coupon`,
+          showTotal: (total) => `Tổng ${total} mã giảm giá`,
         }}
         onChange={(pag) => {
           setPagination({
@@ -258,7 +226,6 @@ export const CouponListPage = () => {
         className="bg-white rounded-lg"
       />
 
-      <AssignmentModal visible={assignmentVisible} couponId={assignmentCouponId} onClose={() => setAssignmentVisible(false)} />
     </div>
   );
 };

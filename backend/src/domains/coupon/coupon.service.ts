@@ -12,13 +12,14 @@ export interface CreateCouponInput {
   value: number;
   startsAt?: Date;
   endsAt?: Date;
-  totalUsageLimit?: number;
-  maxUsagePerUser?: number;
-  mode?: "PUBLIC" | "PRIVATE" | "LIMITED";
+  totalUsageLimit: number;
+  maxUsagePerUser: number;
+  mode?: "PUBLIC" | "PRIVATE";
   refundPolicy?: "NONE" | "ON_CANCEL" | "ON_RETURN";
   minOrderAmount?: number;
   applyTo?: Prisma.InputJsonValue;
   status: "active" | "inactive";
+  assignedUserIds?: string[];
 }
 
 export interface UpdateCouponInput extends Partial<CreateCouponInput> {
@@ -78,21 +79,34 @@ export const validateCoupon = (input: CreateCouponInput): string[] => {
     errors.push("Value phần trăm không được vượt quá 100");
   }
 
+  if (!input.startsAt) {
+    errors.push("Ngày bắt đầu là bắt buộc");
+  }
+
+  if (!input.endsAt) {
+    errors.push("Ngày kết thúc là bắt buộc");
+  }
+
   if (input.startsAt && input.endsAt && new Date(input.startsAt) >= new Date(input.endsAt)) {
-    errors.push("startsAt phải trước endsAt");
+    errors.push("Ngày bắt đầu phải trước ngày kết thúc");
   }
 
-  const totalUsageLimit = input.totalUsageLimit;
-  if (totalUsageLimit !== undefined && totalUsageLimit !== null && totalUsageLimit < 1) {
-    errors.push("totalUsageLimit phải >= 1");
+  if (!input.totalUsageLimit || input.totalUsageLimit < 1) {
+    errors.push("Tổng số lượt sử dụng toàn hệ thống là bắt buộc và phải >= 1");
   }
 
-  if (input.maxUsagePerUser !== undefined && input.maxUsagePerUser !== null && input.maxUsagePerUser < 1) {
-    errors.push("maxUsagePerUser phải >= 1");
+  if (!input.maxUsagePerUser || input.maxUsagePerUser < 1) {
+    errors.push("Giới hạn sử dụng mỗi khách hàng là bắt buộc và phải >= 1");
   }
 
-  if (input.mode && !["PUBLIC", "PRIVATE", "LIMITED"].includes(input.mode)) {
-    errors.push("mode phải là PUBLIC, PRIVATE hoặc LIMITED");
+  if (input.mode === "PRIVATE") {
+    if (!input.assignedUserIds || input.assignedUserIds.length === 0) {
+      errors.push("Chế độ Riêng tư phải có ít nhất 1 khách hàng được chỉ định");
+    }
+  }
+
+  if (input.mode && !["PUBLIC", "PRIVATE"].includes(input.mode)) {
+    errors.push("mode phải là PUBLIC hoặc PRIVATE");
   }
 
   if (input.refundPolicy && !["NONE", "ON_CANCEL", "ON_RETURN"].includes(input.refundPolicy)) {
@@ -141,6 +155,20 @@ export const createCoupon = async (input: CreateCouponInput) => {
       status: input.status,
     },
   });
+
+  // Create voucher assignments for PRIVATE mode
+  if (input.mode === "PRIVATE" && input.assignedUserIds && input.assignedUserIds.length > 0) {
+    for (const userId of input.assignedUserIds) {
+      await prisma.voucherAssignment.create({
+        data: {
+          voucherId: coupon.id,
+          userId,
+          grantedAt: new Date(),
+        },
+      });
+    }
+  }
+
   return withComputedStatus(coupon);
 };
 
@@ -148,12 +176,28 @@ export const createCoupon = async (input: CreateCouponInput) => {
 export const updateCoupon = async (input: UpdateCouponInput) => {
   const { id, ...data } = input;
 
+  // Get existing coupon to preserve dates if not provided
+  const existing = await prisma.coupon.findUnique({ where: { id } });
+  if (!existing) {
+    throw new Error("Coupon không tồn tại");
+  }
+
+  // Use existing dates if not provided in update
+  const startsAt = data.startsAt ?? (existing.startsAt || undefined);
+  const endsAt = data.endsAt ?? (existing.endsAt || undefined);
+
   if (data.code && data.type) {
     const errors = validateCoupon({
       code: data.code,
       type: data.type,
       value: data.value ?? 0,
       status: data.status ?? "active",
+      totalUsageLimit: data.totalUsageLimit ?? 1,
+      maxUsagePerUser: data.maxUsagePerUser ?? 1,
+      mode: data.mode,
+      assignedUserIds: data.assignedUserIds,
+      startsAt,
+      endsAt,
     });
     if (errors.length > 0) {
       throw new Error(errors.join(", "));
@@ -180,8 +224,8 @@ export const updateCoupon = async (input: UpdateCouponInput) => {
       description: data.description,
       type: data.type,
       value: data.value,
-      startsAt: data.startsAt,
-      endsAt: data.endsAt,
+      startsAt: startsAt,
+      endsAt: endsAt,
       totalUsageLimit: data.totalUsageLimit,
       maxUsagePerUser: data.maxUsagePerUser,
       mode: data.mode,
@@ -191,6 +235,33 @@ export const updateCoupon = async (input: UpdateCouponInput) => {
       status: data.status,
     },
   });
+
+  // Update voucher assignments for PRIVATE mode
+  if (data.mode === "PRIVATE" && data.assignedUserIds !== undefined) {
+    // Delete existing assignments
+    await prisma.voucherAssignment.deleteMany({
+      where: { voucherId: id },
+    });
+
+    // Create new assignments
+    for (const userId of data.assignedUserIds) {
+      await prisma.voucherAssignment.create({
+        data: {
+          voucherId: id,
+          userId,
+          grantedAt: new Date(),
+        },
+      });
+    }
+  }
+
+  // If mode changed from PRIVATE to PUBLIC, delete all assignments
+  if (data.mode === "PUBLIC") {
+    await prisma.voucherAssignment.deleteMany({
+      where: { voucherId: id },
+    });
+  }
+
   return withComputedStatus(coupon);
 };
 
@@ -198,11 +269,24 @@ export const updateCoupon = async (input: UpdateCouponInput) => {
 export const getCouponById = async (id: string) => {
   const coupon = await prisma.coupon.findUnique({
     where: { id },
+    include: {
+      assignments: {
+        select: {
+          userId: true,
+        },
+      },
+    },
   });
   if (!coupon) {
     return null;
   }
-  return withComputedStatus(coupon);
+  const couponWithStatus = withComputedStatus(coupon);
+  // Add assignedUserIds to the response
+  const assignedUserIds = coupon.assignments.map((a) => a.userId);
+  return {
+    ...couponWithStatus,
+    assignedUserIds,
+  };
 };
 
 // Get coupon by code
@@ -291,9 +375,6 @@ const validateSingleCouponForUse = async (
     throw new Error("Voucher này chỉ dành cho người dùng được chỉ định");
   }
 
-  if (coupon.mode !== "PUBLIC" && !userId) {
-    throw new Error("Cần đăng nhập để sử dụng voucher này");
-  }
 
   if (userId) {
     const assignment = await getVoucherAssignment(coupon.id, userId, tx);
