@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from "express";
-import { requireAdmin } from "../../../../shared/middleware/admin-auth.middleware";
+import { requireAdmin, checkPermission } from "../../../../shared/middleware/admin-auth.middleware";
 import {
   createCoupon,
   updateCoupon,
@@ -12,7 +12,7 @@ import type { CreateCouponInput, UpdateCouponInput } from "../../coupon.service"
 const router = Router();
 
 // Create coupon
-router.post("/", requireAdmin, async (req: Request, res: Response) => {
+router.post("/", requireAdmin, checkPermission("coupons", "create"), async (req: Request, res: Response) => {
   try {
     const input: CreateCouponInput = {
       code: req.body.code,
@@ -39,7 +39,7 @@ router.post("/", requireAdmin, async (req: Request, res: Response) => {
 });
 
 // List coupons
-router.get("/", async (req: Request, res: Response) => {
+router.get("/", requireAdmin, checkPermission("coupons", "read"), async (req: Request, res: Response) => {
   try {
     const result = await listCoupons({
       page: req.query.page ? parseInt(req.query.page as string) : 1,
@@ -61,7 +61,7 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 // Get coupon by ID
-router.get("/:id", async (req: Request, res: Response) => {
+router.get("/:id", requireAdmin, checkPermission("coupons", "read"), async (req: Request, res: Response) => {
   try {
     const coupon = await getCouponById(req.params.id);
     if (!coupon) {
@@ -74,7 +74,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 });
 
 // Update coupon
-router.put("/:id", requireAdmin, async (req: Request, res: Response) => {
+router.put("/:id", requireAdmin, checkPermission("coupons", "update"), async (req: Request, res: Response) => {
   try {
     const input: UpdateCouponInput = {
       id: req.params.id,
@@ -102,7 +102,7 @@ router.put("/:id", requireAdmin, async (req: Request, res: Response) => {
 });
 
 // Delete coupon
-router.delete("/:id", requireAdmin, async (req: Request, res: Response) => {
+router.delete("/:id", requireAdmin, checkPermission("coupons", "delete"), async (req: Request, res: Response) => {
   try {
     await deleteCoupon(req.params.id);
     res.status(204).send();

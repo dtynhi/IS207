@@ -100,6 +100,8 @@ const defaultPermissions = {
   roles: ["read", "create", "update"],
   accounts: ["read", "create", "update"],
   settings: ["read", "update"],
+  orders: ["read", "update"],
+  coupons: ["read", "create", "update", "delete"],
 };
 
 const seedRolesAndAccounts = async () => {
@@ -132,6 +134,8 @@ const seedRolesAndAccounts = async () => {
         products: ["read", "create", "update"],
         categories: ["read", "create", "update"],
         accounts: ["read"],
+        orders: ["read", "update"],
+        coupons: ["read"],
       } as Prisma.InputJsonValue,
       status: "active",
       deleted: false,
@@ -145,6 +149,8 @@ const seedRolesAndAccounts = async () => {
         products: ["read", "create", "update"],
         categories: ["read", "create", "update"],
         accounts: ["read"],
+        orders: ["read", "update"],
+        coupons: ["read"],
       } as Prisma.InputJsonValue,
       status: "active",
       deleted: false,

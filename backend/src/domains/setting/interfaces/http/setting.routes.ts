@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { z } from "zod";
 import { sendSuccess } from "../../../../shared/response/response";
+import { requireAdmin, checkPermission } from "../../../../shared/middleware/admin-auth.middleware";
 import { getGeneralSetting, upsertGeneralSetting } from "../../setting.service";
 
 const router = Router();
 
-router.get("/admin/settings/general", async (_req, res, next) => {
+router.get("/admin/settings/general", requireAdmin, checkPermission("settings", "read"), async (_req, res, next) => {
   try {
     const setting = await getGeneralSetting();
     return sendSuccess(res, setting);
@@ -14,7 +15,7 @@ router.get("/admin/settings/general", async (_req, res, next) => {
   }
 });
 
-router.patch("/admin/settings/general", async (req, res, next) => {
+router.patch("/admin/settings/general", requireAdmin, checkPermission("settings", "update"), async (req, res, next) => {
   try {
     const payload = z
       .object({

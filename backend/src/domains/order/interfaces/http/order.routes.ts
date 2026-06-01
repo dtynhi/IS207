@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { Router } from "express";
 import { z } from "zod";
 import { sendError, sendSuccess } from "../../../../shared/response/response";
-import { AdminRequest, requireAdmin } from "../../../../shared/middleware/admin-auth.middleware";
+import { AdminRequest, requireAdmin, checkPermission } from "../../../../shared/middleware/admin-auth.middleware";
 import { getUserByToken } from "../../../auth/auth.service";
 import {
   cancelOrderByCustomer,
@@ -223,7 +223,7 @@ router.post("/orders/:id/return-request", async (req, res, next) => {
 
 // ─── Admin endpoints ──────────────────────────────────────────────────────────
 
-router.get("/admin/orders", requireAdmin, async (req, res, next) => {
+router.get("/admin/orders", requireAdmin, checkPermission("orders", "read"), async (req, res, next) => {
   try {
     const params = orderQuerySchema.parse(req.query);
     const result = await listAdminOrders(params);
@@ -233,7 +233,7 @@ router.get("/admin/orders", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.get("/admin/orders/:id", requireAdmin, async (req, res, next) => {
+router.get("/admin/orders/:id", requireAdmin, checkPermission("orders", "read"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const order = await getAdminOrderDetail(id);
@@ -244,7 +244,7 @@ router.get("/admin/orders/:id", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.post("/admin/orders/:id/claim", requireAdmin, async (req, res, next) => {
+router.post("/admin/orders/:id/claim", requireAdmin, checkPermission("orders", "update"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const adminId = (req as AdminRequest).adminId;
@@ -260,7 +260,7 @@ router.post("/admin/orders/:id/claim", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.post("/admin/orders/:id/release", requireAdmin, async (req, res, next) => {
+router.post("/admin/orders/:id/release", requireAdmin, checkPermission("orders", "update"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const adminId = (req as AdminRequest).adminId;
@@ -276,7 +276,7 @@ router.post("/admin/orders/:id/release", requireAdmin, async (req, res, next) =>
   }
 });
 
-router.patch("/admin/orders/:id/status", requireAdmin, async (req, res, next) => {
+router.patch("/admin/orders/:id/status", requireAdmin, checkPermission("orders", "update"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const adminId = (req as AdminRequest).adminId;
@@ -325,7 +325,7 @@ router.patch("/admin/orders/:id/status", requireAdmin, async (req, res, next) =>
   }
 });
 
-router.patch("/admin/orders/:id/payment", requireAdmin, async (req, res, next) => {
+router.patch("/admin/orders/:id/payment", requireAdmin, checkPermission("orders", "update"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const adminId = (req as AdminRequest).adminId;
@@ -347,7 +347,7 @@ router.patch("/admin/orders/:id/payment", requireAdmin, async (req, res, next) =
 
 // ─── Return request review endpoints ───────────────────────────────────────────
 
-router.get("/admin/return-requests", requireAdmin, async (req, res, next) => {
+router.get("/admin/return-requests", requireAdmin, checkPermission("orders", "read"), async (req, res, next) => {
   try {
     const params = z
       .object({
@@ -363,7 +363,7 @@ router.get("/admin/return-requests", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.patch("/admin/return-requests/:id/review", requireAdmin, async (req, res, next) => {
+router.patch("/admin/return-requests/:id/review", requireAdmin, checkPermission("orders", "update"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const adminId = (req as AdminRequest).adminId;
@@ -407,7 +407,7 @@ router.patch("/admin/return-requests/:id/review", requireAdmin, async (req, res,
 
 // ─── Return processing endpoints ──────────────────────────────────────────────
 
-router.get("/admin/returns", requireAdmin, async (req, res, next) => {
+router.get("/admin/returns", requireAdmin, checkPermission("orders", "read"), async (req, res, next) => {
   try {
     const params = z
       .object({
@@ -423,7 +423,7 @@ router.get("/admin/returns", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.get("/admin/returns/:id", requireAdmin, async (req, res, next) => {
+router.get("/admin/returns/:id", requireAdmin, checkPermission("orders", "read"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const order = await getReturnDetail(id);
@@ -434,7 +434,7 @@ router.get("/admin/returns/:id", requireAdmin, async (req, res, next) => {
   }
 });
 
-router.patch("/admin/orders/:id/return", requireAdmin, async (req, res, next) => {
+router.patch("/admin/orders/:id/return", requireAdmin, checkPermission("orders", "update"), async (req, res, next) => {
   try {
     const id = z.string().parse(req.params.id);
     const adminId = (req as AdminRequest).adminId;

@@ -13,6 +13,7 @@ import {
 } from "antd";
 import { useMemo, useState } from "react";
 import { useAdminAccounts } from "../hooks/use-admin-accounts";
+import { useAdminMyAccount } from "../hooks/use-admin-my-account";
 import type {
   AdminAccountFormValues,
   AdminAccountRow,
@@ -27,6 +28,16 @@ export const AdminAccountsPage = () => {
 
   const [editForm] = Form.useForm<AdminAccountFormValues>();
   const [editingAccount, setEditingAccount] = useState<AdminAccountRow | null>(null);
+
+  // Check user permissions
+  const { query: myAccountQuery } = useAdminMyAccount();
+  const myData = myAccountQuery.data as any;
+  const isSuperAdmin = myData?.role?.title === "Quản trị hệ thống";
+  const myPermissions = myData?.role?.permissions || {};
+
+  const canCreate = isSuperAdmin || (Array.isArray(myPermissions.accounts) && myPermissions.accounts.includes("create"));
+  const canUpdate = isSuperAdmin || (Array.isArray(myPermissions.accounts) && myPermissions.accounts.includes("update"));
+  const canDelete = isSuperAdmin || (Array.isArray(myPermissions.accounts) && myPermissions.accounts.includes("delete"));
 
   const roleOptions = useMemo(
     () => (rolesQuery.data || []).map((role) => ({ value: role.id, label: role.title })),
@@ -54,17 +65,20 @@ export const AdminAccountsPage = () => {
     <Card>
       {contextHolder}
       <Title level={3}>Accounts Management</Title>
-      <Form
-        layout="inline"
-        className="mb-4"
-        onFinish={(values: AdminCreateAccountFormValues) => createMutation.mutate(values)}
-      >
-        <Form.Item name="fullName" rules={[{ required: true }]}><Input placeholder="Full name" /></Form.Item>
-        <Form.Item name="email" rules={[{ required: true, type: "email" }]}><Input placeholder="Email" /></Form.Item>
-        <Form.Item name="password" rules={[{ required: true, min: 6 }]}><Input.Password placeholder="Password" /></Form.Item>
-        <Form.Item name="roleId"><Select className="w-[200px]" allowClear placeholder="Role" options={roleOptions} /></Form.Item>
-        <Button type="primary" htmlType="submit" loading={createMutation.isPending}>Create</Button>
-      </Form>
+      
+      {canCreate && (
+        <Form
+          layout="inline"
+          className="mb-4"
+          onFinish={(values: AdminCreateAccountFormValues) => createMutation.mutate(values)}
+        >
+          <Form.Item name="fullName" rules={[{ required: true }]}><Input placeholder="Full name" /></Form.Item>
+          <Form.Item name="email" rules={[{ required: true, type: "email" }]}><Input placeholder="Email" /></Form.Item>
+          <Form.Item name="password" rules={[{ required: true, min: 6 }]}><Input.Password placeholder="Password" /></Form.Item>
+          <Form.Item name="roleId"><Select className="w-[200px]" allowClear placeholder="Role" options={roleOptions} /></Form.Item>
+          <Button type="primary" htmlType="submit" loading={createMutation.isPending}>Create</Button>
+        </Form>
+      )}
 
       <Table<AdminAccountRow>
         loading={query.isPending}
@@ -79,6 +93,7 @@ export const AdminAccountsPage = () => {
             render: (_, record) => (
               <Switch
                 checked={record.status === "active"}
+                disabled={!canUpdate}
                 loading={statusMutation.isPending}
                 onChange={(checked) =>
                   statusMutation.mutate({ id: record.id, status: checked ? "active" : "inactive" })
@@ -88,14 +103,21 @@ export const AdminAccountsPage = () => {
           },
           {
             title: "Actions",
-            render: (_, record) => (
-              <Space>
-                <Button onClick={() => openEditModal(record)}>Edit</Button>
-                <Popconfirm title="Delete account?" onConfirm={() => deleteMutation.mutate(record.id)}>
-                  <Button danger loading={deleteMutation.isPending}>Delete</Button>
-                </Popconfirm>
-              </Space>
-            ),
+            render: (_, record) => {
+              const hasActions = canUpdate || canDelete;
+              if (!hasActions) return <span>No actions permitted</span>;
+
+              return (
+                <Space>
+                  {canUpdate && <Button onClick={() => openEditModal(record)}>Edit</Button>}
+                  {canDelete && (
+                    <Popconfirm title="Delete account?" onConfirm={() => deleteMutation.mutate(record.id)}>
+                      <Button danger loading={deleteMutation.isPending}>Delete</Button>
+                    </Popconfirm>
+                  )}
+                </Space>
+              );
+            },
           },
         ]}
       />

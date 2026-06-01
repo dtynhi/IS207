@@ -11,6 +11,7 @@ import {
 } from "antd";
 import { useState } from "react";
 import { useAdminRoles } from "../hooks/use-admin-roles";
+import { useAdminMyAccount } from "../hooks/use-admin-my-account";
 import type { AdminPermissionFormValues, AdminRoleFormValues, AdminRoleRow } from "../types/admin.types";
 
 const { Title, Paragraph } = Typography;
@@ -21,6 +22,16 @@ export const AdminRolesPage = () => {
   const [permissionForm] = Form.useForm<AdminPermissionFormValues>();
   const [editingRole, setEditingRole] = useState<AdminRoleRow | null>(null);
   const [permissionsRole, setPermissionsRole] = useState<AdminRoleRow | null>(null);
+
+  // Check user permissions
+  const { query: myAccountQuery } = useAdminMyAccount();
+  const myData = myAccountQuery.data as any;
+  const isSuperAdmin = myData?.role?.title === "Quản trị hệ thống";
+  const myPermissions = myData?.role?.permissions || {};
+
+  const canCreate = isSuperAdmin || (Array.isArray(myPermissions.roles) && myPermissions.roles.includes("create"));
+  const canUpdate = isSuperAdmin || (Array.isArray(myPermissions.roles) && myPermissions.roles.includes("update"));
+  const canDelete = isSuperAdmin || (Array.isArray(myPermissions.roles) && myPermissions.roles.includes("delete"));
 
   const rows = (query.data?.items || []) as AdminRoleRow[];
 
@@ -60,15 +71,17 @@ export const AdminRolesPage = () => {
       <Title level={3}>Roles Management</Title>
       <Paragraph type="secondary">Manage role info and permissions with modal forms.</Paragraph>
 
-      <Form
-        layout="inline"
-        className="mb-4"
-        onFinish={(values: AdminRoleFormValues) => createMutation.mutate(values)}
-      >
-        <Form.Item name="title" rules={[{ required: true }]}><Input placeholder="Role title" /></Form.Item>
-        <Form.Item name="description"><Input placeholder="Description" /></Form.Item>
-        <Button type="primary" htmlType="submit" loading={createMutation.isPending}>Create</Button>
-      </Form>
+      {canCreate && (
+        <Form
+          layout="inline"
+          className="mb-4"
+          onFinish={(values: AdminRoleFormValues) => createMutation.mutate(values)}
+        >
+          <Form.Item name="title" rules={[{ required: true }]}><Input placeholder="Role title" /></Form.Item>
+          <Form.Item name="description"><Input placeholder="Description" /></Form.Item>
+          <Button type="primary" htmlType="submit" loading={createMutation.isPending}>Create</Button>
+        </Form>
+      )}
 
       <Table<AdminRoleRow>
         loading={query.isPending}
@@ -80,15 +93,22 @@ export const AdminRolesPage = () => {
           { title: "Permissions", render: (_, record) => <span>{JSON.stringify(record.permissions || [])}</span> },
           {
             title: "Actions",
-            render: (_, record) => (
-              <Space>
-                <Button onClick={() => openEditModal(record)}>Edit</Button>
-                <Button onClick={() => openPermissionsModal(record)}>Permissions</Button>
-                <Popconfirm title="Delete role?" onConfirm={() => deleteMutation.mutate(record.id)}>
-                  <Button danger loading={deleteMutation.isPending}>Delete</Button>
-                </Popconfirm>
-              </Space>
-            ),
+            render: (_, record) => {
+              const hasActions = canUpdate || canDelete;
+              if (!hasActions) return <span>No actions permitted</span>;
+
+              return (
+                <Space>
+                  {canUpdate && <Button onClick={() => openEditModal(record)}>Edit</Button>}
+                  {canUpdate && <Button onClick={() => openPermissionsModal(record)}>Permissions</Button>}
+                  {canDelete && (
+                    <Popconfirm title="Delete role?" onConfirm={() => deleteMutation.mutate(record.id)}>
+                      <Button danger loading={deleteMutation.isPending}>Delete</Button>
+                    </Popconfirm>
+                  )}
+                </Space>
+              );
+            },
           },
         ]}
       />
