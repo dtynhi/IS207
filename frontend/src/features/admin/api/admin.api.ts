@@ -3,10 +3,9 @@ import type { ApiSuccessResponse } from "../../../shared/api/types";
 import type { AdminListMeta } from "../types/admin.types";
 
 const toList = <T>(payload: ApiSuccessResponse<T[]>) => ({ items: payload.data, meta: payload.meta as AdminListMeta });
-export const getRevenueStatsApi = async () => {
-  // Gọi xuống cái API route mà bạn đã tạo ở Backend lúc nãy
-  const response = await apiClient.get("/statistics/revenue"); 
-  return response.data;
+export const getRevenueStatsApi = async (params?: { startDate?: string; endDate?: string }) => {
+  const response = await apiClient.get("/statistics/revenue", { params }); 
+  return response.data; // Lúc này response.data sẽ chứa { overview, chartData, topProducts, ... }
 };
 
 export const getDashboardApi = async () => {
