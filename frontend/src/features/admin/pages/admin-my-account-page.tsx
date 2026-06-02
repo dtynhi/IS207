@@ -11,8 +11,8 @@ export const AdminMyAccountPage = () => {
   return (
     <Card>
       {contextHolder}
-      <Title level={3}>My Account</Title>
-      {!adminId ? <Alert type="warning" message="Login first" showIcon className="mb-4" /> : null}
+      <Title level={3}>Tài khoản của tôi</Title>
+      {!adminId ? <Alert type="warning" message="Vui lòng đăng nhập trước" showIcon className="mb-4" /> : null}
 
       <Form
         layout="vertical"
@@ -26,12 +26,12 @@ export const AdminMyAccountPage = () => {
         key={String(data.id || "my-account-form")}
         onFinish={(values: AdminMyAccountFormValues) => mutation.mutate(values)}
       >
-        <Form.Item name="fullName" label="Full name" rules={[{ required: true }]}><Input /></Form.Item>
-        <Form.Item name="email" label="Email" rules={[{ required: true, type: "email" }]}><Input /></Form.Item>
-        <Form.Item name="phone" label="Phone"><Input /></Form.Item>
-        <Form.Item name="avatar" label="Avatar URL"><Input /></Form.Item>
-        <Form.Item name="password" label="New password (optional)"><Input.Password /></Form.Item>
-        <Button type="primary" htmlType="submit" loading={mutation.isPending}>Save</Button>
+        <Form.Item name="fullName" label="Họ và tên" rules={[{ required: true, message: "Vui lòng nhập họ và tên!" }]}><Input /></Form.Item>
+        <Form.Item name="email" label="Email" rules={[{ required: true, message: "Vui lòng nhập email!" }, { type: "email", message: "Email không hợp lệ!" }]}><Input /></Form.Item>
+        <Form.Item name="phone" label="Số điện thoại"><Input /></Form.Item>
+        <Form.Item name="avatar" label="Đường dẫn ảnh đại diện (Avatar URL)"><Input /></Form.Item>
+        <Form.Item name="password" label="Mật khẩu mới (tùy chọn)"><Input.Password /></Form.Item>
+        <Button type="primary" htmlType="submit" loading={mutation.isPending}>Lưu</Button>
       </Form>
     </Card>
   );

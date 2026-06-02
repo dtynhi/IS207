@@ -414,7 +414,7 @@ export const AdminFlashSalePage = () => {
               },
               {
                 key: "random",
-                label: "Chọn Random",
+                label: "Chọn ngẫu nhiên",
                 children: (
                   <div className="p-4 border border-gray-200 rounded-b-lg border-t-0 bg-gray-50/50">
                     <Text className="block mb-2">Hệ thống sẽ bốc ngẫu nhiên số lượng sản phẩm bạn nhập bên dưới:</Text>

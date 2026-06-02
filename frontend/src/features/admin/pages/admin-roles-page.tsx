@@ -68,8 +68,8 @@ export const AdminRolesPage = () => {
   return (
     <Card>
       {contextHolder}
-      <Title level={3}>Roles Management</Title>
-      <Paragraph type="secondary">Manage role info and permissions with modal forms.</Paragraph>
+      <Title level={3}>Quản lý vai trò</Title>
+      <Paragraph type="secondary">Quản lý thông tin vai trò và phân quyền.</Paragraph>
 
       {canCreate && (
         <Form
@@ -77,9 +77,9 @@ export const AdminRolesPage = () => {
           className="mb-4"
           onFinish={(values: AdminRoleFormValues) => createMutation.mutate(values)}
         >
-          <Form.Item name="title" rules={[{ required: true }]}><Input placeholder="Role title" /></Form.Item>
-          <Form.Item name="description"><Input placeholder="Description" /></Form.Item>
-          <Button type="primary" htmlType="submit" loading={createMutation.isPending}>Create</Button>
+          <Form.Item name="title" rules={[{ required: true, message: "Vui lòng nhập tên vai trò!" }]}><Input placeholder="Tên vai trò" /></Form.Item>
+          <Form.Item name="description"><Input placeholder="Mô tả" /></Form.Item>
+          <Button type="primary" htmlType="submit" loading={createMutation.isPending}>Tạo</Button>
         </Form>
       )}
 
@@ -88,22 +88,27 @@ export const AdminRolesPage = () => {
         rowKey="id"
         dataSource={rows}
         columns={[
-          { title: "Title", dataIndex: "title" },
-          { title: "Description", dataIndex: "description" },
-          { title: "Permissions", render: (_, record) => <span>{JSON.stringify(record.permissions || [])}</span> },
+          { title: "Tên vai trò", dataIndex: "title" },
+          { title: "Mô tả", dataIndex: "description" },
+          { title: "Quyền hạn", render: (_, record) => <span>{JSON.stringify(record.permissions || [])}</span> },
           {
-            title: "Actions",
+            title: "Thao tác",
             render: (_, record) => {
               const hasActions = canUpdate || canDelete;
-              if (!hasActions) return <span>No actions permitted</span>;
+              if (!hasActions) return <span>Không có quyền thao tác</span>;
 
               return (
                 <Space>
-                  {canUpdate && <Button onClick={() => openEditModal(record)}>Edit</Button>}
-                  {canUpdate && <Button onClick={() => openPermissionsModal(record)}>Permissions</Button>}
+                  {canUpdate && <Button onClick={() => openEditModal(record)}>Sửa</Button>}
+                  {canUpdate && <Button onClick={() => openPermissionsModal(record)}>Phân quyền</Button>}
                   {canDelete && (
-                    <Popconfirm title="Delete role?" onConfirm={() => deleteMutation.mutate(record.id)}>
-                      <Button danger loading={deleteMutation.isPending}>Delete</Button>
+                    <Popconfirm
+                      title="Xóa vai trò này?"
+                      okText="Xóa"
+                      cancelText="Hủy"
+                      onConfirm={() => deleteMutation.mutate(record.id)}
+                    >
+                      <Button danger loading={deleteMutation.isPending}>Xóa</Button>
                     </Popconfirm>
                   )}
                 </Space>
@@ -113,16 +118,32 @@ export const AdminRolesPage = () => {
         ]}
       />
 
-      <Modal title="Edit Role" open={Boolean(editingRole)} onCancel={() => setEditingRole(null)} onOk={submitEdit} okText="Save" confirmLoading={updateMutation.isPending}>
+      <Modal
+        title="Chỉnh sửa vai trò"
+        open={Boolean(editingRole)}
+        onCancel={() => setEditingRole(null)}
+        onOk={submitEdit}
+        okText="Lưu"
+        cancelText="Hủy"
+        confirmLoading={updateMutation.isPending}
+      >
         <Form form={editForm} layout="vertical">
-          <Form.Item name="title" label="Role title" rules={[{ required: true }]}><Input /></Form.Item>
-          <Form.Item name="description" label="Description"><Input /></Form.Item>
+          <Form.Item name="title" label="Tên vai trò" rules={[{ required: true, message: "Vui lòng nhập tên vai trò!" }]}><Input /></Form.Item>
+          <Form.Item name="description" label="Mô tả"><Input /></Form.Item>
         </Form>
       </Modal>
 
-      <Modal title="Update Permissions" open={Boolean(permissionsRole)} onCancel={() => setPermissionsRole(null)} onOk={submitPermissions} okText="Save" confirmLoading={permissionMutation.isPending}>
+      <Modal
+        title="Cập nhật quyền hạn"
+        open={Boolean(permissionsRole)}
+        onCancel={() => setPermissionsRole(null)}
+        onOk={submitPermissions}
+        okText="Lưu"
+        cancelText="Hủy"
+        confirmLoading={permissionMutation.isPending}
+      >
         <Form form={permissionForm} layout="vertical">
-          <Form.Item name="permissionsJson" label="Permissions JSON" rules={[{ required: true, message: "Permissions JSON is required" }]}>
+          <Form.Item name="permissionsJson" label="Quyền hạn dạng JSON" rules={[{ required: true, message: "Vui lòng nhập quyền hạn dạng JSON!" }]}>
             <Input.TextArea rows={8} />
           </Form.Item>
         </Form>

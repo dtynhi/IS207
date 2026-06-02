@@ -15,15 +15,15 @@ export const AdminLoginPage = () => {
       <div className="um-auth-card w-full max-w-[400px]">
         <div className="mb-7 text-center">
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--primary)] text-[28px] text-white"><ShopOutlined /></div>
-          <Title level={2} className="!m-0">Admin Panel</Title>
+          <Title level={2} className="!m-0">Trang quản trị</Title>
           <Paragraph className="um-auth-subtitle !mb-0">Đăng nhập trang quản trị</Paragraph>
         </div>
 
         <Form layout="vertical" onFinish={(values: AdminLoginFormValues) => mutation.mutate(values)} size="large">
-          <Form.Item name="email" rules={[{ required: true }, { type: "email" }]}>
+          <Form.Item name="email" rules={[{ required: true, message: "Vui lòng nhập email!" }, { type: "email", message: "Email không hợp lệ!" }]}>
             <Input placeholder="Email" />
           </Form.Item>
-          <Form.Item name="password" rules={[{ required: true }]}>
+          <Form.Item name="password" rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}>
             <Input.Password placeholder="Mật khẩu" />
           </Form.Item>
           <Button htmlType="submit" type="primary" loading={mutation.isPending} block className="h-[46px] rounded-[10px] font-semibold">

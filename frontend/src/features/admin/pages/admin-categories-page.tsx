@@ -53,7 +53,7 @@ export const AdminCategoriesPage = () => {
   return (
     <Card>
       {contextHolder}
-      <Title level={3}>Categories Management</Title>
+      <Title level={3}>Quản lý danh mục</Title>
       <Form
         form={createForm}
         layout="inline"
@@ -64,18 +64,18 @@ export const AdminCategoriesPage = () => {
       >
         <Form.Item
           name="title"
-          rules={[{ required: true }]}
+          rules={[{ required: true, message: "Vui lòng nhập tên danh mục!" }]}
         >
           <Input
-            placeholder="Title"
+            placeholder="Tên danh mục"
             onChange={(event) => {
               const title = event.target.value || "";
               createForm.setFieldValue("slug", toSlug(title));
             }}
           />
         </Form.Item>
-        <Form.Item name="slug" rules={[{ required: true }]}><Input placeholder="Slug" /></Form.Item>
-        <Button type="primary" htmlType="submit" loading={createMutation.isPending}>Create</Button>
+        <Form.Item name="slug" rules={[{ required: true, message: "Vui lòng nhập đường dẫn!" }]}><Input placeholder="Đường dẫn (Slug)" /></Form.Item>
+        <Button type="primary" htmlType="submit" loading={createMutation.isPending}>Tạo</Button>
       </Form>
 
       <Table<AdminCategoryRow>
@@ -83,11 +83,11 @@ export const AdminCategoriesPage = () => {
         rowKey="id"
         dataSource={(query.data?.items || []) as AdminCategoryRow[]}
         columns={[
-          { title: "Title", dataIndex: "title" },
-          { title: "Slug", dataIndex: "slug" },
-          { title: "Position", dataIndex: "position" },
+          { title: "Tên danh mục", dataIndex: "title" },
+          { title: "Đường dẫn (Slug)", dataIndex: "slug" },
+          { title: "Vị trí", dataIndex: "position" },
           {
-            title: "Status",
+            title: "Trạng thái",
             render: (_, record) => (
               <Switch
                 checked={record.status === "active"}
@@ -97,12 +97,17 @@ export const AdminCategoriesPage = () => {
             ),
           },
           {
-            title: "Actions",
+            title: "Thao tác",
             render: (_, record) => (
               <Space>
-                <Button onClick={() => openEditModal(record)}>Edit</Button>
-                <Popconfirm title="Delete category?" onConfirm={() => deleteMutation.mutate(record.id)}>
-                  <Button danger loading={deleteMutation.isPending}>Delete</Button>
+                <Button onClick={() => openEditModal(record)}>Sửa</Button>
+                <Popconfirm
+                  title="Xóa danh mục này?"
+                  okText="Xóa"
+                  cancelText="Hủy"
+                  onConfirm={() => deleteMutation.mutate(record.id)}
+                >
+                  <Button danger loading={deleteMutation.isPending}>Xóa</Button>
                 </Popconfirm>
               </Space>
             ),
@@ -111,17 +116,18 @@ export const AdminCategoriesPage = () => {
       />
 
       <Modal
-        title="Edit Category"
+        title="Chỉnh sửa danh mục"
         open={Boolean(editingCategory)}
         onCancel={() => setEditingCategory(null)}
         onOk={submitEdit}
-        okText="Save"
+        okText="Lưu"
+        cancelText="Hủy"
         confirmLoading={updateMutation.isPending}
       >
         <Form form={editForm} layout="vertical">
-          <Form.Item name="title" label="Title" rules={[{ required: true }]}><Input /></Form.Item>
-          <Form.Item name="slug" label="Slug" rules={[{ required: true }]}><Input /></Form.Item>
-          <Form.Item name="position" label="Position" rules={[{ required: true }]}><InputNumber className="w-full" /></Form.Item>
+          <Form.Item name="title" label="Tên danh mục" rules={[{ required: true, message: "Vui lòng nhập tên danh mục!" }]}><Input /></Form.Item>
+          <Form.Item name="slug" label="Đường dẫn (Slug)" rules={[{ required: true, message: "Vui lòng nhập đường dẫn!" }]}><Input /></Form.Item>
+          <Form.Item name="position" label="Vị trí" rules={[{ required: true, message: "Vui lòng nhập vị trí!" }]}><InputNumber className="w-full" /></Form.Item>
         </Form>
       </Modal>
     </Card>

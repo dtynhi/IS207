@@ -63,17 +63,17 @@ export const AdminLayout = () => {
   }, [adminId, nav]);
 
   const menuItems = [
-    { key: "/admin/dashboard", label: <Link to="/admin/dashboard">Dashboard</Link>, icon: <DashboardOutlined /> },
+    { key: "/admin/dashboard", label: <Link to="/admin/dashboard">Tổng quan</Link>, icon: <DashboardOutlined /> },
     { key: "/admin/revenue", label: <Link to="/admin/revenue">Doanh thu</Link>, icon: <DollarOutlined /> },
     { key: "/admin/products", label: <Link to="/admin/products">Sản phẩm</Link>, icon: <ShopOutlined /> },
     { key: "/admin/categories", label: <Link to="/admin/categories">Danh mục</Link>, icon: <FolderOpenOutlined /> },
     { key: "/admin/orders", label: <Link to="/admin/orders">Đơn hàng</Link>, icon: <ShoppingCartOutlined /> },
-    { key: "/admin/coupons", label: <Link to="/admin/coupons">Coupon</Link>, icon: <TagsOutlined /> },
+    { key: "/admin/coupons", label: <Link to="/admin/coupons">Mã giảm giá</Link>, icon: <TagsOutlined /> },
     { key: "/admin/flash-sale", label: <Link to="/admin/flash-sale">Flash Sale</Link>, icon: <FireOutlined /> },
     { key: "/admin/campaigns", label: <Link to="/admin/campaigns">Chiến dịch</Link>, icon: <GiftOutlined/> },
     { key: "/admin/roles", label: <Link to="/admin/roles">Vai trò</Link>, icon: <LockOutlined /> },
     { key: "/admin/accounts", label: <Link to="/admin/accounts">Tài khoản</Link>, icon: <TeamOutlined /> },
-    { key: "/admin/my-account", label: <Link to="/admin/my-account">Tài khoản tôi</Link>, icon: <UserOutlined /> },
+    { key: "/admin/my-account", label: <Link to="/admin/my-account">Tài khoản của tôi</Link>, icon: <UserOutlined /> },
     { key: "/admin/settings", label: <Link to="/admin/settings">Cài đặt</Link>, icon: <SettingOutlined /> },
   ];
 
@@ -111,7 +111,7 @@ export const AdminLayout = () => {
         <Link to="/admin/dashboard" className="text-lg font-extrabold text-white">
           <Space>
             <ShopOutlined />
-            5N Store Admin
+            Quản trị 5N Store
           </Space>
         </Link>
         <div className="flex items-center gap-[14px]">
@@ -141,7 +141,7 @@ export const AdminLayout = () => {
                 subTitle="Xin lỗi, bạn không có quyền truy cập trang này."
                 extra={
                   <Button type="primary" onClick={() => nav("/admin/dashboard")}>
-                    Quay lại Dashboard
+                    Quay lại Tổng quan
                   </Button>
                 }
               />
