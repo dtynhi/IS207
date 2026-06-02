@@ -36,7 +36,11 @@ export const UserPurchaseCard = ({
   const discountValue = order.discountAmount ?? Math.max(originalTotal - finalTotal, 0);
   const canCancel = order.status === "pending_confirm";
   const hasReturnRequest = Boolean(order.returnRequest);
-  const canRequestReturn = order.status === "delivered" && !hasReturnRequest;
+  const RETURN_WINDOW_MS = 20 * 60 * 1000;
+  const isReturnWindowOpen =
+    order.deliveredAt != null &&
+    Date.now() < new Date(order.deliveredAt).getTime() + RETURN_WINDOW_MS;
+  const canRequestReturn = order.status === "delivered" && !hasReturnRequest && isReturnWindowOpen;
 
   const submitReturn = async () => {
     if (!onRequestReturn) return;

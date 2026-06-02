@@ -489,7 +489,7 @@ export const createReturnRequest = async (payload: {
     if (!order.deliveredAt) return { error: "MISSING_DELIVERED_AT" as const };
 
     const cutoff = new Date(order.deliveredAt);
-    cutoff.setDate(cutoff.getDate() + 10);
+    cutoff.setMinutes(cutoff.getMinutes() + 20);
     if (new Date() > cutoff) return { error: "EXPIRED" as const };
 
     const existing = await tx.returnRequest.findUnique({ where: { orderId: payload.orderId } });
@@ -1084,7 +1084,7 @@ export const listReturnRequests = async (params: { page: number; limit: number }
 
 export const autoCompleteDeliveredOrders = async () => {
   const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 10);
+  cutoff.setMinutes(cutoff.getMinutes() - 20);
 
   const candidates = await prisma.order.findMany({
     where: {
@@ -1117,7 +1117,7 @@ export const autoCompleteDeliveredOrders = async () => {
         fromStatus: "delivered",
         toStatus: "completed",
         actorType: "system",
-        reason: "Auto complete after 10 days with no return request",
+        reason: "Auto complete after 20 minutes with no return request",
       });
     });
   }

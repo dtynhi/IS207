@@ -29,6 +29,7 @@ export type UserPurchase = {
   discountAmount?: number;
   finalAmount?: number;
   cancellationReason?: string;
+  deliveredAt?: string | null;
   returnRequest?: { id: string; status: "pending" | "approved" | "rejected" };
   createdAt: string;
   items: Array<{ quantity: number; price: number; discountPercentage: number; product?: { title: string; thumbnail?: string } }>;
