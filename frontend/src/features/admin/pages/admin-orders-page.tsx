@@ -51,6 +51,12 @@ const paymentLabel: Record<AdminOrderRow["paymentStatus"], string> = {
   paid: "Đã thanh toán",
 };
 
+const returnRequestStatusLabel: Record<string, string> = {
+  pending: "Chờ duyệt",
+  approved: "Đã duyệt",
+  rejected: "Bị từ chối",
+};
+
 const getNextStatuses = (status: AdminOrderRow["status"]) => {
   if (status === "pending_confirm") return ["pending_confirm", "ready_to_pick", "cancelled"];
   if (status === "ready_to_pick") return ["ready_to_pick", "ready_to_ship", "cancelled"];
@@ -353,7 +359,7 @@ export const AdminOrdersPage = () => {
               dataSource={detail.items}
               size="small"
               columns={[
-                { title: "Sản phẩm", dataIndex: ["product", "title"], render: (_, record) => record.product?.title || "N/A" },
+                { title: "Sản phẩm", dataIndex: ["product", "title"], render: (_, record) => record.product?.title || "Không có" },
                 { title: "Số lượng", dataIndex: "quantity", width: 100 },
                 { title: "Giá", dataIndex: "price", width: 140 },
                 { title: "Giảm %", dataIndex: "discountPercentage", width: 100 },
@@ -415,7 +421,7 @@ export const AdminOrdersPage = () => {
                   {detail.returnRequest.reviewReason && (
                     <Text><strong>Ghi chú duyệt:</strong> {detail.returnRequest.reviewReason}</Text>
                   )}
-                  <Text><strong>Trạng thái yêu cầu:</strong> {detail.returnRequest.status}</Text>
+                  <Text><strong>Trạng thái yêu cầu:</strong> {returnRequestStatusLabel[detail.returnRequest.status] || detail.returnRequest.status}</Text>
                 </Space>
 
                 {detail.returnRequest.status === "pending" && (

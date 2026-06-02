@@ -28,6 +28,13 @@ const getCardStyle = (key: string) => {
   return { icon: <AppstoreOutlined />, color: "border-emerald-500", iconColor: "text-emerald-500", bg: "bg-emerald-50" };
 };
 
+const statLabelMap: Record<string, string> = {
+  totalProducts: "Tổng số sản phẩm",
+  totalUsers: "Tổng số khách hàng",
+  totalOrders: "Tổng số đơn hàng",
+  totalCategories: "Tổng số danh mục",
+};
+
 export const AdminDashboardPage = () => {
   const { data } = useAdminDashboard();
   const stats = data || {};
@@ -77,8 +84,8 @@ export const AdminDashboardPage = () => {
                 >
                   <Statistic
                     title={
-                      <span className="text-gray-500 font-medium capitalize block mb-1">
-                        {key.replace(/_/g, " ")} {/* Thay dấu gạch dưới thành dấu cách nếu có */}
+                      <span className="text-gray-500 font-medium block mb-1">
+                        {statLabelMap[key] || key.replace(/_/g, " ")}
                       </span>
                     }
                     value={Number(value)}

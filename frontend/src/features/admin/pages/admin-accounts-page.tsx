@@ -64,7 +64,7 @@ export const AdminAccountsPage = () => {
   return (
     <Card>
       {contextHolder}
-      <Title level={3}>Accounts Management</Title>
+      <Title level={3}>Quản lý tài khoản</Title>
       
       {canCreate && (
         <Form
@@ -72,11 +72,11 @@ export const AdminAccountsPage = () => {
           className="mb-4"
           onFinish={(values: AdminCreateAccountFormValues) => createMutation.mutate(values)}
         >
-          <Form.Item name="fullName" rules={[{ required: true }]}><Input placeholder="Full name" /></Form.Item>
-          <Form.Item name="email" rules={[{ required: true, type: "email" }]}><Input placeholder="Email" /></Form.Item>
-          <Form.Item name="password" rules={[{ required: true, min: 6 }]}><Input.Password placeholder="Password" /></Form.Item>
-          <Form.Item name="roleId"><Select className="w-[200px]" allowClear placeholder="Role" options={roleOptions} /></Form.Item>
-          <Button type="primary" htmlType="submit" loading={createMutation.isPending}>Create</Button>
+          <Form.Item name="fullName" rules={[{ required: true, message: "Vui lòng nhập họ và tên!" }]}><Input placeholder="Họ và tên" /></Form.Item>
+          <Form.Item name="email" rules={[{ required: true, message: "Vui lòng nhập email!" }, { type: "email", message: "Email không hợp lệ!" }]}><Input placeholder="Email" /></Form.Item>
+          <Form.Item name="password" rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }, { min: 6, message: "Mật khẩu tối thiểu 6 ký tự!" }]}><Input.Password placeholder="Mật khẩu" /></Form.Item>
+          <Form.Item name="roleId"><Select className="w-[200px]" allowClear placeholder="Vai trò" options={roleOptions} /></Form.Item>
+          <Button type="primary" htmlType="submit" loading={createMutation.isPending}>Tạo</Button>
         </Form>
       )}
 
@@ -85,11 +85,11 @@ export const AdminAccountsPage = () => {
         rowKey="id"
         dataSource={(query.data?.items || []) as AdminAccountRow[]}
         columns={[
-          { title: "Name", dataIndex: "fullName" },
+          { title: "Họ và tên", dataIndex: "fullName" },
           { title: "Email", dataIndex: "email" },
-          { title: "Role", render: (_, record) => record.role?.title || "-" },
+          { title: "Vai trò", render: (_, record) => record.role?.title || "-" },
           {
-            title: "Status",
+            title: "Trạng thái",
             render: (_, record) => (
               <Switch
                 checked={record.status === "active"}
@@ -102,17 +102,22 @@ export const AdminAccountsPage = () => {
             ),
           },
           {
-            title: "Actions",
+            title: "Thao tác",
             render: (_, record) => {
               const hasActions = canUpdate || canDelete;
-              if (!hasActions) return <span>No actions permitted</span>;
+              if (!hasActions) return <span>Không có quyền thao tác</span>;
 
               return (
                 <Space>
-                  {canUpdate && <Button onClick={() => openEditModal(record)}>Edit</Button>}
+                  {canUpdate && <Button onClick={() => openEditModal(record)}>Sửa</Button>}
                   {canDelete && (
-                    <Popconfirm title="Delete account?" onConfirm={() => deleteMutation.mutate(record.id)}>
-                      <Button danger loading={deleteMutation.isPending}>Delete</Button>
+                    <Popconfirm
+                      title="Xóa tài khoản này?"
+                      okText="Xóa"
+                      cancelText="Hủy"
+                      onConfirm={() => deleteMutation.mutate(record.id)}
+                    >
+                      <Button danger loading={deleteMutation.isPending}>Xóa</Button>
                     </Popconfirm>
                   )}
                 </Space>
@@ -122,12 +127,20 @@ export const AdminAccountsPage = () => {
         ]}
       />
 
-      <Modal title="Edit Account" open={Boolean(editingAccount)} onCancel={() => setEditingAccount(null)} onOk={submitEdit} okText="Save" confirmLoading={updateMutation.isPending}>
+      <Modal
+        title="Chỉnh sửa tài khoản"
+        open={Boolean(editingAccount)}
+        onCancel={() => setEditingAccount(null)}
+        onOk={submitEdit}
+        okText="Lưu"
+        cancelText="Hủy"
+        confirmLoading={updateMutation.isPending}
+      >
         <Form form={editForm} layout="vertical">
-          <Form.Item name="fullName" label="Full name" rules={[{ required: true }]}><Input /></Form.Item>
-          <Form.Item name="email" label="Email" rules={[{ required: true, type: "email" }]}><Input /></Form.Item>
-          <Form.Item name="phone" label="Phone"><Input /></Form.Item>
-          <Form.Item name="roleId" label="Role"><Select allowClear options={roleOptions} /></Form.Item>
+          <Form.Item name="fullName" label="Họ và tên" rules={[{ required: true, message: "Vui lòng nhập họ và tên!" }]}><Input /></Form.Item>
+          <Form.Item name="email" label="Email" rules={[{ required: true, message: "Vui lòng nhập email!" }, { type: "email", message: "Email không hợp lệ!" }]}><Input /></Form.Item>
+          <Form.Item name="phone" label="Số điện thoại"><Input /></Form.Item>
+          <Form.Item name="roleId" label="Vai trò"><Select allowClear options={roleOptions} placeholder="Chọn vai trò" /></Form.Item>
         </Form>
       </Modal>
     </Card>
