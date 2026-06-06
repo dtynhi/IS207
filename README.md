@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">🛒 Unimarket — 5N Store</h1>
+  <h1 align="center">🛒 5N Store</h1>
   <p align="center">
     A full-stack e-commerce platform built for the university community.
     <br />
@@ -31,10 +31,10 @@
 - [Team](#team)
 
 ---
-
+s
 ## About the Project
 
-**Unimarket** is a multi-role e-commerce web application designed to connect students within a university ecosystem. It provides a seamless storefront for shoppers and a full-featured back-office for operators — all in a single monorepo.
+*5N Store** is a multi-role e-commerce web application designed to connect students within a university ecosystem. It provides a seamless storefront for shoppers and a full-featured back-office for operators — all in a single monorepo.
 
 The project follows **Clean Architecture** principles on the backend and a **feature-driven** module structure on the frontend, ensuring the codebase remains maintainable as it grows.
 
