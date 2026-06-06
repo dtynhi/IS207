@@ -1,108 +1,155 @@
 # 5N Store — Unimarket
 
-Dự án thương mại điện tử monorepo gồm:
-
-- **Backend**: TypeScript + Express + Prisma + PostgreSQL (port `4000`)
-- **Frontend**: React + Vite + Tailwind CSS + Ant Design (port `5173`)
-- **Test**: Playwright E2E
-- **Shared**: Thư viện dùng chung
+**Unimarket** is an e-commerce platform built for students, connecting buyers and sellers within the university community. This project was developed as part of the IS207 course.
 
 ---
 
-## Mục lục
+## Overview
 
-1. [Yêu cầu hệ thống](#1-yêu-cầu-hệ-thống)
-2. [Cấu trúc dự án](#2-cấu-trúc-dự-án)
-3. [Cài đặt dependencies](#3-cài-đặt-dependencies)
-4. [Cấu hình môi trường](#4-cấu-hình-môi-trường)
-5. [Cài đặt cơ sở dữ liệu](#5-cài-đặt-cơ-sở-dữ-liệu)
-6. [Quy trình làm việc với DB — bắt buộc cả team](#6-quy-trình-làm-việc-với-db--bắt-buộc-cả-team)
-7. [Chạy ứng dụng](#7-chạy-ứng-dụng)
-8. [Tài khoản mặc định](#8-tài-khoản-mặc-định)
-9. [Build production](#9-build-production)
-10. [Chạy E2E Tests](#10-chạy-e2e-tests)
-11. [Các lệnh hữu ích](#11-các-lệnh-hữu-ích)
-12. [Ghi chú quan trọng](#12-ghi-chú-quan-trọng)
+Unimarket enables students to shop for a wide range of products with a smooth experience — including online payments and a transparent order tracking system. The admin side provides a full suite of tools to operate and monitor business activity.
 
 ---
 
-## 1. Yêu cầu hệ thống
+## Key Features
 
-Cài đặt các phần mềm sau trước khi bắt đầu:
+### For Shoppers
 
-| Phần mềm | Phiên bản tối thiểu | Link tải |
-|----------|---------------------|----------|
-| Node.js | 18+ | https://nodejs.org |
-| npm | 9+ | Đi kèm Node.js |
-| PostgreSQL | 14+ | https://www.postgresql.org/download |
-| Git | Bất kỳ | https://git-scm.com |
+- **Browse & Search** — Explore products by category, filter by attributes, and search instantly
+- **Cart & Checkout** — Add items to cart, place orders, and track order status in real time
+- **Online Payment** — Integrated with VNPay, supporting bank cards and e-wallets
+- **Discount Coupons** — Apply coupon codes at checkout for instant savings
+- **Flash Sales** — Time-limited deals with special pricing
+- **Campaigns & Promotions** — Seasonal banners and promotional events
+- **Account Management** — View order history and update personal information
 
-> **Kiểm tra phiên bản đã cài:**
-> ```bash
-> node -v
-> npm -v
-> psql --version
-> ```
+### For Administrators
+
+- **Dashboard** — Real-time overview of revenue, orders, and user activity
+- **Product Management** — Create, edit, and remove products and categories
+- **Order Management** — View and update order processing status
+- **User Management** — Browse user accounts and manage permissions
+- **Coupon Management** — Create and manage discount codes
+- **Flash Sale & Campaign Management** — Schedule and control promotional programs
+- **Role-Based Access** — Three staff roles with distinct permissions
 
 ---
 
-## 2. Cấu trúc dự án
+## User Roles
+
+| Role | Access Level |
+|------|--------------|
+| **Admin** | Full system administration |
+| **Operations** | Manage products, orders, and promotions |
+| **Support** | Handle user requests and customer support |
+| **Customer** | Shop, place orders, and manage personal account |
+
+---
+
+## Architecture
+
+Unimarket is structured as an **npm workspace monorepo** with three main workspaces:
 
 ```
-Unimarket-main/
-├── backend/                  # API server (Express + Prisma)
-│   ├── prisma/
-│   │   ├── schema.prisma     # Database schema
-│   │   ├── migrations/       # Lịch sử migration
-│   │   └── seed.ts           # Script seed dữ liệu mẫu
-│   ├── src/
-│   │   ├── domains/          # Logic nghiệp vụ (auth, product, order, ...)
-│   │   ├── infrastructure/   # Kết nối DB, dịch vụ ngoài
-│   │   ├── interfaces/       # HTTP routes, middleware
-│   │   └── shared/           # Utilities, validators, error handling
-│   └── .env                  # Biến môi trường backend (tự tạo)
-├── frontend/                 # Web client (React + Vite)
-│   ├── src/
-│   │   ├── features/         # Các module tính năng
-│   │   └── shared/           # Component/util dùng chung
-│   └── .env                  # Biến môi trường frontend (tự tạo)
+unimarket/
+├── backend/        # REST API server
+├── frontend/       # Web client
 ├── packages/
-│   └── shared/               # Thư viện dùng chung giữa FE/BE
-├── test/                     # E2E tests (Playwright)
-├── docs/                     # Tài liệu kỹ thuật
-├── data/                     # Dữ liệu tĩnh
-└── package.json              # Root workspace config
+│   └── shared/     # Shared types and utilities
+└── test/           # End-to-end tests (Playwright)
+```
+
+### Backend
+
+Built with **Node.js + Express + TypeScript**, following a layered architecture:
+
+```
+backend/src/
+├── interfaces/       # HTTP layer — routes, controllers, middleware
+├── application/      # Use cases and application logic
+├── domains/          # Core business logic (auth, product, order, cart, coupon, ...)
+├── infrastructure/   # Database connection (Prisma + PostgreSQL)
+└── shared/           # Utilities, validators, error handling
+```
+
+| Concern | Technology |
+|---------|------------|
+| Runtime | Node.js 18+ |
+| Framework | Express |
+| Language | TypeScript |
+| ORM | Prisma |
+| Database | PostgreSQL |
+| Auth | JWT via httpOnly cookie |
+| Validation | Zod |
+| Scheduler | node-cron |
+
+### Frontend
+
+Built with **React + Vite + TypeScript**, organized by feature modules:
+
+```
+frontend/src/
+├── features/         # Self-contained feature modules (products, cart, orders, admin, ...)
+└── shared/           # Reusable components, hooks, and utilities
+```
+
+| Concern | Technology |
+|---------|------------|
+| Framework | React 18 |
+| Build tool | Vite |
+| UI library | Ant Design |
+| Styling | Tailwind CSS |
+| Data fetching | TanStack Query (React Query) |
+| HTTP client | Axios |
+| Routing | React Router v6 |
+| Charts | Recharts |
+
+### Data Flow
+
+```
+Browser
+  └── React (Vite)
+        └── Axios + React Query
+              └── Express REST API
+                    └── Prisma ORM
+                          └── PostgreSQL
 ```
 
 ---
 
-## 3. Cài đặt dependencies
+## Getting Started
 
-Chạy lệnh sau tại thư mục gốc của dự án. Lệnh này sẽ cài đặt tất cả packages cho cả `backend`, `frontend`, `test` và `packages/shared`:
+### Prerequisites
+
+| Tool | Version |
+|------|---------|
+| Node.js | 18+ |
+| npm | 9+ |
+| PostgreSQL | 14+ |
+| Git | Any |
+
+### 1. Clone the repository
+
+```bash
+git clone <repository-url>
+cd unimarket
+```
+
+### 2. Install dependencies
 
 ```bash
 npm install
 ```
 
----
+This installs packages for all workspaces — backend, frontend, shared, and test.
 
-## 4. Cấu hình môi trường
+### 3. Configure environment variables
 
-### 4.1. Backend
-
-Tạo file `backend/.env` từ file mẫu:
-
-```bash
-cp backend/.env.example backend/.env
-```
-
-Nội dung file `backend/.env` (chỉnh sửa cho phù hợp máy local):
+**Backend** — create `backend/.env`:
 
 ```env
 NODE_ENV=development
 PORT=4000
 
-# Thay username/password/database cho đúng với PostgreSQL local của bạn
 DATABASE_URL=postgresql://postgres:your_password@localhost:5432/unimarket_backend
 
 JWT_SECRET=change_me_to_a_strong_secret
@@ -111,264 +158,103 @@ CORS_ORIGIN=http://localhost:5173
 BASE_URL=http://localhost:4000
 FRONTEND_URL=http://localhost:5173
 
-# VNPay sandbox (dùng cho môi trường dev, không thay đổi)
 VNPAY_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
 VNPAY_TMN_CODE=99396OHE
 VNPAY_HASH_SECRET=HLCNIZIU8HKECRFFRBNXRCQZYXE5HF1U
 ```
 
-> **Lưu ý `DATABASE_URL`:** Đổi `your_password` thành mật khẩu PostgreSQL của bạn và đảm bảo database `unimarket_backend` đã được tạo (xem bước 5).
-
-### 4.2. Frontend
-
-Tạo file `frontend/.env` từ file mẫu:
-
-```bash
-cp frontend/.env.example frontend/.env
-```
-
-Nội dung file `frontend/.env` (mặc định đã đúng, không cần chỉnh):
+**Frontend** — create `frontend/.env`:
 
 ```env
 VITE_API_BASE_URL=http://localhost:4000/api/v1
 ```
 
----
-
-## 5. Cài đặt cơ sở dữ liệu
-
-### Bước 5.1 — Tạo database trong PostgreSQL
-
-Kết nối vào PostgreSQL và tạo database:
+### 4. Set up the database
 
 ```bash
-psql -U postgres
-```
+# Create the database
+psql -U postgres -c "CREATE DATABASE unimarket_backend;"
 
-```sql
-CREATE DATABASE unimarket_backend;
-\q
-```
+# Apply all migrations
+cd backend && npx prisma migrate deploy && cd ..
 
-### Bước 5.2 — Generate Prisma Client
-
-```bash
+# Generate Prisma Client
 npm run prisma:generate
-```
 
-### Bước 5.3 — Apply migrations
-
-Áp dụng toàn bộ migrations đã có vào database (an toàn, không mất dữ liệu):
-
-```bash
-npx prisma migrate deploy --schema backend/prisma/schema.prisma
-```
-
-### Bước 5.4 — Seed dữ liệu mẫu
-
-Nạp dữ liệu mẫu vào database (sản phẩm, tài khoản mặc định, ...):
-
-```bash
+# Seed sample data
 npm run seed
 ```
 
-> Backend cũng tự động seed dữ liệu mặc định khi khởi động lần đầu (idempotent — không tạo trùng).
+### 5. Run the application
 
----
-
-## 6. Quy trình làm việc với DB — bắt buộc cả team
-
-### 6.1. Lần đầu tiên — Reset sạch về baseline chung (chạy MỘT LẦN)
-
-Mỗi thành viên chạy block lệnh này **một lần duy nhất** để đưa DB local về cùng trạng thái với toàn team:
+Open two terminal windows:
 
 ```bash
-# Vào thư mục backend trước (bắt buộc — Prisma đọc .env từ đây)
-cd backend
-
-# Xóa DB local, tạo lại từ đầu và apply toàn bộ migration history
-npx prisma migrate reset --force
-
-# Quay lại thư mục gốc
-cd ..
-
-# Generate lại Prisma Client
-npm run prisma:generate
-
-# Nạp dữ liệu mẫu
-npm run seed
-```
-
-> **Tại sao phải `cd backend` trước?** Prisma tìm file `.env` trong thư mục chứa `schema.prisma` (`backend/prisma/`) hoặc thư mục bạn đang đứng. File `.env` nằm ở `backend/.env` nên phải đứng trong `backend/` thì Prisma mới đọc được. Nếu chạy từ thư mục gốc sẽ báo lỗi `DATABASE_URL not found`.
->
-> `migrate reset` thực hiện 3 việc liên tiếp: **drop DB → re-create → apply toàn bộ migration**. Flag `--force` bỏ qua confirm prompt. Sau khi chạy xong, DB local của bạn đồng bộ hoàn toàn với team.
-
----
-
-### 6.2. Sau mỗi lần `git pull` — Bắt buộc, không bỏ qua
-
-```bash
-# 1. Pull code về
-git pull
-
-# 2. Vào backend và apply các migration mới (LUÔN LUÔN chạy bước này)
-cd backend
-npx prisma migrate deploy
-cd ..
-
-# 3. Generate lại Prisma Client (nếu schema.prisma có thay đổi)
-npm run prisma:generate
-
-# 4. Cài thêm package nếu package.json thay đổi
-npm install
-```
-
-> Dùng `migrate deploy` — lệnh này chỉ **apply** các file migration đã có, không tự sinh migration mới. An toàn cho môi trường team. **Không dùng `db:push` thay thế.**
-
----
-
-### 6.3. Khi nào cần tạo file migration?
-
-Tạo migration mỗi khi bạn **thay đổi bất kỳ thứ gì trong `backend/prisma/schema.prisma`**:
-
-| Thay đổi schema | Cần tạo migration? |
-|---|---|
-| Thêm model mới | Có |
-| Thêm / xóa / đổi tên field | Có |
-| Thêm index, unique, relation | Có |
-| Đổi kiểu dữ liệu của field | Có |
-| Chỉ sửa logic TypeScript | Không |
-| Chỉ sửa file seed | Không |
-
-**Cách tạo migration:**
-
-```bash
-cd backend
-npx prisma migrate dev --name mo-ta-ngan-gon-bang-tieng-anh
-```
-
-Ví dụ tên migration hợp lệ:
-```
---name add-order-status-field
---name add-wallet-table
---name remove-deprecated-cart-column
-```
-
-Sau khi chạy, Prisma tạo file mới trong `backend/prisma/migrations/`. **Commit file đó vào git** — đây là lịch sử thay đổi schema của cả team, người khác cần nó để `migrate deploy` thành công.
-
-**Quy ước đặt tên migration:**
-```
-YYYYMMDD_<động-từ>_<đối-tượng>
-
-Ví dụ:
-  20250531_add_order_status_enum
-  20250601_remove_legacy_cart_field
-  20250602_add_wallet_table
-```
-
----
-
-### 6.4. Bảng quy tắc — không thương lượng
-
-| Tình huống | Lệnh đúng | Lệnh SAI — không dùng |
-|---|---|---|
-| Sau mỗi git pull | `migrate deploy` | ~~`db:push`~~ |
-| Thay đổi `schema.prisma` | `migrate dev --name ...` | ~~`db:push`~~ |
-| Cần data mẫu | `npm run seed` | ~~Insert thủ công vào DB~~ |
-| Reset hoàn toàn local DB | `migrate reset --force` | ~~Xóa DB tay rồi `db:push`~~ |
-
-**Xem trạng thái DB trực tiếp qua giao diện web:**
-
-```bash
-cd backend
-npx prisma studio
-```
-
----
-
-## 7. Chạy ứng dụng
-
-Mở **2 terminal riêng biệt**:
-
-**Terminal 1 — Backend:**
-
-```bash
+# Terminal 1 — API server (http://localhost:4000)
 npm run dev:backend
-```
 
-Kết quả: API server chạy tại `http://localhost:4000`
-
-**Terminal 2 — Frontend:**
-
-```bash
+# Terminal 2 — Web client (http://localhost:5173)
 npm run dev:frontend
 ```
 
-Kết quả: Web app chạy tại `http://localhost:5173`
-
-**Kiểm tra backend hoạt động:**
+Verify the API is running:
 
 ```bash
 curl http://localhost:4000/api/v1/health
+# Expected: { "status": "ok" }
 ```
 
-Hoặc mở trình duyệt tại `http://localhost:4000/api/v1/health`, kết quả trả về `{ "status": "ok" }` là thành công.
+### Default accounts
 
----
-
-## 8. Tài khoản mặc định
-
-Sau khi seed dữ liệu, các tài khoản sau được tạo sẵn:
-
-| Email | Mật khẩu | Vai trò |
-|-------|----------|---------|
+| Email | Password | Role |
+|-------|----------|------|
 | `admin@unimarket.vn` | `123456` | Admin |
-| `vanhanh@unimarket.vn` | `123456` | Vận hành |
-| `hotro@unimarket.vn` | `123456` | Hỗ trợ |
+| `vanhanh@unimarket.vn` | `123456` | Operations |
+| `hotro@unimarket.vn` | `123456` | Support |
 
-> Đổi mật khẩu sau khi deploy lên môi trường thật.
+> Change all default passwords before deploying to production.
 
 ---
 
-## 9. Build production
+## Database Workflow
+
+### After every `git pull`
 
 ```bash
-# Build backend
-npm run build:backend
+git pull
+cd backend && npx prisma migrate deploy && cd ..
+npm run prisma:generate
+npm install
+```
 
-# Build frontend
+### After modifying `schema.prisma`
+
+```bash
+cd backend
+npx prisma migrate dev --name describe-your-change
+```
+
+Always commit the generated migration file — teammates need it to stay in sync.
+
+### Reset local database
+
+```bash
+cd backend && npx prisma migrate reset --force && cd ..
+npm run prisma:generate
+npm run seed
+```
+
+---
+
+## Build for Production
+
+```bash
+npm run build:backend
 npm run build:frontend
 ```
 
 ---
 
-## 10. Chạy E2E Tests
+## About
 
-Đảm bảo cả backend lẫn frontend đang chạy, sau đó:
-
-```bash
-npm run test:e2e
-```
-
----
-
-## 11. Các lệnh hữu ích
-
-```bash
-# Kiểm tra type cho shared package
-npm run typecheck:shared
-
-# Seed lại dữ liệu, ghi đè dữ liệu cũ
-npm run seed -- --force
-```
-
----
-
-## 12. Ghi chú quan trọng
-
-- **Cookie auth**: Token đăng nhập lưu trong httpOnly cookie, không phải localStorage. Thời hạn cookie là 30 ngày.
-- **Prisma & .env**: Prisma đọc `.env` từ cùng thư mục với `schema.prisma`. Khi chạy lệnh `prisma` từ thư mục gốc, phải thêm `--schema backend/prisma/schema.prisma`. Khi `cd backend` rồi chạy thì không cần thêm flag này.
-- **Migration drift**: Nếu Prisma báo drift khi chạy `migrate dev`, hãy thảo luận với team trước khi reset DB vì thao tác này xóa toàn bộ dữ liệu.
-- **VNPay**: Credentials trong file `.env.example` là của môi trường sandbox, chỉ dùng cho dev/test. Không dùng credentials thật trên máy local.
-- **Vite Proxy**: Frontend tự động proxy mọi request `/api/*` đến `http://localhost:4000`, không cần cấu hình thêm.
-- **Branch**: Phát triển tính năng trên branch riêng (`feature/...`), không commit thẳng lên `main`.
+IS207 Project — University of Information Technology, UIT.
