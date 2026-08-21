@@ -31,7 +31,6 @@
 - [Team](#team)
 
 ---
-s
 ## About the Project
 
 *5N Store** is a multi-role e-commerce web application designed to connect students within a university ecosystem. It provides a seamless storefront for shoppers and a full-featured back-office for operators — all in a single monorepo.
